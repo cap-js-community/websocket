@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Socket.IO chat</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<ul id="messages"></ul>
+<form id="form" action="">
+  <label for="input"></label><input id="input" autocomplete="off" />
+  <button>Send</button>
+</form>
+</body>
+<script src="https://cdn.socket.io/4.7.2/socket.io.js"></script>
+<script>
+  document.cookie = "X-Authorization=Basic YWxpY2U6YWxpY2U; path=/"; // Mock auth (overwritten by approuter)
+  const socket = io("/chat", { path: "/ws" });
+  const form = document.getElementById("form");
+  const input = document.getElementById("input");
+  const messages = document.getElementById("messages");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (input.value) {
+      socket.emit("message", { text: input.value });
+      input.value = "";
+    }
+  });
+  socket.on("received", (message) => {
+    const item = document.createElement("li");
+    item.textContent = message.text;
+    messages.appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+  });
+</script>
+</html>

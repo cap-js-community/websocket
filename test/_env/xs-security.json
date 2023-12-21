@@ -1,0 +1,31 @@
+{
+  "xsappname": "ws-uaa",
+  "tenant-mode": "dedicated",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.WS_Chat",
+      "description": "WebSocket Chat"
+    },
+    {
+      "name": "$XSAPPNAME.WS_Todo",
+      "description": "WebSocket Todo"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Token_Exchange",
+      "description": "UAA",
+      "scope-references": ["uaa.user"]
+    },
+    {
+      "name": "WS_Chat",
+      "description": "WS Chat",
+      "scope-references": ["$XSAPPNAME.WS_Chat", "uaa.user"]
+    },
+    {
+      "name": "WS_Todo",
+      "description": "WS Todo",
+      "scope-references": ["$XSAPPNAME.WS_Todo", "uaa.user"]
+    }
+  ]
+}

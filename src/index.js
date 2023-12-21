@@ -1,0 +1,265 @@
+"use strict";
+
+const cds = require("@sap/cds");
+const LOG = cds.log("websocket");
+
+const WebSocketAction = {
+  Connect: "wsConnect",
+  Disconnect: "wsDisconnect",
+};
+
+let socketServer;
+
+let services;
+const collectServicesAndMountAdapter = (srv, options) => {
+  if (!services) {
+    services = {};
+    cds.on("served", () => {
+      options.services = services;
+      serveWebSocketServer(options);
+    });
+  }
+  services[srv.name] = srv;
+};
+
+function serveWebSocketServer(options) {
+  // Wait for server listening (http server is ready)
+  cds.on("listening", (app) => {
+    socketServer = initWebSocketServer(app.server, options.path);
+    if (socketServer) {
+      for (const serviceName in options.services) {
+        const service = options.services[serviceName];
+        if (isServedViaWebsocket(service)) {
+          serveWebSocketService(socketServer, service, options);
+        }
+      }
+    }
+  });
+}
+
+function initWebSocketServer(server, path) {
+  try {
+    cds.env.requires ??= {};
+    cds.env.requires.websocket ??= {};
+    cds.env.requires.websocket.kind ??= "socket.io";
+    const socketModule = require(`./socket/${cds.env.requires.websocket.kind}`);
+    socketServer = new socketModule(server, path);
+    LOG?.info("using websocket", { kind: cds.env.requires.websocket.kind });
+    return socketServer;
+  } catch (err) {
+    LOG?.error(err);
+  }
+}
+
+function serveWebSocketService(socketServer, service, options) {
+  let servicePath = service.path;
+  if (servicePath.startsWith(options.path)) {
+    servicePath = servicePath.substring(options.path.length);
+  }
+  try {
+    socketServer.service(servicePath, (socket) => {
+      try {
+        socket.setup();
+        emitConnect(socket, service);
+        bindServiceDefaults(socket, service);
+        bindServiceOperations(socket, service);
+        bindServiceEntities(socket, service);
+        bindServiceEvents(socket, service);
+      } catch (err) {
+        LOG?.error(err);
+        socket.disconnect();
+      }
+    });
+  } catch (err) {
+    LOG?.error(err);
+  }
+}
+
+function emitConnect(socket, service) {
+  if (service.operations(WebSocketAction.Connect).length) {
+    processEvent(socket, service, undefined, WebSocketAction.Connect);
+  }
+}
+
+function bindServiceDefaults(socket, service) {
+  if (service.operations(WebSocketAction.Disconnect).length) {
+    socket.on("disconnect", (reason) => {
+      processEvent(socket, service, undefined, WebSocketAction.Disconnect, { reason });
+    });
+  }
+}
+
+function bindServiceOperations(socket, service) {
+  for (const operation of service.operations()) {
+    const event = serviceLocalName(service, operation.name);
+    socket.on(event, (data, callback) => {
+      processEvent(socket, service, undefined, event, data, callback);
+    });
+  }
+}
+
+function bindServiceEntities(socket, service) {
+  for (const entity of service.entities()) {
+    const localEntityName = serviceLocalName(service, entity.name);
+    socket.on(`${localEntityName}:create`, (data, callback) => {
+      processEvent(socket, service, entity, "create", data, (response) => {
+        callback && callback(response);
+        socket.broadcast(`${localEntityName}:created`, broadcastData(entity, response));
+      });
+    });
+    socket.on(`${localEntityName}:read`, (data, callback) => {
+      processEvent(socket, service, entity, "read", data, callback);
+    });
+    socket.on(`${localEntityName}:readDeep`, (data, callback) => {
+      processEvent(socket, service, entity, "readDeep", data, callback);
+    });
+    socket.on(`${localEntityName}:update`, (data, callback) => {
+      processEvent(socket, service, entity, "update", data, (response) => {
+        callback && callback(response);
+        socket.broadcast(`${localEntityName}:updated`, broadcastData(entity, response));
+      });
+    });
+    socket.on(`${localEntityName}:delete`, (data, callback) => {
+      processEvent(socket, service, entity, "delete", data, (response) => {
+        callback && callback(response);
+        socket.broadcast(`${localEntityName}:deleted`, broadcastData(entity, { ...response, ...data }));
+      });
+    });
+    socket.on(`${localEntityName}:list`, (data, callback) => {
+      processEvent(socket, service, entity, "list", data, callback);
+    });
+    for (const actionName in entity.actions) {
+      const action = entity.actions[actionName];
+      socket.on(`${localEntityName}:${action.name}`, (data, callback) => {
+        processEvent(socket, service, entity, action.name, data, callback);
+      });
+    }
+  }
+}
+
+function bindServiceEvents(socket, service) {
+  for (const event of service.events()) {
+    service.on(event, (req) => {
+      const localEventName = serviceLocalName(service, event.name);
+      processEmit(socket, service, localEventName, req.data);
+    });
+  }
+}
+
+async function processEmit(socket, service, event, data) {
+  try {
+    socket.emit(event, data);
+  } catch (err) {
+    LOG?.error(err);
+  }
+}
+
+async function processEvent(socket, service, entity, event, data, callback) {
+  try {
+    const response = await call(socket, service, entity, event, data);
+    callback && callback(response);
+  } catch (err) {
+    LOG?.error(err);
+    try {
+      callback &&
+        callback({
+          error: {
+            code: err.code || err.status || err.statusCode,
+            message: err.message,
+          },
+        });
+    } catch (err) {
+      LOG?.error(err);
+    }
+  }
+}
+
+async function call(socket, service, entity, event, data) {
+  data = data || {};
+  return await service.tx(socket.context(), async (srv) => {
+    if (!entity) {
+      return await srv.send({
+        event,
+        data,
+      });
+    }
+    const key = deriveKey(entity, data);
+    switch (event) {
+      case "create":
+        return await srv.create(entity).entries(data);
+      case "read":
+        return await srv.run(SELECT.one.from(entity).where(key));
+      case "readDeep":
+        return await srv.run(SELECT.one.from(entity).columns(getDeepEntityColumns(entity)).where(key));
+      case "update":
+        return await srv.update(entity).set(data).where(key);
+      case "delete":
+        return await srv.delete(entity).where(key);
+      case "list":
+        return await srv.read(entity).where(data);
+      default:
+        return await srv.send({
+          event,
+          entity: entity.name,
+          data,
+        });
+    }
+  });
+}
+
+function broadcastData(entity, data) {
+  if (entity["@websocket.broadcast"] === "data" || entity["@ws.broadcast"] === "data") {
+    return data;
+  }
+  return deriveKey(entity, data);
+}
+
+function deriveKey(entity, data) {
+  return Object.keys(entity.keys).reduce((result, key) => {
+    result[key] = data[key];
+    return result;
+  }, {});
+}
+
+function getDeepEntityColumns(entity) {
+  const columns = [];
+  for (const element of Object.values(entity.elements)) {
+    if (element.type === "cds.Composition" && element.target) {
+      columns.push({
+        ref: [element.name],
+        expand: getDeepEntityColumns(element._target),
+      });
+    } else {
+      columns.push({
+        ref: [element.name],
+      });
+    }
+  }
+  return columns;
+}
+
+function serviceLocalName(service, name) {
+  const servicePrefix = `${service.name}.`;
+  if (name.startsWith(servicePrefix)) {
+    return name.substring(servicePrefix.length);
+  }
+  return name;
+}
+
+function isServedViaWebsocket(service) {
+  const serviceDefinition = service.definition;
+  let protocols = serviceDefinition["@protocol"];
+  if (protocols) {
+    protocols = !Array.isArray(protocols) ? [protocols] : protocols;
+    return protocols.some((protocol) => {
+      return ["websocket", "ws"].includes(typeof protocol === "string" ? protocol : protocol.kind);
+    });
+  }
+  const protocolDirect = Object.keys(cds.env.protocols || {}).find((protocol) => serviceDefinition["@" + protocol]);
+  if (protocolDirect) {
+    return ["websocket", "ws"].includes(protocolDirect);
+  }
+  return false;
+}
+
+module.exports = collectServicesAndMountAdapter;

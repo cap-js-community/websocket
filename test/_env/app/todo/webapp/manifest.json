@@ -1,0 +1,179 @@
+{
+  "_version": "1.8.0",
+  "sap.app": {
+    "id": "todo",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.1.0"
+    },
+    "title": "{{appTitle}}",
+    "subTitle": "{{appSubTitle}}",
+    "description": "{{appDescription}}",
+    "tags": {
+      "keywords": []
+    },
+    "ach": "",
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/todo/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "Todo-manage": {
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          },
+          "semanticObject": "Todo",
+          "action": "manage",
+          "title": "Todo",
+          "subTitle": "",
+          "icon": "sap-icon://document"
+        }
+      }
+    },
+    "offline": false,
+    "sourceTemplate": {
+      "id": "ui5template.fiorielements.v4.lrop",
+      "version": "1.40.12"
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    },
+    "supportedThemes": ["sap_hcb", "sap_belize", "sap_belize_deep", "sap_fiori_3", "sap_horizon"]
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "resources": {
+      "js": [],
+      "css": []
+    },
+    "dependencies": {
+      "minUI5Version": "1.108.24",
+      "libs": {
+        "sap.fe.templates": {
+          "lazy": false
+        },
+        "sap.m": {
+          "lazy": false
+        }
+      },
+      "components": {}
+    },
+    "models": {
+      "": {
+        "preload": true,
+        "dataSource": "mainService",
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      },
+      "@i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      }
+    },
+    "routing": {
+      "routes": [
+        {
+          "pattern": ":?query:",
+          "name": "TodoList",
+          "target": "TodoList"
+        },
+        {
+          "pattern": "Todo({key}):?query:",
+          "name": "TodoObjectPage",
+          "target": "TodoObjectPage"
+        }
+      ],
+      "targets": {
+        "TodoList": {
+          "type": "Component",
+          "id": "TodoList",
+          "name": "sap.fe.templates.ListReport",
+          "options": {
+            "settings": {
+              "entitySet": "Todo",
+              "variantManagement": "Page",
+              "initialLoad": true,
+              "navigation": {
+                "Todo": {
+                  "detail": {
+                    "route": "TodoObjectPage"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "TodoObjectPage": {
+          "type": "Component",
+          "id": "TodoObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "entitySet": "Todo"
+            }
+          }
+        }
+      }
+    },
+    "extends": {
+      "extensions": {
+        "sap.ui.controllerExtensions": {
+          "sap.fe.templates.ListReport.ListReportController": {
+            "controllerName": "todo.controller.ListReportController"
+          },
+          "sap.fe.templates.ObjectPage.ObjectPageController": {
+            "controllerName": "todo.controller.ObjectPageController"
+          }
+        }
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [""],
+    "archeType": "transactional"
+  },
+  "sap.platform.hcp": {
+    "uri": ""
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "todo"
+  },
+  "sap.platform.cf": {
+    "ui5VersionNumber": "1.108.24",
+    "oAuthScopes": ["$XSAPPNAME.WS_Todo"]
+  }
+}

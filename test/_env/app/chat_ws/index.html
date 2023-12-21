@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>WebSocket chat</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<ul id="messages"></ul>
+<form id="form" action="">
+    <label for="input"></label><input id="input" autocomplete="off"/>
+    <button>Send</button>
+</form>
+</body>
+<script>
+  document.cookie = "X-Authorization=Basic YWxpY2U6YWxpY2U; path=/"; // Mock auth (overwritten by approuter)
+  const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+  const socket = new WebSocket(protocol + window.location.host + "/ws/chat")
+  const form = document.getElementById("form");
+  const input = document.getElementById("input");
+  const messages = document.getElementById("messages");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (input.value) {
+      socket.send(JSON.stringify({
+        event: "message",
+        data: { text: input.value },
+      }));
+      input.value = "";
+    }
+  });
+  socket.addEventListener("message", (message) => {
+    const payload = JSON.parse(message.data);
+    switch (payload.event) {
+      case "received":
+        const item = document.createElement("li");
+        item.textContent = payload.data.text;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+        break;
+    }
+  });
+</script>
+</html>

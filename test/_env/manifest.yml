@@ -1,0 +1,28 @@
+---
+applications:
+  - name: ws-test-app
+    path: approuter
+    memory: 1G
+    health-check-type: process
+    routes:
+      - route: ws-test.cfapps.sap.hana.ondemand.com
+    env:
+      destinations: >
+        [
+          {
+            "name": "srv",
+            "url": "https://ws-test-srv.cfapps.sap.hana.ondemand.com",
+            "forwardAuthToken": true
+          }
+        ]
+    services:
+      - ws-uaa
+
+  - name: ws-test-srv
+    path: backend
+    memory: 1G
+    health-check-type: process
+    routes:
+      - route: ws-test-srv.cfapps.sap.hana.ondemand.com
+    services:
+      - ws-uaa

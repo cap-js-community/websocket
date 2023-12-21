@@ -1,0 +1,20 @@
+specVersion: "2.4"
+type: application
+metadata:
+  name: todo
+resources:
+  configuration:
+    propertiesFileSourceEncoding: UTF-8
+builder:
+  resources:
+    excludes:
+      - .DS_Store
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: ui5-task-zipper
+      afterTask: generateCachebusterInfo
+      configuration:
+        archiveName: todo-content
+        additionalFiles:
+          - xs-app.json

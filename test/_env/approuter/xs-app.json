@@ -1,0 +1,14 @@
+{
+  "welcomeFile": "flp.html",
+  "authenticationMethod": "route",
+  "websockets": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "source": ".*",
+      "destination": "srv",
+      "csrfProtection": false
+    }
+  ]
+}

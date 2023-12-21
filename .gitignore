@@ -1,0 +1,13 @@
+.idea/
+.DS_Store
+node_modules/
+reports/
+temp/
+gen/
+test/_env/test.sqlite
+test/_env/test.sqlite-journal
+test/_env/default-env.json
+test/_env/approuter/default-services.json
+test/_env/backend/app
+test/_env/backend/db
+test/_env/backend/srv

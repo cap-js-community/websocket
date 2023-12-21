@@ -1,0 +1,63 @@
+{
+  "name": "@cap-js-community/websocket-test",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cds-serve",
+    "start:socketio": "cds-serve --profile socketio",
+    "start:uaa": "cds-serve --production",
+    "start:socketio:uaa": "cds-serve --production --profile socketio",
+    "start:file": "cds-serve --profile testdb",
+    "test:deploy": "cds deploy srv/index.cds --to sqlite:test.sqlite",
+    "build": "cds build",
+    "cf:uaa:cs": "cf create-service xsuaa application ws-uaa -c xs-security.json",
+    "cf:uaa:csk": "cf create-service-key ws-uaa ws-uaa-key",
+    "cf:uaa:sk": "cf service-key ws-uaa ws-uaa-key",
+    "cf:uaa:ds": "cf delete-service ws-uaa",
+    "cf:uaa:dsk": "cf delete-service-key ws-uaa ws-uaa-key",
+    "cf:uaa": "npm run cf:uaa:cs && npm run cf:uaa:csk && npm run cf:uaa:sk",
+    "cf:uaa:del": "npm run cf:uaa:dsk && npm run cf:uaa:ds",
+    "cf:prepare": "npx -y shx cp -r app backend/app && npx -y shx cp -r db backend/db && npx -y shx cp -r srv backend/srv",
+    "cf:install": "npm i --prefix approuter && npm i --prefix backend",
+    "cf:push": "npm run cf:prepare && npm run cf:install && cf push"
+  },
+  "dependencies": {
+    "@cap-js-community/websocket": "../../"
+  },
+  "cds": {
+    "features": {
+      "in_memory_db": true
+    },
+    "requires": {
+      "websocket": {
+        "kind": "ws",
+        "[socketio]": {
+          "kind": "socket.io",
+          "adapter": {
+            "impl": "@socket.io/redis-adapter",
+            "options": {
+              "key": "websocket"
+            }
+          }
+        }
+      },
+      "auth": {
+        "[production]": {
+          "kind": "xsuaa"
+        }
+      },
+      "db": {
+        "kind": "better-sqlite",
+        "credentials": {
+          "database": ":memory:"
+        },
+        "[testdb]": {
+          "kind": "better-sqlite",
+          "credentials": {
+            "database": "test.sqlite"
+          }
+        }
+      }
+    }
+  }
+}

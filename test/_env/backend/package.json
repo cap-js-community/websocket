@@ -1,0 +1,36 @@
+{
+  "name": "@cap-js-community/websocket-test-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cds-serve --production"
+  },
+  "dependencies": {
+    "@cap-js-community/websocket": "0.1.0",
+    "@cap-js/sqlite": "^1.4.0",
+    "@sap/cds": "^7.4.1",
+    "@sap/xssec": "3.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "cds": {
+    "features": {
+      "in_memory_db": true
+    },
+    "requires": {
+      "websocket": {
+        "kind": "ws"
+      },
+      "auth": {
+        "kind": "xsuaa"
+      },
+      "db": {
+        "kind": "better-sqlite",
+        "credentials": {
+          "database": "test.sqlite"
+        }
+      }
+    }
+  }
+}

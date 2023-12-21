@@ -1,0 +1,25 @@
+{
+  "authenticationMethod": "route",
+  "logout": {
+    "logoutEndpoint": "/do/logout"
+  },
+  "websockets": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "source": ".*",
+      "destination": "backend",
+      "csrfProtection": false
+    },
+    {
+      "source": "^(.*)$",
+      "target": "$1",
+      "service": "html5-apps-repo-rt",
+      "authenticationType": "xsuaa"
+    }
+  ],
+  "compression": {
+    "compressResponseMixedTypeContent": true
+  }
+}

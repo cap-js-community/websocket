@@ -1,0 +1,14 @@
+{
+  "name": "@cap-js-community/websocket-test-approuter",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@sap/approuter": "^14.4.1"
+  },
+  "scripts": {
+    "start": "PORT=5001 node node_modules/@sap/approuter/approuter.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

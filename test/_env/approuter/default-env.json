@@ -1,0 +1,9 @@
+{
+  "destinations": [
+    {
+      "name": "srv",
+      "url": "http://localhost:4004",
+      "forwardAuthToken": true
+    }
+  ]
+}
