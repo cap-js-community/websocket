@@ -28,7 +28,7 @@
       "db": {
         "kind": "better-sqlite",
         "credentials": {
-          "database": "test.sqlite"
+          "database": ":memory:"
         }
       }
     }

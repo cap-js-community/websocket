@@ -27,7 +27,7 @@
     "start:socketio": "npm run start:socketio --prefix=./test/_env",
     "start:uaa": "npm run start:uaa --prefix=./test/_env",
     "start:socketio:uaa": "npm run start:socketio:uaa --prefix=./test/_env",
-    "start:approuter": "npm start --prefix=./test/_env/approuter",
+    "start:approuter": "PORT=5001 npm start --prefix=./test/_env/approuter",
     "test": "jest",
     "test:update": "npm test -- -u",
     "lint": "npm run eslint && npm run prettier",

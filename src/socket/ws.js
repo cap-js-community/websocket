@@ -39,9 +39,13 @@ class SocketWSServer extends SocketServer {
         LOG?.error(error);
       });
       applyMiddleware(ws, request, async () => {
-        const redisClient = await redis.createMainClientAndConnect();
-        const channel = cds.env.requires.websocket?.adapter?.options?.key ?? "websocket";
-        subscribeRedis(redisClient, ws, channel);
+        const adapterActive = cds.env.requires.websocket?.adapter !== false;
+        const redisChannel = cds.env.requires.websocket?.adapter?.options?.key ?? "websocket";
+        let redisClient;
+        if (adapterActive) {
+          redisClient = await redis.createMainClientAndConnect();
+          subscribeRedis(redisClient, ws, redisChannel);
+        }
         connected &&
           connected({
             socket: ws,
@@ -66,7 +70,9 @@ class SocketWSServer extends SocketServer {
                   // ignore
                 }
                 if (payload?.event === event) {
-                  publishRedis(redisClient, ws, channel, message);
+                  if (adapterActive) {
+                    publishRedis(redisClient, ws, redisChannel, message);
+                  }
                   callback(payload.data);
                 }
               });
@@ -126,10 +132,10 @@ function applyMiddleware(ws, request, next) {
   apply();
 }
 
-function subscribeRedis(redisClient, ws, channel) {
-  if (redisClient) {
-    redisClient.subscribe(channel);
-    redisClient.on("message", (onChannel, message) => {
+function subscribeRedis(client, ws, channel) {
+  if (client) {
+    client.subscribe(channel);
+    client.on("message", (onChannel, message) => {
       if (onChannel === channel) {
         ws.send(message);
       }
@@ -137,9 +143,9 @@ function subscribeRedis(redisClient, ws, channel) {
   }
 }
 
-function publishRedis(redisClient, ws, channel, message) {
-  if (redisClient) {
-    redisClient.publish(channel, message);
+function publishRedis(client, ws, channel, message) {
+  if (client) {
+    client.publish(channel, message);
   }
 }
 

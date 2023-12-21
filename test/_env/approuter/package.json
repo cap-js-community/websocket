@@ -6,7 +6,7 @@
     "@sap/approuter": "^15.0.0"
   },
   "scripts": {
-    "start": "PORT=5001 node node_modules/@sap/approuter/approuter.js"
+    "start": "node node_modules/@sap/approuter/approuter.js"
   },
   "engines": {
     "node": ">=20"

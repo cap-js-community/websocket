@@ -17,7 +17,7 @@
     "cf:uaa:dsk": "cf delete-service-key ws-uaa ws-uaa-key",
     "cf:uaa": "npm run cf:uaa:cs && npm run cf:uaa:csk && npm run cf:uaa:sk",
     "cf:uaa:del": "npm run cf:uaa:dsk && npm run cf:uaa:ds",
-    "cf:prepare": "npx -y shx cp -r app backend/app && npx -y shx cp -r db backend/db && npx -y shx cp -r srv backend/srv",
+    "cf:prepare": "npx -y shx cp -r app backend && npx -y shx cp -r db backend && npx -y shx cp -r srv backend",
     "cf:install": "npm i --prefix approuter && npm i --prefix backend",
     "cf:push": "npm run cf:prepare && npm run cf:install && cf push"
   },

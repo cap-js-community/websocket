@@ -64,7 +64,7 @@ WebSocket server options can be provided via `cds.requires.websocket.options`.
 
 Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.websocket.path` resp. `cds.env.protocols.ws.path`;
 
-Services are exposed therefore like this: `/ws/<service-path`:
+Services are exposed therefore like this: `/ws/<service-path>`:
 
 **Examples:**
 
@@ -92,6 +92,14 @@ Locally, the following default environment files need to exist:
 
 - `test/\_env/default-env.json`
 - `test/\_env/approuter/default-services.json`
+
+Approuter is configured to support websockets in `xs-app.json` according to [@sap/approuter - websockets property](https://www.npmjs.com/package/@sap/approuter#websockets-property):
+
+```
+"websockets": {
+  "enabled": true
+}
+```
 
 #### Local
 
@@ -278,42 +286,62 @@ describe("WebSocket", () => {
 ### Adapters (Socket.IO)
 
 An Adapter is a server-side component which is responsible for broadcasting events to all or a subset of clients.
-Details can be found here: https://socket.io/docs/v4/adapter/
-
-Currently, two adapters are supported out-of-the-box:
 
 #### Redis
 
 Every event that is sent to multiple clients is sent to all matching clients connected to the current server
 and published in a Redis channel, and received by the other Socket.IO servers of the cluster.
 
-##### Redis Adapter
+Redis adapter can be disabled by setting `cds.requires.websocket.adapter: false`.
 
-To use the redis adapter, the following steps have to be performed:
+##### WS
+
+Per default a basic publish/subscribe redis adapter is active, if the app is bound to a Redis service. 
+The Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `websocket`.
+
+##### Socket.IO
+
+The following Redis adapters for Socket.IO are supported out-of-the-box.
+
+###### Redis Adapter
+
+To use the Redis Adapter, the following steps have to be performed:
 
 - Install Redis Adapter dependency:
   `npm install @socket.io/redis-adapter`
-- Set `cds.requires.websocket.adapter: "@socket.io/redis-adapter"`
+- Set `cds.requires.websocket.adapter.impl: "@socket.io/redis-adapter"`
 - Application needs to be bound to a Redis instance
   - Locally a `default-env.json` file need to exist with redis configuration
-- Redis adapter options can be specified via `cds.requires.websocket.adapter.options`;
+- Redis Adapter options can be specified via `cds.requires.websocket.adapter.options`
 
 Details:
 https://socket.io/docs/v4/redis-adapter/
 
-##### Redis Stream Adapter
+###### Redis Streams Adapter
 
-To use the redis adapter, the following steps have to be performed:
+To use the Redis Stream Adapter, the following steps have to be performed:
 
-- Install Redis Adapter dependency:
-  `npm install @socket.io/redis-adapter`
-- Set `cds.requires.websocket.adapter: "@socket.io/redis-streams-adapter"`
+- Install Redis Streams Adapter dependency:
+  `npm install @socket.io/redis-streams-adapter`
+- Set `cds.requires.websocket.adapter.impl: "@socket.io/redis-streams-adapter"`
 - Application needs to be bound to a Redis instance
   - Locally a `default-env.json` file need to exist with redis configuration
-- Redis adapter options can be specified via `cds.requires.websocket.adapter.options`;
+- Redis Streams Adapter options can be specified via `cds.requires.websocket.adapter.options`
 
 Details:
 https://socket.io/docs/v4/redis-streams-adapter/
+
+### Deployment
+
+This module also works on a deployed infrastructure like Cloud Foundry (CF) or Kubernetes (K8s).
+
+An example Cloud Foundry deployment can be found in `test/_env`:
+- `cd test/_env`
+  - [manifest.yml](test/_env/manifest.yml)
+- `npm run cf:push`
+  - Prepares modules `approuter` and `backend` in `test/_env` and pushes to Cloud Foundry
+    - Approuter performs authentication flow with XSUAA and forwards to backend
+    - Backend serves endpoints (websocket, odata) and UI apps (runs on an in-memory SQlite3 database)
 
 ## Support, Feedback, Contributing
 

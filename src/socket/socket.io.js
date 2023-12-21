@@ -65,6 +65,9 @@ class SocketIOServer extends SocketServer {
 
 async function applyAdapter() {
   try {
+    if (cds.env.requires.websocket?.adapter === false) {
+      return;
+    }
     const adapterImpl = cds.env.requires?.websocket?.adapter?.impl;
     if (adapterImpl) {
       const { createAdapter } = require(adapterImpl);
