@@ -47,8 +47,8 @@ describe("Chat", () => {
         {
           name: "Test-Item-1",
           description: "Test Item description",
-          startAt: new Date("2024-01-01T12:00:00.000").toISOString(),
-          endAt: new Date("2024-12-31T12:00:00.000").toISOString(),
+          startAt: new Date("2024-01-01T12:00:00.000Z").toISOString(),
+          endAt: new Date("2024-12-31T12:00:00.000Z").toISOString(),
         },
       ],
     };

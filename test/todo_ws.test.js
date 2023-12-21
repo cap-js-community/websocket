@@ -24,7 +24,7 @@ describe("Todo", () => {
     const waitRefreshPromise = waitForEvent(socket, "refresh");
     let response = await fetch(cds.server.url + "/odata/v4/todo/Todo", {
       method: "POST",
-      headers: { "content-type": "application/json", authorization, },
+      headers: { "content-type": "application/json", authorization },
       body: JSON.stringify({ name: "Buy milk" }),
     });
     let result = await response.json();

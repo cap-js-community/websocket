@@ -5,9 +5,9 @@ exports[`Chat CRUD entity 1`] = `
   "Items": [
     {
       "description": "Test Item description",
-      "endAt": "2024-12-31T11:00:00.000Z",
+      "endAt": "2024-12-31T12:00:00.000Z",
       "name": "Test-Item-1",
-      "startAt": "2024-01-01T11:00:00.000Z",
+      "startAt": "2024-01-01T12:00:00.000Z",
     },
   ],
   "country": "de",
@@ -39,9 +39,9 @@ exports[`Chat CRUD entity 4`] = `
   "Items": [
     {
       "description": "Test Item description",
-      "endAt": "2024-12-31T11:00:00.000Z",
+      "endAt": "2024-12-31T12:00:00.000Z",
       "name": "Test-Item-1",
-      "startAt": "2024-01-01T11:00:00.000Z",
+      "startAt": "2024-01-01T12:00:00.000Z",
     },
   ],
   "country": "de",
@@ -60,9 +60,9 @@ exports[`Chat CRUD entity 5`] = `
   "Items": [
     {
       "description": "Test Item description - updated",
-      "endAt": "2024-12-31T11:00:00.000Z",
+      "endAt": "2024-12-31T12:00:00.000Z",
       "name": "Test-Item-1",
-      "startAt": "2024-01-01T11:00:00.000Z",
+      "startAt": "2024-01-01T12:00:00.000Z",
     },
   ],
   "country": "de",

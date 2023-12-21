@@ -72,7 +72,7 @@ Events can be directly emitted via the `socket` bypassing CDS runtime.
 
 Authentication only works via AppRouter using a UAA configuration, as the auth token is forwarded
 via authorization header bearer token by AppRouter to backend instance. CDS middlewares process the auth token and
-set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and 
+set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and
 authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
 
 #### Approuter
@@ -102,7 +102,6 @@ Operation results will be provided via optional websocket acknowledgement callba
 Each unbound function and action is exposed as websocket event.
 The signature (parameters and return type) is passed through without additional modification.
 Operation result will be provided as part of acknowledgment callback.
-
 
 ##### Special operations
 
