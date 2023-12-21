@@ -296,7 +296,7 @@ Redis adapter can be disabled by setting `cds.requires.websocket.adapter: false`
 
 ##### WS
 
-Per default a basic publish/subscribe redis adapter is active, if the app is bound to a Redis service. 
+Per default a basic publish/subscribe redis adapter is active, if the app is bound to a Redis service.
 The Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `websocket`.
 
 ##### Socket.IO
@@ -336,6 +336,7 @@ https://socket.io/docs/v4/redis-streams-adapter/
 This module also works on a deployed infrastructure like Cloud Foundry (CF) or Kubernetes (K8s).
 
 An example Cloud Foundry deployment can be found in `test/_env`:
+
 - `cd test/_env`
   - [manifest.yml](test/_env/manifest.yml)
 - `npm run cf:push`
