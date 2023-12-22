@@ -64,12 +64,35 @@ WebSocket server options can be provided via `cds.requires.websocket.options`.
 
 Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.websocket.path` resp. `cds.env.protocols.ws.path`;
 
-Services are exposed therefore like this: `/ws/<service-path>`:
+#### WebSocket Service
+
+Annotated services with websocket protocol are exposed at endpoint: `/ws/<service-path>`:
 
 **Examples:**
 
 - **WS**: `const socket = new WebSocket("ws://localhost:4004/ws/chat");`
 - **Socket.IO**: `const socket = io("/chat", { path: "/ws" })`
+
+#### WebSocket Event
+
+Non-websocket services can contain events that are exposed as websocket events:
+
+```cds
+  @protocol: 'odata'
+  @path: 'chat'
+  service ChatService {
+    entity Chat as projection on chat.Chat;
+    function message(text: String) returns String;
+    @websocket
+    event received {
+      text: String;
+    }
+  }
+```
+
+Although the service is exposed as an OData protocol at `/odata/v4/chat`, the service events annotated with `@websocket` or
+`@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
+are not exposed, as the service itself is not marked as websocket protocol.
 
 ## Server Socket
 
@@ -361,6 +384,14 @@ An example Cloud Foundry deployment can be found in `test/_env`:
   - Prepares modules `approuter` and `backend` in `test/_env` and pushes to Cloud Foundry
     - Approuter performs authentication flow with XSUAA and forwards to backend
     - Backend serves endpoints (websocket, odata) and UI apps (runs on an in-memory SQlite3 database)
+
+In deployed infrastructure, websocket protocol is exposed via Web Socket Secure (WSS) at `wss://` over an encrypted TLS connection.
+For WebSocket standard the following setup in browser environment is recommended to cover deployed and local use-case:
+
+```
+const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+const socket = new WebSocket(protocol + window.location.host + "/ws/chat")
+```
 
 ## Support, Feedback, Contributing
 
