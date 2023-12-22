@@ -91,7 +91,25 @@ Valid UAA bindings for approuter and backend are necessary, so that the authoriz
 Locally, the following default environment files need to exist:
 
 - `test/\_env/default-env.json`
+  ```
+  {
+    "VCAP_SERVICES": {
+      "xsuaa": [
+        {
+          ...
+        }
+      ]
+    }
+  }
+  ```
 - `test/\_env/approuter/default-services.json`
+  ```
+  {
+    "uaa": {
+      ...
+    }
+  }
+  ```
 
 Approuter is configured to support websockets in `xs-app.json` according to [@sap/approuter - websockets property](https://www.npmjs.com/package/@sap/approuter#websockets-property):
 

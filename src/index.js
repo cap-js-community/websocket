@@ -27,10 +27,54 @@ function serveWebSocketServer(options) {
   cds.on("listening", (app) => {
     socketServer = initWebSocketServer(app.server, options.path);
     if (socketServer) {
+      // Websocket services
       for (const serviceName in options.services) {
         const service = options.services[serviceName];
         if (isServedViaWebsocket(service)) {
           serveWebSocketService(socketServer, service, options);
+        }
+      }
+      // Websockets events
+      const eventServices = {};
+      for (const name in cds.model.definitions) {
+        const definition = cds.model.definitions[name];
+        if (definition.kind === "event" && (definition["@websocket"] || definition["@ws"])) {
+          const service = cds.services[definition._service?.name];
+          if (service && !isServedViaWebsocket(service)) {
+            eventServices[service.name] ??= eventServices[service.name] || {
+              name: service.name,
+              definition: service.definition,
+              endpoints: service.endpoints.map((endpoint) => {
+                const protocol =
+                  cds.env.protocols[endpoint.kind] ||
+                  (endpoint.kind === "odata" ? cds.env.protocols["odata-v4"] : null);
+                return {
+                  kind: "websocket",
+                  path: cds.env.protocols.websocket.path + normalizeServicePath(service.path, protocol.path),
+                };
+              }),
+              operations: () => {
+                return [];
+              },
+              entities: () => {
+                return [];
+              },
+              events: [],
+              on: service.on.bind(service),
+              tx: service.tx.bind(service),
+            };
+            eventServices[service.name].events.push(definition);
+          }
+        }
+      }
+      for (const name in eventServices) {
+        const eventService = eventServices[name];
+        const events = eventService.events;
+        if (events.length > 0) {
+          eventService.events = () => {
+            return events;
+          };
+          serveWebSocketService(socketServer, eventService, options);
         }
       }
     }
@@ -51,27 +95,35 @@ function initWebSocketServer(server, path) {
   }
 }
 
-function serveWebSocketService(socketServer, service, options) {
-  let servicePath = service.path;
-  if (servicePath.startsWith(options.path)) {
-    servicePath = servicePath.substring(options.path.length);
+function normalizeServicePath(servicePath, protocolPath) {
+  if (servicePath.startsWith(protocolPath)) {
+    return servicePath.substring(protocolPath.length);
   }
-  try {
-    socketServer.service(servicePath, (socket) => {
+  return servicePath;
+}
+
+function serveWebSocketService(socketServer, service, options) {
+  for (const endpoint of service.endpoints || []) {
+    if (["websocket", "ws"].includes(endpoint.kind)) {
+      const servicePath = normalizeServicePath(endpoint.path, options.path);
       try {
-        socket.setup();
-        emitConnect(socket, service);
-        bindServiceDefaults(socket, service);
-        bindServiceOperations(socket, service);
-        bindServiceEntities(socket, service);
-        bindServiceEvents(socket, service);
+        socketServer.service(servicePath, (socket) => {
+          try {
+            socket.setup();
+            emitConnect(socket, service);
+            bindServiceDefaults(socket, service);
+            bindServiceOperations(socket, service);
+            bindServiceEntities(socket, service);
+            bindServiceEvents(socket, service);
+          } catch (err) {
+            LOG?.error(err);
+            socket.disconnect();
+          }
+        });
       } catch (err) {
         LOG?.error(err);
-        socket.disconnect();
       }
-    });
-  } catch (err) {
-    LOG?.error(err);
+    }
   }
 }
 
@@ -247,7 +299,13 @@ function serviceLocalName(service, name) {
 }
 
 function isServedViaWebsocket(service) {
+  if (!service) {
+    return false;
+  }
   const serviceDefinition = service.definition;
+  if (!serviceDefinition) {
+    return false;
+  }
   let protocols = serviceDefinition["@protocol"];
   if (protocols) {
     protocols = !Array.isArray(protocols) ? [protocols] : protocols;
