@@ -221,8 +221,6 @@ Example application can be started by:
   - Starting backend: `npm run start:uaa`
   - Open in browser: http://localhost:5001/flp.html#Todo-manage
 
-### Example
-
 #### Chat (HTML)
 
 An example `chat` application using Socket.IO can be found at `test/_env/app/chat`.
