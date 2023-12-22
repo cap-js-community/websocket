@@ -94,6 +94,8 @@ Although the service is exposed as an OData protocol at `/odata/v4/chat`, the se
 `@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
 are not exposed, as the service itself is not marked as websocket protocol.
 
+> Non-websocket service events are only active when at least one websocket enabled service is available (=> websocket protocol adapter active).
+
 ## Server Socket
 
 Each CDS handler request context is extended to hold the current server `socket` instance of the event.
