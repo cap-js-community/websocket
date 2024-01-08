@@ -1,89 +1,47 @@
 "use strict";
 
-const path = require("path");
-const redis = require("redis");
-const xsenv = require("@sap/xsenv");
+const redis = require("../redis");
 const cds = require("@sap/cds");
 
 const LOG = cds.log("websocket/redis");
 
-xsenv.loadEnv(path.join(process.cwd(), "default-env.json"));
-
-let subscriberClientPromise;
-
-const createMainClientAndConnect = () => {
-  if (subscriberClientPromise) {
-    return subscriberClientPromise;
+class RedisAdapter {
+  constructor(server, channel, options) {
+    this.server = server;
+    this.channel = channel;
+    this.options = options;
   }
 
-  const errorHandlerCreateClient = (err) => {
-    LOG?.error("error from redis client for pub/sub failed", err);
-    subscriberClientPromise = null;
-    setTimeout(createMainClientAndConnect, 5 * 1000);
-  };
-  subscriberClientPromise = _createClientAndConnect(errorHandlerCreateClient);
-  return subscriberClientPromise;
-};
-
-const createClientAndConnect = () => {
-  const errorHandlerCreateClient = (err) => {
-    LOG?.error("error from redis client for pub/sub failed", err);
-    setTimeout(createClientAndConnect, 5 * 1000);
-  };
-  return _createClientAndConnect(errorHandlerCreateClient);
-};
-
-const _createClientBase = () => {
-  let credentials;
-  try {
-    credentials = xsenv.serviceCredentials({ label: "redis-cache" });
-  } catch (err) {
-    LOG?.info(err.message);
+  async setup() {
+    this.client = await redis.createMainClientAndConnect();
   }
-  if (credentials) {
+
+  async on() {
+    if (!this.client) {
+      return;
+    }
     try {
-      // NOTE: settings the user explicitly to empty resolves auth problems, see
-      // https://github.com/go-redis/redis/issues/1343
-      const redisIsCluster = credentials.cluster_mode;
-      const url = credentials.uri.replace(/(?<=rediss:\/\/)[\w-]+?(?=:)/, "");
-      if (redisIsCluster) {
-        return redis.createCluster({
-          rootNodes: [{ url }],
-          // https://github.com/redis/node-redis/issues/1782
-          defaults: {
-            password: credentials.password,
-            socket: { tls: credentials.tls },
-          },
-        });
-      }
-      return redis.createClient({ url });
+      await this.client.subscribe(this.channel);
+      this.client.on("message", (channel, message) => {
+        if (channel === this.channel) {
+          this.server.wss.broadcastAll(message);
+        }
+      });
     } catch (err) {
-      throw new Error("error during create client with redis-cache service:" + err);
+      LOG?.error(err);
     }
   }
-};
 
-const _createClientAndConnect = async (errorHandlerCreateClient) => {
-  let client = null;
-  try {
-    client = _createClientBase();
-  } catch (err) {
-    throw new Error("error during create client with redis-cache service:" + err);
+  async emit(message) {
+    if (!this.client) {
+      return;
+    }
+    try {
+      await this.client.publish(this.channel, message);
+    } catch (err) {
+      LOG?.error(err);
+    }
   }
-  if (!client) {
-    return;
-  }
-  client.on("error", errorHandlerCreateClient);
-  try {
-    await client.connect();
-    LOG?.info("redis-cache service connected");
-  } catch (err) {
-    errorHandlerCreateClient(err);
-  }
-  return client;
-};
+}
 
-module.exports = {
-  createMainClientAndConnect,
-  createClientAndConnect,
-};
+module.exports = RedisAdapter;

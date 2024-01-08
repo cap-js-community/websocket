@@ -28,8 +28,10 @@
 
 ## Usage
 
+### Server
+
 - Run `npm add @cap-js-community/websocket` in `@sap/cds` project
-- Create a service to be exposed as websocket protocol
+- Create a service to be exposed as websocket protocol: **srv/chat-service.cds**
   ```cds
   @protocol: 'websocket'
   service ChatService {
@@ -39,7 +41,51 @@
     }
   }
   ```
-- Connect with socket client
+- Implement CDS websocket service: **srv/chat-service.js**
+  ```js
+  module.exports = (srv) => {
+    srv.on("message", async (req) => {
+      srv.emit("received", req.data);
+      return req.data.text;
+    });
+  };
+  ```
+
+### Client
+
+In browser environment implement the websocket client: **index.html**
+
+#### WebSocket Standard
+
+- Connect with WebSocket
+  ```js
+  const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+  const socket = new WebSocket(protocol + window.location.host + "/ws/chat");
+  ```
+- Emit event
+  ```js
+  socket.send(
+    JSON.stringify({
+      event: "message",
+      data: { text: input.value },
+    }),
+  );
+  ```
+- Listen to event
+  ```js
+  socket.addEventListener("message", (message) => {
+    const payload = JSON.parse(message.data);
+    switch (payload.event) {
+      case "received":
+        console.log(payload.data.text);
+        break;
+    }
+  });
+  ```
+
+#### Socket.IO
+
+- Connect with Socket.IO client
   ```js
   const socket = io("/chat", { path: "/ws" });
   ```
@@ -50,7 +96,7 @@
 - Listen to event
   ```js
   socket.on("received", (message) => {
-    /* ... message.text */
+    console.log(message.text);
   });
   ```
 
@@ -115,32 +161,28 @@ Authorization in provided in production by approuter component vis XSUAA auth.
 Valid UAA bindings for approuter and backend are necessary, so that the authorization flow is working.
 Locally, the following default environment files need to exist:
 
-- `test/\_env/default-env.json`
-  ```
+- `test/_env/default-env.json`
+  ```json
   {
     "VCAP_SERVICES": {
-      "xsuaa": [
-        {
-          ...
-        }
-      ]
+      "xsuaa": [{}]
     }
   }
   ```
-- `test/\_env/approuter/default-services.json`
-  ```
+- `test/_env/approuter/default-services.json`
+  ```json
   {
-    "uaa": {
-      ...
-    }
+    "uaa": {}
   }
   ```
 
 Approuter is configured to support websockets in `xs-app.json` according to [@sap/approuter - websockets property](https://www.npmjs.com/package/@sap/approuter#websockets-property):
 
-```
-"websockets": {
-  "enabled": true
+```json
+{
+  "websockets": {
+    "enabled": true
+  }
 }
 ```
 
@@ -197,9 +239,9 @@ Events can be emitted and the response can be retrieved via acknowledgment callb
 
 CRUD events that modify entities automatically emit another event after successful processing:
 
-- `<entity>:create` -> `<entity>:created`: Entity instance has been updated
-- `<entity>:update` -> `<entity>:updated`: Entity instance has been created
-- `<entity>:delete` -> `<entity>:deleted`: Entity instance has been deleted
+- `<entity>:create => <entity>:created`: Entity instance has been updated
+- `<entity>:update => <entity>:updated`: Entity instance has been created
+- `<entity>:delete => <entity>:deleted`: Entity instance has been deleted
 
 Because of security concerns, it can be controlled which data of those events is broadcast,
 via annotations `@websocket.broadcast` or `@ws.broadcast`.
@@ -248,7 +290,7 @@ The basic unit-test setup for WebSockets in CDS context looks as follows:
 
 ### WS
 
-```
+```js
 "use strict";
 
 const cds = require("@sap/cds");
@@ -263,10 +305,10 @@ describe("WebSocket", () => {
 
   beforeAll((done) => {
     const port = cds.app.server.address().port;
-    socket = new WebSocket(`ws://localhost:${ port }/ws/chat`, {
+    socket = new WebSocket(`ws://localhost:${port}/ws/chat`, {
       headers: {
-        authorization
-      }
+        authorization,
+      },
     });
   });
 
@@ -276,17 +318,19 @@ describe("WebSocket", () => {
   });
 
   test("Test", (done) => {
-    socket.send(JSON.stringify({
-      event: "event",
-      data: {},
-    }));
+    socket.send(
+      JSON.stringify({
+        event: "event",
+        data: {},
+      }),
+    );
   });
 });
 ```
 
 #### Socket.io
 
-```javascript
+```js
 "use strict";
 
 const cds = require("@sap/cds");
@@ -331,46 +375,56 @@ An Adapter is a server-side component which is responsible for broadcasting even
 #### Redis
 
 Every event that is sent to multiple clients is sent to all matching clients connected to the current server
-and published in a Redis channel, and received by the other Socket.IO servers of the cluster.
+and published in a Redis channel, and received by the other websocket servers of the cluster.
+The app needs to be bound to a Redis service instance to set up and connect Redis client.
 
-Redis adapter can be disabled by setting `cds.requires.websocket.adapter: false`.
+##### WS Standard
 
-##### WS
+The following adapters for WS Standard are supported out-of-the-box.
 
-Per default a basic publish/subscribe redis adapter is active, if the app is bound to a Redis service.
-The Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `websocket`.
+###### Redis
+
+To use the Redis Adapter (basic publish/subscribe), the following steps have to be performed:
+
+- Set `cds.requires.websocket.adapter.impl: "redis"`
+- Application needs to be bound to a Redis instance
+  - Locally a `default-env.json` file need to exist with index configuration
+- Redis Adapter options can be specified via `cds.requires.websocket.adapter.options`
+- Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `websocket`.
 
 ##### Socket.IO
 
-The following Redis adapters for Socket.IO are supported out-of-the-box.
+The following adapters for Socket.IO are supported out-of-the-box.
 
 ###### Redis Adapter
 
 To use the Redis Adapter, the following steps have to be performed:
 
 - Install Redis Adapter dependency:
-  `npm install @socket.io/redis-adapter`
-- Set `cds.requires.websocket.adapter.impl: "@socket.io/redis-adapter"`
+  `npm install @socket.io/index-adapter`
+- Set `cds.requires.websocket.adapter.impl: "@socket.io/index-adapter"`
 - Application needs to be bound to a Redis instance
-  - Locally a `default-env.json` file need to exist with redis configuration
+  - Locally a `default-env.json` file need to exist with index configuration
 - Redis Adapter options can be specified via `cds.requires.websocket.adapter.options`
+- Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `socket.io`.
 
 Details:
-https://socket.io/docs/v4/redis-adapter/
+https://socket.io/docs/v4/index-adapter/
 
 ###### Redis Streams Adapter
 
 To use the Redis Stream Adapter, the following steps have to be performed:
 
 - Install Redis Streams Adapter dependency:
-  `npm install @socket.io/redis-streams-adapter`
-- Set `cds.requires.websocket.adapter.impl: "@socket.io/redis-streams-adapter"`
+  `npm install @socket.io/index-streams-adapter`
+- Set `cds.requires.websocket.adapter.impl: "@socket.io/index-streams-adapter"`
 - Application needs to be bound to a Redis instance
-  - Locally a `default-env.json` file need to exist with redis configuration
+  - Locally a `default-env.json` file need to exist with index configuration
 - Redis Streams Adapter options can be specified via `cds.requires.websocket.adapter.options`
+- Redis channel key can be specified via `cds.requires.websocket.adapter.options.streamName`. Default value is `socket.io`.
 
 Details:
-https://socket.io/docs/v4/redis-streams-adapter/
+https://socket.io/docs/v4/index-streams-adapter/
 
 ### Deployment
 
@@ -378,19 +432,19 @@ This module also works on a deployed infrastructure like Cloud Foundry (CF) or K
 
 An example Cloud Foundry deployment can be found in `test/_env`:
 
-- `cd test/_env`
-  - [manifest.yml](test/_env/manifest.yml)
+- `cd test/_env`:
+  - Use [manifest.yml](test/_env/manifest.yml)
 - `npm run cf:push`
   - Prepares modules `approuter` and `backend` in `test/_env` and pushes to Cloud Foundry
     - Approuter performs authentication flow with XSUAA and forwards to backend
-    - Backend serves endpoints (websocket, odata) and UI apps (runs on an in-memory SQlite3 database)
+    - Backend serves endpoints (websocket, odata) and UI apps (runs on an in-memory SQLite3 database)
 
 In deployed infrastructure, websocket protocol is exposed via Web Socket Secure (WSS) at `wss://` over an encrypted TLS connection.
 For WebSocket standard the following setup in browser environment is recommended to cover deployed and local use-case:
 
-```
+```js
 const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
-const socket = new WebSocket(protocol + window.location.host + "/ws/chat")
+const socket = new WebSocket(protocol + window.location.host + "/ws/chat");
 ```
 
 ## Support, Feedback, Contributing

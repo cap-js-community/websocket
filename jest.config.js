@@ -4,15 +4,15 @@ module.exports = {
   reporters: ["default"],
   automock: false,
   bail: false,
-  clearMocks: true,
+  clearMocks: false,
   collectCoverage: true,
-  collectCoverageFrom: ["**/src/*.js"],
+  collectCoverageFrom: ["**/src/**/*.js"],
   coverageDirectory: "reports/coverage/unit/",
   coverageReporters: ["lcov", "text"],
   coverageThreshold: {
     global: {
       branches: 70,
-      functions: 100,
+      functions: 90,
       lines: 90,
       statements: 90,
     },

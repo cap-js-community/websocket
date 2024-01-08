@@ -2,7 +2,6 @@
 
 const SocketServer = require("./base");
 const WebSocket = require("ws");
-const redis = require("../adapter/redis");
 const cds = require("@sap/cds");
 
 const LOG = cds.log("websocket/ws");
@@ -25,8 +24,13 @@ class SocketWSServer extends SocketServer {
         }
       });
     };
+    this.adapter = null;
     cds.ws = this.wss;
     cds.wss = this.wss;
+  }
+
+  async setup() {
+    await this._applyAdapter();
   }
 
   service(service, connected) {
@@ -38,121 +42,118 @@ class SocketWSServer extends SocketServer {
       ws.on("error", (error) => {
         LOG?.error(error);
       });
-      applyMiddleware(ws, request, async () => {
-        const adapterActive = cds.env.requires.websocket?.adapter !== false;
-        const redisChannel = cds.env.requires.websocket?.adapter?.options?.key ?? "websocket";
-        let redisClient;
-        if (adapterActive) {
-          redisClient = await redis.createMainClientAndConnect();
-          subscribeRedis(redisClient, ws, redisChannel);
-        }
-        connected &&
-          connected({
-            socket: ws,
-            setup: () => {
-              enforceAuth(ws);
-            },
-            context: () => {
-              return {
-                id: ws.request.correlationId,
-                user: ws.request.user,
-                tenant: ws.request.tenant,
-                http: { req: ws.request, res: ws.request.res },
-                socket: ws,
-              };
-            },
-            on: (event, callback) => {
-              ws.on("message", (message) => {
-                let payload;
-                try {
-                  payload = JSON.parse(message);
-                } catch (_) {
-                  // ignore
-                }
-                if (payload?.event === event) {
-                  if (adapterActive) {
-                    publishRedis(redisClient, ws, redisChannel, message);
+      this._applyMiddleware(ws, async () => {
+        try {
+          connected &&
+            connected({
+              socket: ws,
+              setup: () => {
+                this._enforceAuth(ws);
+              },
+              context: () => {
+                return {
+                  id: ws.request.correlationId,
+                  user: ws.request.user,
+                  tenant: ws.request.tenant,
+                  http: { req: ws.request, res: ws.request.res },
+                  socket: ws,
+                };
+              },
+              on: (event, callback) => {
+                ws.on("message", async (message) => {
+                  let payload;
+                  try {
+                    payload = JSON.parse(message);
+                  } catch (_) {
+                    // ignore
                   }
-                  callback(payload.data);
-                }
-              });
-            },
-            emit: (event, data) => {
-              ws.send(
-                JSON.stringify({
-                  event,
-                  data,
-                }),
-              );
-            },
-            broadcast: (event, data) => {
-              this.wss.broadcast(
-                JSON.stringify({
-                  event,
-                  data,
-                }),
-                ws,
-              );
-            },
-            disconnect() {
-              ws.disconnect();
-            },
-          });
+                  try {
+                    if (payload?.event === event) {
+                      await callback(payload.data);
+                      if (this.adapter) {
+                        await this.adapter.emit(message);
+                      }
+                    }
+                  } catch (err) {
+                    LOG?.error(err);
+                  }
+                });
+              },
+              emit: (event, data) => {
+                ws.send(
+                  JSON.stringify({
+                    event,
+                    data,
+                  }),
+                );
+              },
+              broadcast: (event, data) => {
+                this.wss.broadcast(
+                  JSON.stringify({
+                    event,
+                    data,
+                  }),
+                  ws,
+                );
+              },
+              disconnect() {
+                ws.disconnect();
+              },
+            });
+        } catch (err) {
+          LOG?.error(err);
+        }
       });
     });
   }
-}
 
-function applyMiddleware(ws, request, next) {
-  // Mock response (not available in websockets), CDS accesses it
-  ws.request.res ??= {
-    set: (name, value) => {
-      if (name.toLowerCase() === "x-correlation-id") {
-        ws.request.correlationId = value;
+  async _applyAdapter() {
+    try {
+      const adapterImpl = cds.env.requires?.websocket?.adapter?.impl;
+      if (adapterImpl) {
+        let options = {};
+        if (cds.env.requires.websocket?.adapter?.options) {
+          options = { ...options, ...cds.env.requires.websocket?.adapter?.options };
+        }
+        const channel = options?.key ?? "websocket";
+        this.adapterFactory = require(`../adapter/${adapterImpl}`);
+        this.adapter = new this.adapterFactory(this, channel, options);
+        await this.adapter.setup();
+        await this.adapter.on();
       }
-    },
-  };
-  SocketServer.applyAuthCookie(request);
-  // Middleware
-  let middlewares = [];
-  for (const middleware of cds.middlewares?.before ?? []) {
-    if (Array.isArray(middleware)) {
-      middlewares = middlewares.concat(middleware);
-    } else {
-      middlewares.push(middleware);
+    } catch (err) {
+      LOG?.error(err);
     }
   }
-  function apply() {
-    const middleware = middlewares.shift();
-    if (!middleware) {
-      return next();
-    }
-    middleware(ws.request, ws.request.res, apply);
-  }
-  apply();
-}
 
-function subscribeRedis(client, ws, channel) {
-  if (client) {
-    client.subscribe(channel);
-    client.on("message", (onChannel, message) => {
-      if (onChannel === channel) {
-        ws.send(message);
+  _applyMiddleware(ws, next) {
+    SocketServer.mockResponse(ws.request);
+    SocketServer.applyAuthCookie(ws.request);
+    // Middleware
+    let middlewares = [];
+    for (const middleware of cds.middlewares?.before ?? []) {
+      if (Array.isArray(middleware)) {
+        middlewares = middlewares.concat(middleware);
+      } else {
+        middlewares.push(middleware);
       }
-    });
-  }
-}
+    }
 
-function publishRedis(client, ws, channel, message) {
-  if (client) {
-    client.publish(channel, message);
+    function apply() {
+      const middleware = middlewares.shift();
+      if (!middleware) {
+        return next();
+      }
+      middleware(ws.request, ws.request.res, apply);
+    }
+    apply();
   }
-}
 
-function enforceAuth(ws) {
-  if (ws.request.isAuthenticated && !ws.request.isAuthenticated()) {
-    ws.disconnect();
-    throw new Error("403 - Forbidden");
+  _enforceAuth(ws) {
+    if (ws.request.isAuthenticated && !ws.request.isAuthenticated()) {
+      ws.disconnect();
+      throw new Error("403 - Forbidden");
+    }
   }
 }
 

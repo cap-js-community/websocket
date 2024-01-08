@@ -24,8 +24,8 @@ const collectServicesAndMountAdapter = (srv, options) => {
 
 function serveWebSocketServer(options) {
   // Wait for server listening (http server is ready)
-  cds.on("listening", (app) => {
-    socketServer = initWebSocketServer(app.server, options.path);
+  cds.on("listening", async (app) => {
+    socketServer = await initWebSocketServer(app.server, options.path);
     if (socketServer) {
       // Websocket services
       for (const serviceName in options.services) {
@@ -77,18 +77,19 @@ function serveWebSocketServer(options) {
           serveWebSocketService(socketServer, eventService, options);
         }
       }
+      LOG?.info("using websocket", { kind: cds.env.requires.websocket.kind });
     }
   });
 }
 
-function initWebSocketServer(server, path) {
+async function initWebSocketServer(server, path) {
   try {
     cds.env.requires ??= {};
     cds.env.requires.websocket ??= {};
-    cds.env.requires.websocket.kind ??= "socket.io";
+    cds.env.requires.websocket.kind ??= "ws";
     const socketModule = require(`./socket/${cds.env.requires.websocket.kind}`);
     socketServer = new socketModule(server, path);
-    LOG?.info("using websocket", { kind: cds.env.requires.websocket.kind });
+    await socketServer.setup();
     return socketServer;
   } catch (err) {
     LOG?.error(err);
@@ -110,11 +111,11 @@ function serveWebSocketService(socketServer, service, options) {
         socketServer.service(servicePath, (socket) => {
           try {
             socket.setup();
-            emitConnect(socket, service);
             bindServiceDefaults(socket, service);
             bindServiceOperations(socket, service);
             bindServiceEntities(socket, service);
             bindServiceEvents(socket, service);
+            emitConnect(socket, service);
           } catch (err) {
             LOG?.error(err);
             socket.disconnect();
@@ -127,16 +128,16 @@ function serveWebSocketService(socketServer, service, options) {
   }
 }
 
-function emitConnect(socket, service) {
+async function emitConnect(socket, service) {
   if (service.operations(WebSocketAction.Connect).length) {
-    processEvent(socket, service, undefined, WebSocketAction.Connect);
+    await processEvent(socket, service, undefined, WebSocketAction.Connect);
   }
 }
 
 function bindServiceDefaults(socket, service) {
   if (service.operations(WebSocketAction.Disconnect).length) {
-    socket.on("disconnect", (reason) => {
-      processEvent(socket, service, undefined, WebSocketAction.Disconnect, { reason });
+    socket.on("disconnect", async (reason) => {
+      await processEvent(socket, service, undefined, WebSocketAction.Disconnect, { reason });
     });
   }
 }
@@ -144,8 +145,8 @@ function bindServiceDefaults(socket, service) {
 function bindServiceOperations(socket, service) {
   for (const operation of service.operations()) {
     const event = serviceLocalName(service, operation.name);
-    socket.on(event, (data, callback) => {
-      processEvent(socket, service, undefined, event, data, callback);
+    socket.on(event, async (data, callback) => {
+      await processEvent(socket, service, undefined, event, data, callback);
     });
   }
 }
@@ -153,37 +154,37 @@ function bindServiceOperations(socket, service) {
 function bindServiceEntities(socket, service) {
   for (const entity of service.entities()) {
     const localEntityName = serviceLocalName(service, entity.name);
-    socket.on(`${localEntityName}:create`, (data, callback) => {
-      processEvent(socket, service, entity, "create", data, (response) => {
+    socket.on(`${localEntityName}:create`, async (data, callback) => {
+      await processEvent(socket, service, entity, "create", data, (response) => {
         callback && callback(response);
         socket.broadcast(`${localEntityName}:created`, broadcastData(entity, response));
       });
     });
-    socket.on(`${localEntityName}:read`, (data, callback) => {
-      processEvent(socket, service, entity, "read", data, callback);
+    socket.on(`${localEntityName}:read`, async (data, callback) => {
+      await processEvent(socket, service, entity, "read", data, callback);
     });
-    socket.on(`${localEntityName}:readDeep`, (data, callback) => {
-      processEvent(socket, service, entity, "readDeep", data, callback);
+    socket.on(`${localEntityName}:readDeep`, async (data, callback) => {
+      await processEvent(socket, service, entity, "readDeep", data, callback);
     });
-    socket.on(`${localEntityName}:update`, (data, callback) => {
-      processEvent(socket, service, entity, "update", data, (response) => {
+    socket.on(`${localEntityName}:update`, async (data, callback) => {
+      await processEvent(socket, service, entity, "update", data, (response) => {
         callback && callback(response);
         socket.broadcast(`${localEntityName}:updated`, broadcastData(entity, response));
       });
     });
-    socket.on(`${localEntityName}:delete`, (data, callback) => {
-      processEvent(socket, service, entity, "delete", data, (response) => {
+    socket.on(`${localEntityName}:delete`, async (data, callback) => {
+      await processEvent(socket, service, entity, "delete", data, (response) => {
         callback && callback(response);
         socket.broadcast(`${localEntityName}:deleted`, broadcastData(entity, { ...response, ...data }));
       });
     });
-    socket.on(`${localEntityName}:list`, (data, callback) => {
-      processEvent(socket, service, entity, "list", data, callback);
+    socket.on(`${localEntityName}:list`, async (data, callback) => {
+      await processEvent(socket, service, entity, "list", data, callback);
     });
     for (const actionName in entity.actions) {
       const action = entity.actions[actionName];
-      socket.on(`${localEntityName}:${action.name}`, (data, callback) => {
-        processEvent(socket, service, entity, action.name, data, callback);
+      socket.on(`${localEntityName}:${action.name}`, async (data, callback) => {
+        await processEvent(socket, service, entity, action.name, data, callback);
       });
     }
   }
@@ -191,9 +192,9 @@ function bindServiceEntities(socket, service) {
 
 function bindServiceEvents(socket, service) {
   for (const event of service.events()) {
-    service.on(event, (req) => {
+    service.on(event, async (req) => {
       const localEventName = serviceLocalName(service, event.name);
-      processEmit(socket, service, localEventName, req.data);
+      await processEmit(socket, service, localEventName, req.data);
     });
   }
 }

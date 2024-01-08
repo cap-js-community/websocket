@@ -4,7 +4,7 @@ const cds = require("@sap/cds");
 const { Server } = require("socket.io");
 
 const SocketServer = require("./base");
-const redis = require("../adapter/redis");
+const redis = require("../redis");
 
 const LOG = cds.log("websocket/socket.io");
 const DEBUG = cds.debug("websocket");
@@ -21,112 +21,113 @@ class SocketIOServer extends SocketServer {
     });
     cds.ws = this.io;
     cds.io = this.io;
-    applyAdapter();
+  }
+
+  async setup() {
+    await this._applyAdapter();
   }
 
   service(service, connected) {
-    const io = applyMiddleware(this.io.of(service));
+    const io = this._applyMiddleware(this.io.of(service));
     io.on("connection", async (socket) => {
-      DEBUG?.("Connected", socket.id);
-      socket.on("disconnect", () => {
-        DEBUG?.("Disconnected", socket.id);
-      });
-      const serviceSocket = {
-        socket,
-        setup: () => {
-          enforceAuth(socket);
-        },
-        context: () => {
-          return {
-            id: socket.request.correlationId,
-            user: socket.request.user,
-            tenant: socket.request.tenant,
-            http: { req: socket.request, res: socket.request.res },
-            socket,
-          };
-        },
-        on: (event, callback) => {
-          socket.on(event, callback);
-        },
-        emit: (event, data) => {
-          socket.emit(event, data);
-        },
-        broadcast: (event, data) => {
-          socket.broadcast.emit(event, data);
-        },
-        disconnect() {
-          socket.disconnect();
-        },
-      };
-      connected && connected(serviceSocket);
+      try {
+        DEBUG?.("Connected", socket.id);
+        socket.on("disconnect", () => {
+          DEBUG?.("Disconnected", socket.id);
+        });
+        const serviceSocket = {
+          socket,
+          setup: () => {
+            this._enforceAuth(socket);
+          },
+          context: () => {
+            return {
+              id: socket.request.correlationId,
+              user: socket.request.user,
+              tenant: socket.request.tenant,
+              http: { req: socket.request, res: socket.request.res },
+              socket,
+            };
+          },
+          on: (event, callback) => {
+            socket.on(event, callback);
+          },
+          emit: (event, data) => {
+            socket.emit(event, data);
+          },
+          broadcast: (event, data) => {
+            socket.broadcast.emit(event, data);
+          },
+          disconnect() {
+            socket.disconnect();
+          },
+        };
+        connected && connected(serviceSocket);
+      } catch (err) {
+        LOG?.error(err);
+      }
     });
   }
-}
 
-async function applyAdapter() {
-  try {
-    if (cds.env.requires.websocket?.adapter === false) {
-      return;
-    }
-    const adapterImpl = cds.env.requires?.websocket?.adapter?.impl;
-    if (adapterImpl) {
-      const { createAdapter } = require(adapterImpl);
-      const client = await redis.createMainClientAndConnect();
-      if (client) {
-        let adapter;
-        let subClient;
+  async _applyAdapter() {
+    try {
+      const adapterImpl = cds.env.requires?.websocket?.adapter?.impl;
+      if (adapterImpl) {
         let options = {};
         if (cds.env.requires.websocket?.adapter?.options) {
           options = { ...options, ...cds.env.requires.websocket?.adapter?.options };
         }
+        let client;
+        let subClient;
+        let adapter;
+        const adapterFactory = require(adapterImpl);
         switch (adapterImpl) {
           case "@socket.io/redis-adapter":
-            subClient = await redis.createClientAndConnect();
-            adapter = createAdapter(client, subClient, options);
+            client = await redis.createMainClientAndConnect();
+            subClient = await redis.createSecondClientAndConnect();
+            if (client && subClient) {
+              adapter = adapterFactory.createAdapter(client, subClient, options);
+            }
             break;
           case "@socket.io/redis-streams-adapter":
-            adapter = createAdapter(client, options);
+            client = await redis.createMainClientAndConnect();
+            if (client) {
+              adapter = adapterFactory.createAdapter(client, options);
+            }
             break;
         }
         if (adapter) {
           this.io.adapter(adapter);
         }
       }
+    } catch (err) {
+      LOG?.error(err);
     }
-  } catch (err) {
-    LOG?.error(err);
   }
-}
 
-function applyMiddleware(serviceIO) {
-  serviceIO.use((socket, next) => {
-    SocketServer.applyAuthCookie(socket.request);
-    // Mock response (not available in websockets), CDS accesses it
-    socket.request.res ??= {
-      set: (name, value) => {
-        if (name.toLowerCase() === "x-correlation-id") {
-          socket.request.correlationId = value;
+  _applyMiddleware(io) {
+    io.use((socket, next) => {
+      SocketServer.mockResponse(socket.request);
+      SocketServer.applyAuthCookie(socket.request);
+      next();
+    });
+    for (const middleware of cds.middlewares?.before ?? []) {
+      if (Array.isArray(middleware)) {
+        for (const entry of middleware) {
+          io.use(wrapMiddleware(entry));
         }
-      },
-    };
-    next();
-  });
-  for (const middleware of cds.middlewares?.before ?? []) {
-    if (Array.isArray(middleware)) {
-      for (const entry of middleware) {
-        serviceIO.use(wrapMiddleware(entry));
+      } else {
+        io.use(wrapMiddleware(middleware));
       }
-    } else {
-      serviceIO.use(wrapMiddleware(middleware));
     }
+    return io;
   }
-  return serviceIO;
-}
 
-function enforceAuth(io) {
-  if (io.request.isAuthenticated && !io.request.isAuthenticated()) {
-    io.disconnect();
-    throw new Error("403 - Forbidden");
+  _enforceAuth(io) {
+    if (io.request.isAuthenticated && !io.request.isAuthenticated()) {
+      io.disconnect();
+      throw new Error("403 - Forbidden");
+    }
   }
 }
 

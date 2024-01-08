@@ -31,6 +31,12 @@
     "requires": {
       "websocket": {
         "kind": "ws",
+        "adapter": {
+          "impl": "redis",
+          "options": {
+            "key": "websocket"
+          }
+        },
         "[socketio]": {
           "kind": "socket.io",
           "adapter": {
