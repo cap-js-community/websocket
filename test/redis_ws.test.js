@@ -36,7 +36,7 @@ describe("Redis", () => {
     const waitResult = await waitResultPromise;
     expect(waitResult).toEqual({ text: "test" });
 
-    expect(redis.createClient).toHaveBeenCalledWith({ url: "uri"});
+    expect(redis.createClient).toHaveBeenCalledWith({ url: "uri" });
     expect(redis.client.connect).toHaveBeenCalledWith();
     expect(redis.client.on).toHaveBeenNthCalledWith(1, "error", expect.any(Function));
     expect(redis.client.on).toHaveBeenNthCalledWith(2, "message", expect.any(Function));

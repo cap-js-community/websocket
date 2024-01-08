@@ -45,13 +45,13 @@
     "cookie": "^0.6.0",
     "express": "^4.18.2",
     "redis": "^4.6.11",
-    "socket.io": "^4.7.2",
+    "socket.io": "^4.7.3",
     "ws": "^8.15.1"
   },
   "devDependencies": {
     "@cap-js-community/websocket": "./",
     "@cap-js/sqlite": "^1.4.0",
-    "@sap/cds": "^7.5.1",
+    "@sap/cds": "^7.5.2",
     "@sap/cds-dk": "^7.5.0",
     "@sap/xssec": "3.6.1",
     "@socket.io/redis-adapter": "^8.2.1",
@@ -59,11 +59,11 @@
     "@types/express": "^4.17.21",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-jest": "^27.6.0",
+    "eslint-plugin-jest": "^27.6.1",
     "jest": "^29.7.0",
     "passport": "0.7.0",
     "prettier": "^3.1.1",
-    "socket.io-client": "^4.7.2"
+    "socket.io-client": "^4.7.3"
   },
   "license": "Apache-2.0",
   "repository": {
