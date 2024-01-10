@@ -5,6 +5,7 @@ const WebSocket = require("ws");
 const cds = require("@sap/cds");
 
 const LOG = cds.log("websocket/ws");
+const DEBUG = cds.debug("websocket");
 
 class SocketWSServer extends SocketServer {
   constructor(server, path) {
@@ -39,6 +40,10 @@ class SocketWSServer extends SocketServer {
       if (ws.request?.url !== `${this.path}${service}`) {
         return;
       }
+      DEBUG?.("Connected");
+      ws.on("close", () => {
+        DEBUG?.("Disconnected");
+      });
       ws.on("error", (error) => {
         LOG?.error(error);
       });
