@@ -8,7 +8,7 @@ sap.ui.define(["sap/fe/core/AppComponent", "sap/ui/core/ws/WebSocket"], function
 
     constructor: function () {
       AppComponent.prototype.constructor.apply(this, arguments);
-      window.socket = new WebSocket("ws/todo");
+      window.socket = new WebSocket("/ws/todo");
     },
   });
 });
