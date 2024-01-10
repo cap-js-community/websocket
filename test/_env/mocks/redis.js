@@ -3,8 +3,16 @@
 const onMessage = [];
 const onError = [];
 
+let createClientError = false;
+let connectError = false;
+
 const client = {
-  connect: jest.fn(() => {}),
+  connect: jest.fn(() => {
+    if (connectError) {
+      connectError = false;
+      throw new Error("connect error");
+    }
+  }),
   on: jest.fn((event, cb) => {
     switch (event) {
       case "message":
@@ -32,7 +40,21 @@ const client = {
 
 module.exports = {
   client,
+  throwError(kind) {
+    switch (kind) {
+      case "createClient":
+        createClientError = true;
+        break;
+      case "connect":
+        connectError = true;
+        break;
+    }
+  },
   createClient: jest.fn(() => {
+    if (createClientError) {
+      createClientError = false;
+      throw new Error("create client error");
+    }
     return client;
   }),
   createCluster: jest.fn(() => {

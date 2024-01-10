@@ -11,35 +11,35 @@ xsenv.loadEnv(path.join(process.cwd(), "default-env.json"));
 
 const TIMEOUT = 5 * 1000;
 
-let mainClientPromise;
-let secondClientPromise;
+let primaryClientPromise;
+let secondaryClientPromise;
 
-const createMainClientAndConnect = () => {
-  if (mainClientPromise) {
-    return mainClientPromise;
+const createPrimaryClientAndConnect = () => {
+  if (primaryClientPromise) {
+    return primaryClientPromise;
   }
 
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
-    mainClientPromise = null;
-    setTimeout(createMainClientAndConnect, TIMEOUT);
+    primaryClientPromise = null;
+    setTimeout(createPrimaryClientAndConnect, TIMEOUT);
   };
-  mainClientPromise = _createClientAndConnect(errorHandlerCreateClient);
-  return mainClientPromise;
+  primaryClientPromise = _createClientAndConnect(errorHandlerCreateClient);
+  return primaryClientPromise;
 };
 
-const createSecondClientAndConnect = () => {
-  if (secondClientPromise) {
-    return secondClientPromise;
+const createSecondaryClientAndConnect = () => {
+  if (secondaryClientPromise) {
+    return secondaryClientPromise;
   }
 
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
-    secondClientPromise = null;
-    setTimeout(createSecondClientAndConnect, TIMEOUT);
+    secondaryClientPromise = null;
+    setTimeout(createSecondaryClientAndConnect, TIMEOUT);
   };
-  secondClientPromise = _createClientAndConnect(errorHandlerCreateClient);
-  return secondClientPromise;
+  secondaryClientPromise = _createClientAndConnect(errorHandlerCreateClient);
+  return secondaryClientPromise;
 };
 const _createClientBase = () => {
   let credentials;
@@ -94,7 +94,13 @@ const _createClientAndConnect = async (errorHandlerCreateClient) => {
   return client;
 };
 
+const clearClients = () => {
+  primaryClientPromise = null;
+  secondaryClientPromise = null;
+};
+
 module.exports = {
-  createMainClientAndConnect,
-  createSecondClientAndConnect,
+  createPrimaryClientAndConnect,
+  createSecondaryClientAndConnect,
+  clearClients,
 };

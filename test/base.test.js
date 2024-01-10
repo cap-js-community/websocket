@@ -16,6 +16,7 @@ describe("Base", () => {
     const connected = (_socket) => {
       socket = _socket;
     };
+    socketServer.setup();
     socketServer.service("test", connected);
     expect(socket).toEqual({
       socket: null,
@@ -26,6 +27,12 @@ describe("Base", () => {
       broadcast: expect.any(Function),
       disconnect: expect.any(Function),
     });
+    expect(socket.setup()).toBeUndefined();
+    expect(socket.context()).toBeUndefined();
+    expect(socket.on()).toBeUndefined();
+    expect(socket.emit()).toBeUndefined();
+    expect(socket.broadcast()).toBeUndefined();
+    expect(socket.disconnect()).toBeUndefined();
   });
 
   test("Mock Response", async () => {

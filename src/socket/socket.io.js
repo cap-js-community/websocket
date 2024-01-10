@@ -83,14 +83,14 @@ class SocketIOServer extends SocketServer {
         const adapterFactory = require(adapterImpl);
         switch (adapterImpl) {
           case "@socket.io/redis-adapter":
-            client = await redis.createMainClientAndConnect();
-            subClient = await redis.createSecondClientAndConnect();
+            client = await redis.createPrimaryClientAndConnect();
+            subClient = await redis.createSecondaryClientAndConnect();
             if (client && subClient) {
               adapter = adapterFactory.createAdapter(client, subClient, options);
             }
             break;
           case "@socket.io/redis-streams-adapter":
-            client = await redis.createMainClientAndConnect();
+            client = await redis.createPrimaryClientAndConnect();
             if (client) {
               adapter = adapterFactory.createAdapter(client, options);
             }

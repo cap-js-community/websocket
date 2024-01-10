@@ -13,7 +13,7 @@ class RedisAdapter {
   }
 
   async setup() {
-    this.client = await redis.createMainClientAndConnect();
+    this.client = await redis.createPrimaryClientAndConnect();
   }
 
   async on() {
