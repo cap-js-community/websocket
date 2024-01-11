@@ -21,7 +21,7 @@ module.exports = (srv) => {
 
   srv.on("triggerCustomEvent", async (req) => {
     const text = req.data.text + req.data.num;
-    srv.emit("customEvent", { text });
+    await srv.emit("customEvent", { text });
     return text;
   });
 
