@@ -83,7 +83,7 @@ In browser environment implement the websocket client: **index.html**
   });
   ```
 
-#### Socket.IO
+#### Socket.IO (`kind: socket.io`)
 
 - Connect with Socket.IO client
   ```js
@@ -102,7 +102,7 @@ In browser environment implement the websocket client: **index.html**
 
 ## Documentation
 
-## WebSocket Server
+### WebSocket Server
 
 The websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific at
 `cds.io` or `cds.wss`. Additional listeners can be registered bypassing CDS definitions and runtime.
@@ -110,12 +110,20 @@ WebSocket server options can be provided via `cds.requires.websocket.options`.
 
 Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.websocket.path` resp. `cds.env.protocols.ws.path`;
 
+### WebSocket Implementation
+
+The CDS websocket server supports the following two websocket implementations:
+
+- [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.requires.websocket: "ws"` **(default)**
+- [Socket.IO](https://socket.io): `cds.requires.websocket: "socket.io"`
+
+The server implementation abstracts from the concrete websocket implementation. The websocket client still needs to be implemented websocket implementation specific.
+
 #### WebSocket Service
 
 Annotated services with websocket protocol are exposed at endpoint: `/ws/<service-path>`:
 
-**Examples:**
-
+Websocket client connection happens as follows for exposed endpoints:
 - **WS**: `const socket = new WebSocket("ws://localhost:4004/ws/chat");`
 - **Socket.IO**: `const socket = io("/chat", { path: "/ws" })`
 
@@ -140,24 +148,29 @@ Although the service is exposed as an OData protocol at `/odata/v4/chat`, the se
 `@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
 are not exposed, as the service itself is not marked as websocket protocol.
 
-> Non-websocket service events are only active when at least one websocket enabled service is available (=> websocket protocol adapter active).
+> Non-websocket service events are only active when at least one websocket enabled service is available (i.e. websocket protocol adapter is active).
 
-## Server Socket
+### Server Socket
 
 Each CDS handler request context is extended to hold the current server `socket` instance of the event.
 It can be accessed via `req.context.socket` or `cds.context.socket`.
 Events can be directly emitted via the `socket` bypassing CDS runtime.
 
+### Middlewares
+
+For each server websocket connection the standard CDS middlewares are applied. That means, that especially the correct CDS
+context is set up and the configured authorization strategy is applied.
+
 ### Authentication & Authorization
 
-Authentication only works via AppRouter using a UAA configuration, as the auth token is forwarded
+Authentication only works via AppRouter (e.g. using a UAA configuration), as the auth token is forwarded
 via authorization header bearer token by AppRouter to backend instance. CDS middlewares process the auth token and
 set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and
 authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
 
 #### Approuter
 
-Authorization in provided in production by approuter component vis XSUAA auth.
+Authorization in provided in production by approuter component (e.g. via XSUAA auth).
 Valid UAA bindings for approuter and backend are necessary, so that the authorization flow is working.
 Locally, the following default environment files need to exist:
 
@@ -197,7 +210,7 @@ exposed by CDS service either unbound (static level) or bound (entity instance l
 Operations are exposed as part of the websocket protocol as described below.
 Operation results will be provided via optional websocket acknowledgement callback.
 
-> Operation results are only supported with Socket.IO (kind: `socket.io`) using acknowledgement callbacks.
+> Operation results are only supported with Socket.IO (`kind: socket.io`) using acknowledgement callbacks.
 
 #### Unbound
 
@@ -288,7 +301,7 @@ Example application can be started by:
 Unit-test can be found in folder `test` and can be executed via `npm test`;
 The basic unit-test setup for WebSockets in CDS context looks as follows:
 
-### WS
+#### WS
 
 ```js
 "use strict";
@@ -337,6 +350,10 @@ const cds = require("@sap/cds");
 const ioc = require("socket.io-client");
 
 cds.test(__dirname + "/..");
+
+cds.env.requires.websocket = {
+  kind: "socket.io",
+};
 
 const authorization = `Basic ${Buffer.from("alice:alice").toString("base64")}`;
 
