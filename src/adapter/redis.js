@@ -6,9 +6,9 @@ const cds = require("@sap/cds");
 const LOG = cds.log("websocket/redis");
 
 class RedisAdapter {
-  constructor(server, channel, options) {
+  constructor(server, prefix, options) {
     this.server = server;
-    this.channel = channel;
+    this.prefix = prefix;
     this.options = options;
   }
 
@@ -16,15 +16,19 @@ class RedisAdapter {
     this.client = await redis.createPrimaryClientAndConnect();
   }
 
-  async on() {
+  async on(service) {
     if (!this.client) {
       return;
     }
     try {
-      await this.client.subscribe(this.channel);
-      this.client.on("message", (channel, message) => {
-        if (channel === this.channel) {
-          this.server.wss.broadcastAll(message);
+      const channel = this.prefix + service;
+      await this.client.subscribe(channel, async (message, messageChannel) => {
+        try {
+          if (messageChannel === channel) {
+            await this.server.broadcast(service, message);
+          }
+        } catch (err) {
+          LOG?.error(err);
         }
       });
     } catch (err) {
@@ -32,12 +36,13 @@ class RedisAdapter {
     }
   }
 
-  async emit(message) {
+  async emit(service, message) {
     if (!this.client) {
       return;
     }
     try {
-      await this.client.publish(this.channel, message);
+      const channel = this.prefix + service;
+      await this.client.publish(channel, message);
     } catch (err) {
       LOG?.error(err);
     }

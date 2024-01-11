@@ -36,6 +36,7 @@ class SocketIOServer extends SocketServer {
           DEBUG?.("Disconnected", socket.id);
         });
         const serviceSocket = {
+          service,
           socket,
           setup: () => {
             this._enforceAuth(socket);
@@ -67,6 +68,15 @@ class SocketIOServer extends SocketServer {
         LOG?.error(err);
       }
     });
+  }
+
+  async broadcast(service, event, data, socket, multiple) {
+    if (socket) {
+      socket.broadcast.emit(event, data);
+    } else {
+      const io = this.io.of(service);
+      io.emit(event, data);
+    }
   }
 
   async _applyAdapter() {

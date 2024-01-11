@@ -108,13 +108,13 @@ function serveWebSocketService(socketServer, service, options) {
     if (["websocket", "ws"].includes(endpoint.kind)) {
       const servicePath = normalizeServicePath(endpoint.path, options.path);
       try {
+        bindServiceEvents(socketServer, servicePath, service);
         socketServer.service(servicePath, (socket) => {
           try {
             socket.setup();
             bindServiceDefaults(socket, service);
             bindServiceOperations(socket, service);
             bindServiceEntities(socket, service);
-            bindServiceEvents(socket, service);
             emitConnect(socket, service);
           } catch (err) {
             LOG?.error(err);
@@ -128,9 +128,16 @@ function serveWebSocketService(socketServer, service, options) {
   }
 }
 
-async function emitConnect(socket, service) {
-  if (service.operations(WebSocketAction.Connect).length) {
-    await processEvent(socket, service, undefined, WebSocketAction.Connect);
+function bindServiceEvents(socketServer, servicePath, service) {
+  for (const event of service.events()) {
+    service.on(event, async (req) => {
+      const localEventName = serviceLocalName(service, event.name);
+      try {
+        await socketServer.broadcast(servicePath, localEventName, req.data, null, true);
+      } catch (err) {
+        LOG?.error(err);
+      }
+    });
   }
 }
 
@@ -190,20 +197,9 @@ function bindServiceEntities(socket, service) {
   }
 }
 
-function bindServiceEvents(socket, service) {
-  for (const event of service.events()) {
-    service.on(event, async (req) => {
-      const localEventName = serviceLocalName(service, event.name);
-      await processEmit(socket, service, localEventName, req.data);
-    });
-  }
-}
-
-async function processEmit(socket, service, event, data) {
-  try {
-    socket.emit(event, data);
-  } catch (err) {
-    LOG?.error(err);
+async function emitConnect(socket, service) {
+  if (service.operations(WebSocketAction.Connect).length) {
+    await processEvent(socket, service, undefined, WebSocketAction.Connect);
   }
 }
 

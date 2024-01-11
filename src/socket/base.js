@@ -4,7 +4,15 @@ const cds = require("@sap/cds");
 const cookie = require("cookie");
 const crypto = require("crypto");
 
+/**
+ * Base class for a websocket server
+ */
 class SocketServer {
+  /**
+   * Constructor for websocket server
+   * @param server HTTP server from express app
+   * @param path Protocol path, e.g. '/ws'
+   */
   constructor(server, path) {
     this.id = crypto.randomUUID();
     this.server = server;
@@ -12,11 +20,21 @@ class SocketServer {
     cds.ws = null;
   }
 
+  /**
+   * Setup websocket server with async operations
+   * @returns {Promise<void>} Promise when setup is completed
+   */
   async setup() {}
 
+  /**
+   * Connect a service to websocket
+   * @param service service path, e.g. "/chat"
+   * @param connected Callback function to be called on every websocket connection passing socket functions (i.e. ws.on("connection", connected))
+   */
   service(service, connected) {
     connected &&
       connected({
+        service,
         socket: null,
         setup: () => {},
         context: () => {},
@@ -27,6 +45,21 @@ class SocketServer {
       });
   }
 
+  /**
+   * Broadcast to all websocket clients
+   * @param service service path, e.g. "/chat"
+   * @param event Event name
+   * @param data Data object
+   * @param socket Broadcast client to be excluded
+   * @param multiple Broadcast across multiple websocket servers
+   * @returns {Promise<void>} Promise when broadcasting completed
+   */
+  async broadcast(service, event, data, socket, multiple) {}
+
+  /**
+   * Mock the HTTP response object and make available at request.res
+   * @param request HTTP request
+   */
   static mockResponse(request) {
     // Mock response (not available in websocket, CDS middlewares need it)
     const res = request.res ?? {};
@@ -67,6 +100,10 @@ class SocketServer {
     request.res = res;
   }
 
+  /**
+   * Apply the authorization cookie to authorization header for local authorization testing in mocked auth scenario
+   * @param request HTTP request
+   */
   static applyAuthCookie(request) {
     // Apply cookie to authorization header
     if (["mocked"].includes(cds.env.requires.auth.kind) && !request.headers.authorization && request.headers.cookie) {

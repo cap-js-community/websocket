@@ -19,6 +19,7 @@ describe("Base", () => {
     socketServer.setup();
     socketServer.service("test", connected);
     expect(socket).toEqual({
+      service: "test",
       socket: null,
       setup: expect.any(Function),
       context: expect.any(Function),

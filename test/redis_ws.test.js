@@ -39,7 +39,8 @@ describe("Redis", () => {
     expect(redis.createClient).toHaveBeenCalledWith({ url: "uri" });
     expect(redis.client.connect).toHaveBeenCalledWith();
     expect(redis.client.on).toHaveBeenNthCalledWith(1, "error", expect.any(Function));
-    expect(redis.client.on).toHaveBeenNthCalledWith(2, "message", expect.any(Function));
-    expect(redis.client.publish).toHaveBeenCalledWith("websocket", expect.any(Buffer));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(1, "websocket/chat", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(2, "websocket/main", expect.any(Function));
+    expect(redis.client.publish).toHaveBeenCalledWith("websocket/chat", expect.any(Buffer));
   });
 });

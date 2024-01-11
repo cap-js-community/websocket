@@ -11,23 +11,9 @@ class SocketWSServer extends SocketServer {
   constructor(server, path) {
     super(server, path);
     this.wss = new WebSocket.Server({ server });
-    this.wss.broadcast = (message, socket) => {
-      this.wss.clients.forEach((client) => {
-        if (client !== socket && client.readyState === WebSocket.OPEN) {
-          client.send(message);
-        }
-      });
-    };
-    this.wss.broadcastAll = (message) => {
-      this.wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(message);
-        }
-      });
-    };
-    this.adapter = null;
     cds.ws = this.wss;
     cds.wss = this.wss;
+    this.adapter = null;
   }
 
   async setup() {
@@ -35,6 +21,7 @@ class SocketWSServer extends SocketServer {
   }
 
   service(service, connected) {
+    this.adapter?.on(service);
     this.wss.on("connection", async (ws, request) => {
       ws.request = request;
       if (ws.request?.url !== `${this.path}${service}`) {
@@ -51,6 +38,7 @@ class SocketWSServer extends SocketServer {
         try {
           connected &&
             connected({
+              service,
               socket: ws,
               setup: () => {
                 this._enforceAuth(ws);
@@ -66,7 +54,7 @@ class SocketWSServer extends SocketServer {
               },
               on: (event, callback) => {
                 ws.on("message", async (message) => {
-                  let payload;
+                  let payload = {};
                   try {
                     payload = JSON.parse(message);
                   } catch (_) {
@@ -74,10 +62,8 @@ class SocketWSServer extends SocketServer {
                   }
                   try {
                     if (payload?.event === event) {
+                      await this.adapter?.emit(service, message);
                       await callback(payload.data);
-                      if (this.adapter) {
-                        await this.adapter.emit(message);
-                      }
                     }
                   } catch (err) {
                     LOG?.error(err);
@@ -93,13 +79,7 @@ class SocketWSServer extends SocketServer {
                 );
               },
               broadcast: (event, data) => {
-                this.wss.broadcast(
-                  JSON.stringify({
-                    event,
-                    data,
-                  }),
-                  ws,
-                );
+                this.broadcast(service, event, data, ws, true);
               },
               disconnect() {
                 ws.disconnect();
@@ -112,6 +92,28 @@ class SocketWSServer extends SocketServer {
     });
   }
 
+  async broadcast(service, event, data, socket, multiple) {
+    const clients = [];
+    this.wss.clients.forEach((client) => {
+      if (
+        client.readyState === WebSocket.OPEN &&
+        client !== socket &&
+        client.request?.url === `${this.path}${service}`
+      ) {
+        clients.push(client);
+      }
+    });
+    if (clients.length > 0 || multiple) {
+      const message = !data ? event : JSON.stringify({ event, data });
+      clients.forEach((client) => {
+        client.send(message);
+      });
+      if (multiple) {
+        await this.adapter?.emit(service, message);
+      }
+    }
+  }
+
   async _applyAdapter() {
     try {
       const adapterImpl = cds.env.requires?.websocket?.adapter?.impl;
@@ -120,11 +122,10 @@ class SocketWSServer extends SocketServer {
         if (cds.env.requires.websocket?.adapter?.options) {
           options = { ...options, ...cds.env.requires.websocket?.adapter?.options };
         }
-        const channel = options?.key ?? "websocket";
+        const prefix = options?.key ?? "websocket";
         this.adapterFactory = require(`../adapter/${adapterImpl}`);
-        this.adapter = new this.adapterFactory(this, channel, options);
-        await this.adapter.setup();
-        await this.adapter.on();
+        this.adapter = new this.adapterFactory(this, prefix, options);
+        await this.adapter?.setup();
       }
     } catch (err) {
       LOG?.error(err);

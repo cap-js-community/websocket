@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 0.1.3 - 2024-xx-xx
+## Version 0.1.3 - 2024-01-11
 
 ### Fixed
 
-- tbd
+- Broadcast service events without connected sockets via Redis
+- Document base websocket server class
 
 ## Version 0.1.2 - 2024-01-08
 
