@@ -124,6 +124,7 @@ The server implementation abstracts from the concrete websocket implementation. 
 Annotated services with websocket protocol are exposed at endpoint: `/ws/<service-path>`:
 
 Websocket client connection happens as follows for exposed endpoints:
+
 - **WS**: `const socket = new WebSocket("ws://localhost:4004/ws/chat");`
 - **Socket.IO**: `const socket = io("/chat", { path: "/ws" })`
 
