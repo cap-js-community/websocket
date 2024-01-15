@@ -77,7 +77,7 @@ function serveWebSocketServer(options) {
           serveWebSocketService(socketServer, eventService, options);
         }
       }
-      LOG?.info("using websocket", { kind: cds.env.requires.websocket.kind });
+      LOG?.info("using websocket", { kind: cds.env.requires.websocket.kind, adapter: socketServer.adapterActive });
     }
   });
 }

@@ -17,6 +17,8 @@ class SocketServer {
     this.id = crypto.randomUUID();
     this.server = server;
     this.path = path;
+    this.adapter = null;
+    this.adapterActive = false;
     cds.ws = null;
   }
 

@@ -33,6 +33,7 @@
         "kind": "ws",
         "adapter": {
           "impl": "redis",
+          "local": true,
           "options": {
             "key": "websocket"
           }

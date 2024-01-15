@@ -13,7 +13,6 @@ class SocketWSServer extends SocketServer {
     this.wss = new WebSocket.Server({ server });
     cds.ws = this.wss;
     cds.wss = this.wss;
-    this.adapter = null;
   }
 
   async setup() {
@@ -123,9 +122,10 @@ class SocketWSServer extends SocketServer {
           options = { ...options, ...cds.env.requires.websocket?.adapter?.options };
         }
         const prefix = options?.key ?? "websocket";
-        this.adapterFactory = require(`../adapter/${adapterImpl}`);
-        this.adapter = new this.adapterFactory(this, prefix, options);
+        const adapterFactory = require(`../adapter/${adapterImpl}`);
+        this.adapter = new adapterFactory(this, prefix, options);
         await this.adapter?.setup();
+        this.adapterActive = !!this.adapter?.client;
       }
     } catch (err) {
       LOG?.error(err);

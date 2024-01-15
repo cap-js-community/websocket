@@ -9,6 +9,7 @@ const LOG = cds.log("websocket/redis");
 
 xsenv.loadEnv(path.join(process.cwd(), "default-env.json"));
 
+const IS_ON_CF = process.env.USER === "vcap";
 const TIMEOUT = 5 * 1000;
 
 let primaryClientPromise;
@@ -42,6 +43,11 @@ const createSecondaryClientAndConnect = () => {
   return secondaryClientPromise;
 };
 const _createClientBase = () => {
+  const adapterLocal = !!cds.env.requires?.websocket?.adapter?.local;
+  if (!(IS_ON_CF || adapterLocal)) {
+    LOG?.info("Redis not available in local environment");
+    return;
+  }
   let credentials;
   try {
     credentials = xsenv.serviceCredentials({ label: "redis-cache" });
@@ -49,6 +55,7 @@ const _createClientBase = () => {
     LOG?.info(err.message);
   }
   if (!credentials) {
+    LOG?.info("No Redis credentials found");
     return;
   }
   try {

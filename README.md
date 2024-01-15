@@ -405,8 +405,11 @@ The following adapters for WS Standard are supported out-of-the-box.
 To use the Redis Adapter (basic publish/subscribe), the following steps have to be performed:
 
 - Set `cds.requires.websocket.adapter.impl: "redis"`
-- Application needs to be bound to a Redis instance
-  - Locally a `default-env.json` file need to exist with index configuration
+- Application needs to be bound to a Redis instance 
+  - Cloud Foundry: Redis automatically active
+  - Local (or other): 
+    - Option `cds.requires.websocket.adapter.local: true` needs to be set
+    - File `default-env.json` need to exist with Redis configuration
 - Redis Adapter options can be specified via `cds.requires.websocket.adapter.options`
 - Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `websocket`.
 
