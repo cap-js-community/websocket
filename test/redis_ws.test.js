@@ -16,6 +16,7 @@ cds.env.requires.websocket = {
   kind: "ws",
   adapter: {
     impl: "redis",
+    local: true,
   },
 };
 

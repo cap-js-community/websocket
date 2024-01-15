@@ -16,6 +16,7 @@ cds.env.requires.websocket = {
   kind: "socket.io",
   adapter: {
     impl: "@socket.io/redis-streams-adapter",
+    local: true,
     options: {
       key: "websocket",
     },
