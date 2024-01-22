@@ -35,55 +35,57 @@ class SocketWSServer extends SocketServer {
       });
       this._applyMiddleware(ws, async () => {
         try {
-          connected &&
-            connected({
-              service,
-              socket: ws,
-              setup: () => {
-                this._enforceAuth(ws);
-              },
-              context: () => {
-                return {
-                  id: ws.request.correlationId,
-                  user: ws.request.user,
-                  tenant: ws.request.tenant,
-                  http: { req: ws.request, res: ws.request.res },
-                  socket: ws,
-                };
-              },
-              on: (event, callback) => {
-                ws.on("message", async (message) => {
-                  let payload = {};
-                  try {
-                    payload = JSON.parse(message);
-                  } catch (_) {
-                    // ignore
+          const facade = {
+            service,
+            socket: ws,
+            setup: () => {
+              this._enforceAuth(ws);
+            },
+            context: () => {
+              return {
+                id: ws.request.correlationId,
+                user: ws.request.user,
+                tenant: ws.request.tenant,
+                http: { req: ws.request, res: ws.request.res },
+                ws: { service: facade, socket: ws },
+              };
+            },
+            on: (event, callback) => {
+              ws.on("message", async (message) => {
+                let payload = {};
+                try {
+                  payload = JSON.parse(message);
+                } catch (_) {
+                  // ignore
+                }
+                try {
+                  if (payload?.event === event) {
+                    await callback(payload.data);
                   }
-                  try {
-                    if (payload?.event === event) {
-                      await this.adapter?.emit(service, message);
-                      await callback(payload.data);
-                    }
-                  } catch (err) {
-                    LOG?.error(err);
-                  }
-                });
-              },
-              emit: (event, data) => {
-                ws.send(
-                  JSON.stringify({
-                    event,
-                    data,
-                  }),
-                );
-              },
-              broadcast: (event, data) => {
-                this.broadcast(service, event, data, ws, true);
-              },
-              disconnect() {
-                ws.disconnect();
-              },
-            });
+                } catch (err) {
+                  LOG?.error(err);
+                }
+              });
+            },
+            emit: (event, data) => {
+              ws.send(
+                JSON.stringify({
+                  event,
+                  data,
+                }),
+              );
+            },
+            broadcast: (event, data) => {
+              this.broadcast(service, event, data, ws, true);
+            },
+            broadcastAll: (event, data) => {
+              this.broadcast(service, event, data, null, true);
+            },
+            disconnect() {
+              ws.disconnect();
+            },
+          };
+          connected && connected(facade);
         } catch (err) {
           LOG?.error(err);
         }
@@ -91,7 +93,7 @@ class SocketWSServer extends SocketServer {
     });
   }
 
-  async broadcast(service, event, data, socket, multiple) {
+  async broadcast(service, event, data, socket, remote) {
     const clients = [];
     this.wss.clients.forEach((client) => {
       if (
@@ -102,12 +104,12 @@ class SocketWSServer extends SocketServer {
         clients.push(client);
       }
     });
-    if (clients.length > 0 || multiple) {
+    if (clients.length > 0 || remote) {
       const message = !data ? event : JSON.stringify({ event, data });
       clients.forEach((client) => {
         client.send(message);
       });
-      if (multiple) {
+      if (remote) {
         await this.adapter?.emit(service, message);
       }
     }

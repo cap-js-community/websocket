@@ -164,7 +164,7 @@ function bindServiceEntities(socket, service) {
     socket.on(`${localEntityName}:create`, async (data, callback) => {
       await processEvent(socket, service, entity, "create", data, (response) => {
         callback && callback(response);
-        socket.broadcast(`${localEntityName}:created`, broadcastData(entity, response));
+        broadcast(socket, `${localEntityName}:created`, entity, response);
       });
     });
     socket.on(`${localEntityName}:read`, async (data, callback) => {
@@ -176,13 +176,13 @@ function bindServiceEntities(socket, service) {
     socket.on(`${localEntityName}:update`, async (data, callback) => {
       await processEvent(socket, service, entity, "update", data, (response) => {
         callback && callback(response);
-        socket.broadcast(`${localEntityName}:updated`, broadcastData(entity, response));
+        broadcast(socket, `${localEntityName}:updated`, entity, response);
       });
     });
     socket.on(`${localEntityName}:delete`, async (data, callback) => {
       await processEvent(socket, service, entity, "delete", data, (response) => {
         callback && callback(response);
-        socket.broadcast(`${localEntityName}:deleted`, broadcastData(entity, { ...response, ...data }));
+        broadcast(socket, `${localEntityName}:deleted`, entity, { ...response, ...data });
       });
     });
     socket.on(`${localEntityName}:list`, async (data, callback) => {
@@ -256,8 +256,21 @@ async function call(socket, service, entity, event, data) {
   });
 }
 
+function broadcast(socket, event, entity, data) {
+  if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
+    socket.broadcastAll(event, broadcastData(entity, data));
+  } else {
+    socket.broadcast(event, broadcastData(entity, data));
+  }
+}
+
 function broadcastData(entity, data) {
-  if (entity["@websocket.broadcast"] === "data" || entity["@ws.broadcast"] === "data") {
+  if (
+    (entity["@websocket.broadcast"] ||
+      entity["@websocket.broadcast.content"] ||
+      entity["@ws.broadcast"] ||
+      entity["@ws.broadcast.content"]) === "data"
+  ) {
     return data;
   }
   return deriveKey(entity, data);

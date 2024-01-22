@@ -26,13 +26,21 @@ describe("Base", () => {
       on: expect.any(Function),
       emit: expect.any(Function),
       broadcast: expect.any(Function),
+      broadcastAll: expect.any(Function),
       disconnect: expect.any(Function),
     });
     expect(socket.setup()).toBeUndefined();
-    expect(socket.context()).toBeUndefined();
+    expect(socket.context()).toMatchObject({
+      id: null,
+      user: null,
+      tenant: null,
+      http: { req: null, res: null },
+      ws: { service: expect.any(Object), socket: null },
+    });
     expect(socket.on()).toBeUndefined();
     expect(socket.emit()).toBeUndefined();
     expect(socket.broadcast()).toBeUndefined();
+    expect(socket.broadcastAll()).toBeUndefined();
     expect(socket.disconnect()).toBeUndefined();
   });
 

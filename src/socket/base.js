@@ -10,8 +10,8 @@ const crypto = require("crypto");
 class SocketServer {
   /**
    * Constructor for websocket server
-   * @param server HTTP server from express app
-   * @param path Protocol path, e.g. '/ws'
+   * @param {Object} server HTTP server from express app
+   * @param {string} path Protocol path, e.g. '/ws'
    */
   constructor(server, path) {
     this.id = crypto.randomUUID();
@@ -30,37 +30,46 @@ class SocketServer {
 
   /**
    * Connect a service to websocket
-   * @param service service path, e.g. "/chat"
-   * @param connected Callback function to be called on every websocket connection passing socket functions (i.e. ws.on("connection", connected))
+   * @param {string} service service path, e.g. "/chat"
+   * @param {function} connected Callback function to be called on every websocket connection passing socket functions (i.e. ws.on("connection", connected))
    */
   service(service, connected) {
-    connected &&
-      connected({
-        service,
-        socket: null,
-        setup: () => {},
-        context: () => {},
-        on: (event, callback) => {},
-        emit: (event, data) => {},
-        broadcast: (event, data) => {},
-        disconnect() {},
-      });
+    const facade = {
+      service,
+      socket: null,
+      setup: () => {},
+      context: () => {
+        return {
+          id: null,
+          user: null,
+          tenant: null,
+          http: { req: null, res: null },
+          ws: { service: facade, socket: null },
+        };
+      },
+      on: (event, callback) => {},
+      emit: (event, data) => {},
+      broadcast: (event, data) => {},
+      broadcastAll: (event, data) => {},
+      disconnect() {},
+    };
+    connected && connected(facade);
   }
 
   /**
    * Broadcast to all websocket clients
-   * @param service service path, e.g. "/chat"
-   * @param event Event name
-   * @param data Data object
-   * @param socket Broadcast client to be excluded
-   * @param multiple Broadcast across multiple websocket servers
+   * @param {string} service service path, e.g. "/chat"
+   * @param {string} event Event name
+   * @param {Object} data Data object
+   * @param {Object} socket Broadcast client to be excluded
+   * @param {boolean} remote Broadcast also remote (e.g. via redis)
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast(service, event, data, socket, multiple) {}
+  async broadcast(service, event, data, socket, remote) {}
 
   /**
    * Mock the HTTP response object and make available at request.res
-   * @param request HTTP request
+   * @param {Object} request HTTP request
    */
   static mockResponse(request) {
     // Mock response (not available in websocket, CDS middlewares need it)
@@ -104,7 +113,7 @@ class SocketServer {
 
   /**
    * Apply the authorization cookie to authorization header for local authorization testing in mocked auth scenario
-   * @param request HTTP request
+   * @param {Object} request HTTP request
    */
   static applyAuthCookie(request) {
     // Apply cookie to authorization header

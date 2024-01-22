@@ -102,6 +102,10 @@ In browser environment implement the websocket client: **index.html**
 
 ## Documentation
 
+### Architecture Overview
+
+![WebSocket Overview](./docs/assets/overview.png)
+
 ### WebSocket Server
 
 The websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific at
@@ -154,8 +158,9 @@ are not exposed, as the service itself is not marked as websocket protocol.
 ### Server Socket
 
 Each CDS handler request context is extended to hold the current server `socket` instance of the event.
-It can be accessed via `req.context.socket` or `cds.context.socket`.
-Events can be directly emitted via the `socket` bypassing CDS runtime.
+It can be accessed via the service websocket facade via `req.context.ws.service` or `cds.context.ws.service`.
+In addition the native websocket server socket can be accessed via `req.context.ws.socket` or `cds.context.ws.socket`.
+Events can be directly emitted via the native `socket`, bypassing CDS runtime, if necessary.
 
 ### Middlewares
 
@@ -258,10 +263,22 @@ CRUD events that modify entities automatically emit another event after successf
 - `<entity>:delete => <entity>:deleted`: Entity instance has been deleted
 
 Because of security concerns, it can be controlled which data of those events is broadcast,
-via annotations `@websocket.broadcast` or `@ws.broadcast`.
+via annotations `@websocket.broadcast` or `@ws.broadcast` on entity level.
 
-- Propagate only key (default): `@websocket.broadcast = 'key'`, `@ws.broadcast = 'key'`
-- Propagate complete entity data: `@websocket.broadcast = 'data'`, `@ws.broadcast = 'data'`
+- Propagate only key via one of the following options (default, if no annotation is present):
+  - `@websocket.broadcast = 'key'`
+  - `@websocket.broadcast.content = 'key'`
+  - `@ws.broadcast = 'key'`
+  - `@ws.broadcast.content = 'key'`
+- Propagate complete entity data via one of the following options:
+  - `@websocket.broadcast = 'data'`
+  - `@websocket.broadcast.content = 'data'`
+  - `@ws.broadcast = 'data'`
+  - `@ws.broadcast.content = 'data'`
+
+Per default, this event is broadcast to every connected socket, expect the socket, that was called with the CRUD event.
+To also include the triggering socket within the broadcast, this can be controlled via annotations
+`@websocket.broadcast.all` or `@ws.broadcast.all` on entity level.
 
 ### Examples
 

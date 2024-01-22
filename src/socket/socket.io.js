@@ -35,7 +35,7 @@ class SocketIOServer extends SocketServer {
         socket.on("disconnect", () => {
           DEBUG?.("Disconnected", socket.id);
         });
-        const serviceSocket = {
+        const facade = {
           service,
           socket,
           setup: () => {
@@ -47,7 +47,7 @@ class SocketIOServer extends SocketServer {
               user: socket.request.user,
               tenant: socket.request.tenant,
               http: { req: socket.request, res: socket.request.res },
-              socket,
+              ws: { service: facade, socket, io },
             };
           },
           on: (event, callback) => {
@@ -57,20 +57,23 @@ class SocketIOServer extends SocketServer {
             socket.emit(event, data);
           },
           broadcast: (event, data) => {
-            socket.broadcast.emit(event, data);
+            this.broadcast(service, event, data, socket, true);
+          },
+          broadcastAll: (event, data) => {
+            this.broadcast(service, event, data, null, true);
           },
           disconnect() {
             socket.disconnect();
           },
         };
-        connected && connected(serviceSocket);
+        connected && connected(facade);
       } catch (err) {
         LOG?.error(err);
       }
     });
   }
 
-  async broadcast(service, event, data, socket, multiple) {
+  async broadcast(service, event, data, socket, remote) {
     if (socket) {
       socket.broadcast.emit(event, data);
     } else {
