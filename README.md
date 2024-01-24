@@ -106,6 +106,14 @@ In browser environment implement the websocket client: **index.html**
 
 ![WebSocket Overview](./docs/assets/overview.png)
 
+The CDS Websocket module supports the following use-cases:
+
+- Connect multiple websocket clients (browser and non-browser) to CAP server websockets
+- Process websockets messages as CDS entity CRUD, action and function calls
+- Broadcast CDS events across local server websockets and multi-instance server websockets (via Redis)
+- Broadcast CDS events across multiple CAP server applications and application instances (via Redis)
+- Emit/Broadcast CDS events from server websockets to websocket clients (browser and non-browser)
+
 ### WebSocket Server
 
 The websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific at
