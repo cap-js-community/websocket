@@ -11,6 +11,7 @@ class SocketWSServer extends SocketServer {
   constructor(server, path) {
     super(server, path);
     this.wss = new WebSocket.Server({ server });
+    this.services = {};
     cds.ws = this;
     cds.wss = this.wss;
   }
@@ -18,21 +19,40 @@ class SocketWSServer extends SocketServer {
   async setup() {
     await this.applyAdapter();
     this._middlewares = this.middlewares();
+    this.wss.on("connection", async (ws, request) => {
+      const service = this.services[request?.url];
+      if (service) {
+        service(ws, request);
+      }
+    });
   }
 
   service(service, connected) {
     this.adapter?.on(service);
-    this.wss.on("connection", async (ws, request) => {
+    this.services[`${this.path}${service}`] = (ws, request) => {
       ws.request = request;
-      if (ws.request?.url !== `${this.path}${service}`) {
-        return;
-      }
       DEBUG?.("Connected");
       ws.on("close", () => {
         DEBUG?.("Disconnected");
       });
       ws.on("error", (error) => {
         LOG?.error(error);
+      });
+      const events = {};
+      ws.on("message", async (message) => {
+        let payload = {};
+        try {
+          payload = JSON.parse(message);
+        } catch (_) {
+          // ignore
+        }
+        try {
+          for (const callback of events[payload?.event] || []) {
+            await callback(payload.data);
+          }
+        } catch (err) {
+          LOG?.error(err);
+        }
       });
       this.applyMiddleware(ws, async () => {
         try {
@@ -52,21 +72,8 @@ class SocketWSServer extends SocketServer {
               };
             },
             on: (event, callback) => {
-              ws.on("message", async (message) => {
-                let payload = {};
-                try {
-                  payload = JSON.parse(message);
-                } catch (_) {
-                  // ignore
-                }
-                try {
-                  if (payload?.event === event) {
-                    await callback(payload.data);
-                  }
-                } catch (err) {
-                  LOG?.error(err);
-                }
-              });
+              events[event] ||= [];
+              events[event].push(callback);
             },
             emit: (event, data) => {
               ws.send(
@@ -91,7 +98,7 @@ class SocketWSServer extends SocketServer {
           LOG?.error(err);
         }
       });
-    });
+    }
   }
 
   async broadcast(service, event, data, socket, remote) {
