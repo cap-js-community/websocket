@@ -27,7 +27,7 @@ describe("Auth", () => {
         expect(String(reason)).toEqual(`{"error":{"code":"401","message":"Unauthorized"}}`);
         resolve();
       });
-    })
+    });
     emitEvent(socket, "message", { text: "test" });
     cds.ws.close(socket);
     cds.ws.close();

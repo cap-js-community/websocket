@@ -85,8 +85,7 @@ class SocketServer {
    * @param {integer} code Reason code for close
    * @param {string} reason Reason text for close
    */
-  close(socket, code, reason) {
-  }
+  close(socket, code, reason) {}
 
   /**
    * Middlewares executed before

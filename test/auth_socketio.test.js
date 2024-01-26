@@ -30,7 +30,7 @@ describe("Auth", () => {
       socket.on("disconnect", () => {
         resolve();
       });
-    })
+    });
     emitEvent(socket, "message", { text: "test" });
     cds.ws.close(socket);
     cds.ws.close();
