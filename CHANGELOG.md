@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Change `cds` websocket env from `cds.requires.websocket` to `cds.websocket` accessible via `cds.env.websocket`
+- Option to disable websockets via env configuration `cds.websocket: false`
 - Add configuration schema for websocket environment via `cds.schema` for CDS plugin
+
+### Fixed
+
+- Change `cds` websocket env from `cds.requires.websocket` to `cds.websocket` accessible via `cds.env.websocket`
 
 ## Version 0.3.0 - 2024-01-22
 
