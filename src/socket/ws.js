@@ -11,12 +11,13 @@ class SocketWSServer extends SocketServer {
   constructor(server, path) {
     super(server, path);
     this.wss = new WebSocket.Server({ server });
-    cds.ws = this.wss;
+    cds.ws = this;
     cds.wss = this.wss;
   }
 
   async setup() {
-    await this._applyAdapter();
+    await this.applyAdapter();
+    this._middlewares = this.middlewares();
   }
 
   service(service, connected) {
@@ -33,13 +34,13 @@ class SocketWSServer extends SocketServer {
       ws.on("error", (error) => {
         LOG?.error(error);
       });
-      this._applyMiddleware(ws, async () => {
+      this.applyMiddleware(ws, async () => {
         try {
           const facade = {
             service,
             socket: ws,
             setup: () => {
-              this._enforceAuth(ws);
+              this.enforceAuth(ws);
             },
             context: () => {
               return {
@@ -82,7 +83,7 @@ class SocketWSServer extends SocketServer {
               this.broadcast(service, event, data, null, true);
             },
             disconnect() {
-              ws.disconnect();
+              ws.close();
             },
           };
           connected && connected(facade);
@@ -115,7 +116,15 @@ class SocketWSServer extends SocketServer {
     }
   }
 
-  async _applyAdapter() {
+  close(socket, code, reason) {
+    if (socket) {
+      socket.close(code, reason);
+    } else {
+      this.wss.close();
+    }
+  }
+
+  async applyAdapter() {
     try {
       const adapterImpl = cds.env.websocket?.adapter?.impl;
       if (adapterImpl) {
@@ -134,32 +143,26 @@ class SocketWSServer extends SocketServer {
     }
   }
 
-  _applyMiddleware(ws, next) {
-    SocketServer.mockResponse(ws.request);
-    SocketServer.applyAuthCookie(ws.request);
-    // Middleware
-    let middlewares = [];
-    for (const middleware of cds.middlewares?.before ?? []) {
-      if (Array.isArray(middleware)) {
-        middlewares = middlewares.concat(middleware);
-      } else {
-        middlewares.push(middleware);
-      }
-    }
-
-    function apply() {
+  applyMiddleware(ws, next) {
+    const middlewares = this._middlewares.slice(0);
+    function call() {
       const middleware = middlewares.shift();
       if (!middleware) {
-        return next();
+        return next(null);
       }
-      middleware(ws.request, ws.request.res, apply);
+      middleware(ws, (err) => {
+        if (err) {
+          next(err);
+        } else {
+          call();
+        }
+      });
     }
-    apply();
+    call();
   }
 
-  _enforceAuth(ws) {
+  enforceAuth(ws) {
     if (ws.request.isAuthenticated && !ws.request.isAuthenticated()) {
-      ws.disconnect();
       throw new Error("403 - Forbidden");
     }
   }

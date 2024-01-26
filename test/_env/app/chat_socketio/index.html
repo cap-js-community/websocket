@@ -28,7 +28,7 @@
   });
   socket.on("received", (message) => {
     const item = document.createElement("li");
-    item.textContent = message.text;
+    item.textContent = `${message.user}: ${message.text}`
     messages.appendChild(item);
     window.scrollTo(0, document.body.scrollHeight);
   });

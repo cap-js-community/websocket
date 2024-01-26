@@ -13,7 +13,8 @@
           "id": "bob",
           "password": "bob",
           "roles": []
-        }
+        },
+        "*": false
       }
     },
     "cdsc": {

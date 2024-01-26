@@ -1,7 +1,8 @@
 "use strict";
 
 const credentials = "alice:alice";
-const authorization = `Basic ${Buffer.from(credentials).toString("base64")}`;
+const authorization = `Basic ${Buffer.from(credentials).toString("base64")}`; // Basic YWxpY2U6YWxpY2U
+const invalidAuthorization = `Basic ${Buffer.from("invalid:invalid").toString("base64")}`; // Basic aW52YWxpZDppbnZhbGlk
 
 function cleanData(data) {
   const isArray = Array.isArray(data);
@@ -23,5 +24,6 @@ function cleanData(data) {
 module.exports = {
   credentials,
   authorization,
+  invalidAuthorization,
   cleanData,
 };

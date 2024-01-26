@@ -21,6 +21,6 @@ describe("Chat", () => {
     const waitResultPromise = waitForEvent(socket, "received");
     emitEvent(socket, "message", { text: "test" });
     const waitResult = await waitResultPromise;
-    expect(waitResult).toEqual({ text: "test" });
+    expect(waitResult).toEqual({ text: "test", user: "alice" });
   });
 });

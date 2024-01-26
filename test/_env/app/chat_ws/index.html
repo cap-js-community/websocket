@@ -32,9 +32,9 @@
   socket.addEventListener("message", (message) => {
     const payload = JSON.parse(message.data);
     switch (payload.event) {
-      case "received":
+        case "received":
         const item = document.createElement("li");
-        item.textContent = payload.data.text;
+        item.textContent = `${payload.data.user}: ${payload.data.text}`;
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
         break;

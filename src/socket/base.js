@@ -68,60 +68,141 @@ class SocketServer {
   async broadcast(service, event, data, socket, remote) {}
 
   /**
-   * Mock the HTTP response object and make available at request.res
-   * @param {Object} request HTTP request
+   * Handle HTTP request response
+   * @param {object} Server socket
+   * @param {Number} statusCode Response status code
+   * @param {string} body Response body
    */
-  static mockResponse(request) {
-    // Mock response (not available in websocket, CDS middlewares need it)
-    const res = request.res ?? {};
-    res.headers ??= {};
-    res.set ??= (name, value) => {
-      res.headers[name] = value;
-      if (name.toLowerCase() === "x-correlation-id") {
-        request.correlationId = value;
+  respond(socket, statusCode, body) {
+    if (statusCode >= 400) {
+      this.close(socket, 4000 + statusCode, body);
+    }
+  }
+
+  /**
+   * Close socket and disconnect client. If no socket is passed the server is closed
+   * @param {object} socket Socket to be disconnected
+   * @param {integer} code Reason code for close
+   * @param {string} reason Reason text for close
+   */
+  close(socket, code, reason) {
+  }
+
+  /**
+   * Middlewares executed before
+   * @returns {[function]} Returns a list of middleware functions
+   */
+  beforeMiddlewares() {
+    return [this.mockResponse.bind(this), this.applyAuthCookie.bind(this)];
+  }
+
+  /**
+   * Middlewares executed after
+   * @returns {[function]} Returns a list of middleware functions
+   */
+  afterMiddlewares() {
+    return [];
+  }
+
+  /**
+   * Get all middlewares
+   * @returns {[function]} Returns a list of middleware functions
+   */
+  middlewares() {
+    function wrapMiddleware(middleware) {
+      return (socket, next) => {
+        return middleware(socket.request, socket.request.res, next);
+      };
+    }
+
+    const middlewares = this.beforeMiddlewares() || [];
+    for (const middleware of cds.middlewares?.before ?? []) {
+      if (Array.isArray(middleware)) {
+        for (const entry of middleware) {
+          middlewares.push(wrapMiddleware(entry));
+        }
+      } else {
+        middlewares.push(wrapMiddleware(middleware));
       }
-      return res;
-    };
-    res.setHeader ??= (name, value) => {
-      return res.set(name, value);
-    };
-    res.status ??= (statusCode) => {
-      res.statusCode = statusCode;
-      return res;
-    };
-    res.writeHead ??= (statusCode, statusMessage, headers) => {
-      res.status(statusCode);
-      res.headers = { ...res.headers, ...headers };
-      return res;
-    };
-    res.json ??= (json) => {
-      res.body = json;
-      return res;
-    };
-    res.send ??= (text) => {
-      res.body = text;
-      return res;
-    };
-    res.end ??= () => {
-      return res;
-    };
-    res.on ??= () => {
-      return res;
-    };
-    request.res = res;
+    }
+    return middlewares.concat(this.afterMiddlewares());
+  }
+
+  /**
+   * Mock the HTTP response object and make available at req.res
+   * @param {Object} socket Server socket
+   * @param {function} next Call next
+   */
+  mockResponse(socket, next) {
+    const req = socket.request;
+    let error = null;
+    try {
+      // Mock response (not available in websocket, CDS middlewares need it)
+      const res = req.res ?? {};
+      res.headers ??= {};
+      res.set ??= (name, value) => {
+        res.headers[name] = value;
+        if (name.toLowerCase() === "x-correlation-id") {
+          req.correlationId = value;
+        }
+        return res;
+      };
+      res.setHeader ??= (name, value) => {
+        return res.set(name, value);
+      };
+      res.status ??= (statusCode) => {
+        res.statusCode = statusCode;
+        return res;
+      };
+      res.writeHead ??= (statusCode, statusMessage, headers) => {
+        res.status(statusCode);
+        res.headers = { ...res.headers, ...headers };
+        return res;
+      };
+      res.json ??= (json) => {
+        this.respond(socket, res.statusCode, JSON.stringify(json));
+        res.body = json;
+        return res;
+      };
+      res.send ??= (text) => {
+        this.respond(socket, res.statusCode, text);
+        res.body = text;
+        return res;
+      };
+      res.end ??= () => {
+        return res;
+      };
+      res.on ??= () => {
+        return res;
+      };
+      req.res = res;
+    } catch (err) {
+      error = err;
+    } finally {
+      next(error);
+    }
   }
 
   /**
    * Apply the authorization cookie to authorization header for local authorization testing in mocked auth scenario
-   * @param {Object} request HTTP request
+   * @param {Object} socket Server socket
+   * @param {function} next Call next
    */
-  static applyAuthCookie(request) {
-    // Apply cookie to authorization header
-    if (["mocked"].includes(cds.env.requires?.auth?.kind) && !request.headers.authorization && request.headers.cookie) {
-      const cookies = cookie.parse(request.headers.cookie);
-      if (cookies["X-Authorization"] || cookies["Authorization"]) {
-        request.headers.authorization = cookies["X-Authorization"] || cookies["Authorization"];
+  applyAuthCookie(socket, next) {
+    const req = socket.request;
+    let error = null;
+    try {
+      // Apply cookie to authorization header
+      if (["mocked"].includes(cds.env.requires?.auth?.kind) && !req.headers.authorization && req.headers.cookie) {
+        const cookies = cookie.parse(req.headers.cookie);
+        if (cookies["X-Authorization"] || cookies["Authorization"]) {
+          req.headers.authorization = cookies["X-Authorization"] || cookies["Authorization"];
+        }
       }
+    } catch (err) {
+      error = err;
+    } finally {
+      next(error);
     }
   }
 }

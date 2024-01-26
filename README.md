@@ -116,8 +116,8 @@ The CDS Websocket module supports the following use-cases:
 
 ### WebSocket Server
 
-The websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific at
-`cds.io` or `cds.wss`. Additional listeners can be registered bypassing CDS definitions and runtime.
+The CDS websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific at
+`cds.wss` for WebSocket Standard or `cds.io` for Socket.IO. Additional listeners can be registered bypassing CDS definitions and runtime.
 WebSocket server options can be provided via `cds.websocket.options`.
 
 Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.websocket.path` resp. `cds.env.protocols.ws.path`;

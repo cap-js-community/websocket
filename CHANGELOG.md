@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Version 0.5.0 - 2024-02-xx
+
+### Added
+
+- Provide user context in examples and tests, to verify authorization flow
+
+### Fixed
+
+- Refactor middlewares and authorization check
+- Change `cds.ws` to point to CDS websocket server (not the native implementation, use `cds.wss` or `cds.io` for that) 
+
 ## Version 0.4.0 - 2024-01-26
 
 ### Added

@@ -19,16 +19,16 @@ class SocketIOServer extends SocketServer {
     this.io.engine.on("connection_error", (err) => {
       LOG?.error(err);
     });
-    cds.ws = this.io;
+    cds.ws = this;
     cds.io = this.io;
   }
 
   async setup() {
-    await this._applyAdapter();
+    await this.applyAdapter();
   }
 
   service(service, connected) {
-    const io = this._applyMiddleware(this.io.of(service));
+    const io = this.applyMiddleware(this.io.of(service));
     io.on("connection", async (socket) => {
       try {
         DEBUG?.("Connected", socket.id);
@@ -39,7 +39,7 @@ class SocketIOServer extends SocketServer {
           service,
           socket,
           setup: () => {
-            this._enforceAuth(socket);
+            this.enforceAuth(socket);
           },
           context: () => {
             return {
@@ -82,7 +82,15 @@ class SocketIOServer extends SocketServer {
     }
   }
 
-  async _applyAdapter() {
+  close(socket) {
+    if (socket) {
+      socket.disconnect();
+    } else {
+      this.io.close();
+    }
+  }
+
+  async applyAdapter() {
     try {
       const adapterImpl = cds.env.websocket?.adapter?.impl;
       if (adapterImpl) {
@@ -96,9 +104,11 @@ class SocketIOServer extends SocketServer {
         switch (adapterImpl) {
           case "@socket.io/redis-adapter":
             client = await redis.createPrimaryClientAndConnect();
-            subClient = await redis.createSecondaryClientAndConnect();
-            if (client && subClient) {
-              this.adapter = adapterFactory.createAdapter(client, subClient, options);
+            if (client) {
+              subClient = await redis.createSecondaryClientAndConnect();
+              if (subClient) {
+                this.adapter = adapterFactory.createAdapter(client, subClient, options);
+              }
             }
             break;
           case "@socket.io/redis-streams-adapter":
@@ -118,36 +128,18 @@ class SocketIOServer extends SocketServer {
     }
   }
 
-  _applyMiddleware(io) {
-    io.use((socket, next) => {
-      SocketServer.mockResponse(socket.request);
-      SocketServer.applyAuthCookie(socket.request);
-      next();
-    });
-    for (const middleware of cds.middlewares?.before ?? []) {
-      if (Array.isArray(middleware)) {
-        for (const entry of middleware) {
-          io.use(wrapMiddleware(entry));
-        }
-      } else {
-        io.use(wrapMiddleware(middleware));
-      }
+  applyMiddleware(io) {
+    for (const middleware of this.middlewares()) {
+      io.use(middleware);
     }
     return io;
   }
 
-  _enforceAuth(io) {
-    if (io.request.isAuthenticated && !io.request.isAuthenticated()) {
-      io.disconnect();
+  enforceAuth(socket) {
+    if (socket.request.isAuthenticated && !socket.request.isAuthenticated()) {
       throw new Error("403 - Forbidden");
     }
   }
-}
-
-function wrapMiddleware(middleware) {
-  return (socket, next) => {
-    return middleware(socket.request, socket.request.res, next);
-  };
 }
 
 module.exports = SocketIOServer;

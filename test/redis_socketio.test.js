@@ -39,12 +39,14 @@ describe("Redis", () => {
     const result = await emitEvent(socket, "message", { text: "test" });
     expect(result).toBe("test");
     const waitResult = await waitResultPromise;
-    expect(waitResult).toEqual({ text: "test" });
+    expect(waitResult).toEqual({ text: "test", user: "alice" });
 
     expect(redis.createClient).toHaveBeenCalledWith({ url: "uri" });
     expect(redis.client.connect).toHaveBeenCalledWith();
     expect(redis.client.on).toHaveBeenNthCalledWith(1, "error", expect.any(Function));
     expect(redis.client.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function));
     expect(redis.client.on).toHaveBeenNthCalledWith(3, "error", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenCalled();
+    expect(redis.client.publish).toHaveBeenCalledWith("websocket#/chat#", expect.anything());
   });
 });

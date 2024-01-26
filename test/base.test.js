@@ -5,9 +5,11 @@ const cds = require("@sap/cds");
 const SocketServer = require("../src/socket/base");
 
 describe("Base", () => {
-  beforeAll(async () => {});
+  beforeAll(async () => {
+  });
 
-  afterAll(() => {});
+  afterAll(() => {
+  });
 
   test("Instance", async () => {
     const socketServer = new SocketServer();
@@ -27,7 +29,7 @@ describe("Base", () => {
       emit: expect.any(Function),
       broadcast: expect.any(Function),
       broadcastAll: expect.any(Function),
-      disconnect: expect.any(Function),
+      disconnect: expect.any(Function)
     });
     expect(socket.setup()).toBeUndefined();
     expect(socket.context()).toMatchObject({
@@ -35,7 +37,7 @@ describe("Base", () => {
       user: null,
       tenant: null,
       http: { req: null, res: null },
-      ws: { service: expect.any(Object), socket: null },
+      ws: { service: expect.any(Object), socket: null }
     });
     expect(socket.on()).toBeUndefined();
     expect(socket.emit()).toBeUndefined();
@@ -45,38 +47,40 @@ describe("Base", () => {
   });
 
   test("Mock Response", async () => {
+    const socketServer = new SocketServer();
     const req = {};
-    SocketServer.mockResponse(req);
+    const next = jest.fn();
+    socketServer.mockResponse({ request: req }, next);
     expect(req.res).toBeDefined();
     expect(req.res.headers).toEqual({});
     expect(req.res.set("A", "B")).toBe(req.res);
     expect(req.res.headers).toEqual({
-      A: "B",
+      A: "B"
     });
     expect(req.res.set("x-correlation-id", "123")).toBe(req.res);
     expect(req.correlationId).toEqual("123");
     expect(req.res.headers).toEqual({
       A: "B",
-      "x-correlation-id": "123",
+      "x-correlation-id": "123"
     });
     expect(req.res.setHeader("X", "Y")).toBe(req.res);
     expect(req.res.headers).toEqual({
       A: "B",
       X: "Y",
-      "x-correlation-id": "123",
+      "x-correlation-id": "123"
     });
     expect(req.res.status(200)).toBe(req.res);
     expect(req.res.statusCode).toEqual(200);
     expect(
       req.res.writeHead(201, "Created", {
-        X: "Z",
-      }),
+        X: "Z"
+      })
     ).toBe(req.res);
     expect(req.res.statusCode).toEqual(201);
     expect(req.res.headers).toEqual({
       A: "B",
       X: "Z",
-      "x-correlation-id": "123",
+      "x-correlation-id": "123"
     });
     expect(req.res.json({ A: 1 })).toBe(req.res);
     expect(req.res.body).toEqual({ A: 1 });
@@ -84,6 +88,7 @@ describe("Base", () => {
     expect(req.res.body).toEqual("Good Day!");
     expect(req.res.end()).toBe(req.res);
     expect(req.res.on()).toBe(req.res);
+    expect(next).toHaveBeenCalled();
   });
 
   test("Mock Auth", async () => {
@@ -91,10 +96,13 @@ describe("Base", () => {
     const request = {
       headers: {
         authorization: "",
-        cookie: "X-Authorization=Basic YWxpY2U6YWxpY2U",
-      },
+        cookie: "X-Authorization=Basic YWxpY2U6YWxpY2U"
+      }
     };
-    SocketServer.applyAuthCookie(request);
+    const next = jest.fn();
+    const socketServer = new SocketServer();
+    socketServer.applyAuthCookie({ request }, next);
     expect(request.headers.authorization).toEqual("Basic YWxpY2U6YWxpY2U");
+    expect(next).toHaveBeenCalled();
   });
 });

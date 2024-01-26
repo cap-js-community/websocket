@@ -5,18 +5,18 @@ const ioc = require("socket.io-client");
 
 const { authorization } = require("./common");
 
-async function connect(service) {
+async function connect(service, options = {}) {
+  const port = cds.app.server.address().port;
+  const socket = ioc(`http://localhost:${port}/${service}`, {
+    path: "/ws",
+    extraHeaders: {
+      authorization: options?.authorization || authorization,
+    },
+  });
+  cds.io.of(service).on("connection", (serverSocket) => {
+    socket.serverSocket = serverSocket;
+  });
   return new Promise((resolve, reject) => {
-    const port = cds.app.server.address().port;
-    const socket = ioc(`http://localhost:${port}/${service}`, {
-      path: "/ws",
-      extraHeaders: {
-        authorization,
-      },
-    });
-    cds.io.of(service).on("connection", (serverSocket) => {
-      socket.serverSocket = serverSocket;
-    });
     socket.on("connect", () => {
       resolve(socket);
     });

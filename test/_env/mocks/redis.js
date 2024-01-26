@@ -1,6 +1,7 @@
 "use strict";
 
 const onMessage = [];
+const onSubscribe = [];
 const onError = [];
 
 let createClientError = false;
@@ -24,11 +25,16 @@ const client = {
     }
   }),
   xAdd: jest.fn(() => {}),
-  subscribe: jest.fn(() => {}),
+  subscribe: jest.fn((channel, cb) => {
+    onSubscribe.push(cb);
+  }),
   pSubscribe: jest.fn(() => {}),
-  publish: jest.fn((key, value) => {
+  publish: jest.fn((channel, message) => {
     for (const on of onMessage) {
-      on(key, value);
+      on(channel, message);
+    }
+    for (const on of onSubscribe) {
+      on(message, channel);
     }
   }),
   error: jest.fn((err) => {
