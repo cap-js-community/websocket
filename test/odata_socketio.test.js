@@ -7,7 +7,7 @@ const { authorization } = require("./_env/util/common");
 
 cds.test(__dirname + "/_env");
 
-cds.env.requires.websocket = {
+cds.env.websocket = {
   kind: "socket.io",
 };
 

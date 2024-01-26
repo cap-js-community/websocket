@@ -118,7 +118,7 @@ The CDS Websocket module supports the following use-cases:
 
 The websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific at
 `cds.io` or `cds.wss`. Additional listeners can be registered bypassing CDS definitions and runtime.
-WebSocket server options can be provided via `cds.requires.websocket.options`.
+WebSocket server options can be provided via `cds.websocket.options`.
 
 Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.websocket.path` resp. `cds.env.protocols.ws.path`;
 
@@ -126,8 +126,8 @@ Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.web
 
 The CDS websocket server supports the following two websocket implementations:
 
-- [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.requires.websocket: "ws"` **(default)**
-- [Socket.IO](https://socket.io): `cds.requires.websocket: "socket.io"`
+- [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.websocket: "ws"` **(default)**
+- [Socket.IO](https://socket.io): `cds.websocket: "socket.io"`
 
 The server implementation abstracts from the concrete websocket implementation. The websocket client still needs to be implemented websocket implementation specific.
 
@@ -377,7 +377,7 @@ const ioc = require("socket.io-client");
 
 cds.test(__dirname + "/..");
 
-cds.env.requires.websocket = {
+cds.env.websocket = {
   kind: "socket.io",
 };
 
@@ -429,14 +429,14 @@ The following adapters for WS Standard are supported out-of-the-box.
 
 To use the Redis Adapter (basic publish/subscribe), the following steps have to be performed:
 
-- Set `cds.requires.websocket.adapter.impl: "redis"`
+- Set `cds.websocket.adapter.impl: "redis"`
 - Application needs to be bound to a Redis instance
   - Cloud Foundry: Redis automatically active
   - Local (or other):
-    - Option `cds.requires.websocket.adapter.local: true` needs to be set
+    - Option `cds.websocket.adapter.local: true` needs to be set
     - File `default-env.json` need to exist with Redis configuration
-- Redis Adapter options can be specified via `cds.requires.websocket.adapter.options`
-- Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `websocket`.
+- Redis Adapter options can be specified via `cds.websocket.adapter.options`
+- Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
 
 ##### Socket.IO
 
@@ -448,11 +448,11 @@ To use the Redis Adapter, the following steps have to be performed:
 
 - Install Redis Adapter dependency:
   `npm install @socket.io/index-adapter`
-- Set `cds.requires.websocket.adapter.impl: "@socket.io/index-adapter"`
+- Set `cds.websocket.adapter.impl: "@socket.io/index-adapter"`
 - Application needs to be bound to a Redis instance
   - Locally a `default-env.json` file need to exist with index configuration
-- Redis Adapter options can be specified via `cds.requires.websocket.adapter.options`
-- Redis channel key can be specified via `cds.requires.websocket.adapter.options.key`. Default value is `socket.io`.
+- Redis Adapter options can be specified via `cds.websocket.adapter.options`
+- Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `socket.io`.
 
 Details:
 https://socket.io/docs/v4/index-adapter/
@@ -463,11 +463,11 @@ To use the Redis Stream Adapter, the following steps have to be performed:
 
 - Install Redis Streams Adapter dependency:
   `npm install @socket.io/index-streams-adapter`
-- Set `cds.requires.websocket.adapter.impl: "@socket.io/index-streams-adapter"`
+- Set `cds.websocket.adapter.impl: "@socket.io/index-streams-adapter"`
 - Application needs to be bound to a Redis instance
   - Locally a `default-env.json` file need to exist with index configuration
-- Redis Streams Adapter options can be specified via `cds.requires.websocket.adapter.options`
-- Redis channel key can be specified via `cds.requires.websocket.adapter.options.streamName`. Default value is `socket.io`.
+- Redis Streams Adapter options can be specified via `cds.websocket.adapter.options`
+- Redis channel key can be specified via `cds.websocket.adapter.options.streamName`. Default value is `socket.io`.
 
 Details:
 https://socket.io/docs/v4/index-streams-adapter/

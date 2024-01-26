@@ -69,5 +69,66 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/cap-js-community/websocket.git"
+  },
+  "cds": {
+    "schema": {
+      "cds": {
+        "websocket": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "Websocket implementation kind",
+                  "enum": [
+                    "ws",
+                    "socket.io"
+                  ],
+                  "default": "ws"
+                },
+                "options": {
+                  "type": "object",
+                  "description": "Websocket implementation configuration options",
+                  "additionalProperties": true
+                },
+                "adapter": {
+                  "type": "object",
+                  "description": "Websocket adapter configuration options",
+                  "properties": {
+                    "impl": {
+                      "type": "string",
+                      "description": "Websocket adapter implementation",
+                      "enum": [
+                        "redis",
+                        "@socket.io/redis-adapter",
+                        "@socket.io/redis-streams-adapter"
+                      ]
+                    },
+                    "options": {
+                      "type": "object",
+                      "description": "Websocket adapter implementation configuration options",
+                      "additionalProperties": true
+                    },
+                    "local": {
+                      "type": "boolean",
+                      "description": "Enabled websocket adapter in local environment",
+                      "default": false
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "boolean",
+              "description": "Set to false to disable websockets"
+            }
+          ]
+        }
+      }
+    },
+    "weboscket": {
+      "kind": "ws"
+    }
   }
 }

@@ -6,7 +6,7 @@ const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/so
 
 cds.test(__dirname + "/_env");
 
-cds.env.requires.websocket = {
+cds.env.websocket = {
   kind: "socket.io",
 };
 

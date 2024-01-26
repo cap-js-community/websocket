@@ -117,11 +117,11 @@ class SocketWSServer extends SocketServer {
 
   async _applyAdapter() {
     try {
-      const adapterImpl = cds.env.requires?.websocket?.adapter?.impl;
+      const adapterImpl = cds.env.websocket?.adapter?.impl;
       if (adapterImpl) {
         let options = {};
-        if (cds.env.requires.websocket?.adapter?.options) {
-          options = { ...options, ...cds.env.requires.websocket?.adapter?.options };
+        if (cds.env.websocket?.adapter?.options) {
+          options = { ...options, ...cds.env.websocket?.adapter?.options };
         }
         const prefix = options?.key ?? "websocket";
         const adapterFactory = require(`../adapter/${adapterImpl}`);

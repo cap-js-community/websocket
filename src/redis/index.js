@@ -43,7 +43,7 @@ const createSecondaryClientAndConnect = () => {
   return secondaryClientPromise;
 };
 const _createClientBase = () => {
-  const adapterLocal = !!cds.env.requires?.websocket?.adapter?.local;
+  const adapterLocal = !!cds.env.websocket?.adapter?.local;
   if (!(IS_ON_CF || adapterLocal)) {
     LOG?.info("Redis not available in local environment");
     return;

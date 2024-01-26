@@ -10,7 +10,7 @@ cds.test(__dirname + "/_env");
 
 jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
-cds.env.requires.websocket = {
+cds.env.websocket = {
   kind: "ws",
   adapter: {
     impl: "redis",

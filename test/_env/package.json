@@ -28,26 +28,26 @@
     "features": {
       "in_memory_db": true
     },
-    "requires": {
-      "websocket": {
-        "kind": "ws",
+    "websocket": {
+      "kind": "ws",
+      "adapter": {
+        "impl": "redis",
+        "local": true,
+        "options": {
+          "key": "websocket"
+        }
+      },
+      "[socketio]": {
+        "kind": "socket.io",
         "adapter": {
-          "impl": "redis",
-          "local": true,
+          "impl": "@socket.io/redis-adapter",
           "options": {
             "key": "websocket"
           }
-        },
-        "[socketio]": {
-          "kind": "socket.io",
-          "adapter": {
-            "impl": "@socket.io/redis-adapter",
-            "options": {
-              "key": "websocket"
-            }
-          }
         }
-      },
+      }
+    },
+    "requires": {
       "auth": {
         "[production]": {
           "kind": "xsuaa"

@@ -77,17 +77,19 @@ function serveWebSocketServer(options) {
           serveWebSocketService(socketServer, eventService, options);
         }
       }
-      LOG?.info("using websocket", { kind: cds.env.requires.websocket.kind, adapter: socketServer.adapterActive });
+      LOG?.info("using websocket", { kind: cds.env.websocket.kind, adapter: socketServer.adapterActive });
     }
   });
 }
 
 async function initWebSocketServer(server, path) {
+  if (cds.env.websocket === false) {
+    return;
+  }
   try {
-    cds.env.requires ??= {};
-    cds.env.requires.websocket ??= {};
-    cds.env.requires.websocket.kind ??= "ws";
-    const socketModule = require(`./socket/${cds.env.requires.websocket.kind}`);
+    cds.env.websocket ??= {};
+    cds.env.websocket.kind ??= "ws";
+    const socketModule = require(`./socket/${cds.env.websocket.kind}`);
     socketServer = new socketModule(server, path);
     await socketServer.setup();
     return socketServer;

@@ -4,7 +4,7 @@ const cds = require("@sap/cds");
 
 cds.test(__dirname + "/_env");
 
-cds.env.requires.websocket = {
+cds.env.websocket = {
   kind: "socket.io",
 };
 

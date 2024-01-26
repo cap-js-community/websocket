@@ -117,7 +117,7 @@ class SocketServer {
    */
   static applyAuthCookie(request) {
     // Apply cookie to authorization header
-    if (["mocked"].includes(cds.env.requires.auth.kind) && !request.headers.authorization && request.headers.cookie) {
+    if (["mocked"].includes(cds.env.requires?.auth?.kind) && !request.headers.authorization && request.headers.cookie) {
       const cookies = cookie.parse(request.headers.cookie);
       if (cookies["X-Authorization"] || cookies["Authorization"]) {
         request.headers.authorization = cookies["X-Authorization"] || cookies["Authorization"];

@@ -14,7 +14,7 @@ class SocketIOServer extends SocketServer {
     super(server, path);
     this.io = new Server(server, {
       path,
-      ...cds.env.requires.websocket?.options,
+      ...cds.env.websocket?.options,
     });
     this.io.engine.on("connection_error", (err) => {
       LOG?.error(err);
@@ -84,11 +84,11 @@ class SocketIOServer extends SocketServer {
 
   async _applyAdapter() {
     try {
-      const adapterImpl = cds.env.requires?.websocket?.adapter?.impl;
+      const adapterImpl = cds.env.websocket?.adapter?.impl;
       if (adapterImpl) {
         let options = {};
-        if (cds.env.requires.websocket?.adapter?.options) {
-          options = { ...options, ...cds.env.requires.websocket?.adapter?.options };
+        if (cds.env.websocket?.adapter?.options) {
+          options = { ...options, ...cds.env.websocket?.adapter?.options };
         }
         let client;
         let subClient;
