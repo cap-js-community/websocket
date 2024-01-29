@@ -126,8 +126,8 @@ Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.web
 
 The CDS websocket server supports the following two websocket implementations:
 
-- [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.websocket: "ws"` **(default)**
-- [Socket.IO](https://socket.io): `cds.websocket: "socket.io"`
+- [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.websocket.kind: "ws"` **(default)**
+- [Socket.IO](https://socket.io): `cds.websocket.kind: "socket.io"`
 
 The server implementation abstracts from the concrete websocket implementation. The websocket client still needs to be implemented websocket implementation specific.
 

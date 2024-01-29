@@ -35,7 +35,9 @@ async function emitEvent(socket, event, data) {
         event,
         data,
       }),
-      resolve,
+      (result) => {
+        resolve(result || null);
+      },
     );
   });
 }
