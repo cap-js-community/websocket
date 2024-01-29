@@ -6,9 +6,10 @@ const xsenv = require("@sap/xsenv");
 jest.mock("redis", () => require("./_env/mocks/redis"));
 const redis = require("redis");
 
-jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
+const auth = require("./_env/util/auth");
+const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent } = require("./_env/util/ws");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/ws");
+jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
 cds.test(__dirname + "/_env");
 
@@ -22,20 +23,26 @@ cds.env.websocket = {
 
 describe("Redis", () => {
   let socket;
+  let socketOtherTenant;
 
   beforeAll(async () => {
     socket = await connect("/ws/chat");
+    socketOtherTenant = await connect("/ws/chat", {
+      authorization: auth.bob,
+    });
   });
 
-  afterAll(() => {
-    disconnect(socket);
+  afterAll(async () => {
+    await disconnect(socket);
   });
 
   test("Redis adapter", async () => {
     const waitResultPromise = waitForEvent(socket, "received");
-    emitEvent(socket, "message", { text: "test" });
+    const waitNoResultPromise = waitForNoEvent(socketOtherTenant, "received");
+    await emitEvent(socket, "message", { text: "test" });
     const waitResult = await waitResultPromise;
     expect(waitResult).toEqual({ text: "test", user: "alice" });
+    await waitNoResultPromise;
 
     expect(redis.createClient).toHaveBeenCalledWith({ url: "uri" });
     expect(redis.client.connect).toHaveBeenCalledWith();
@@ -44,7 +51,7 @@ describe("Redis", () => {
     expect(redis.client.subscribe).toHaveBeenNthCalledWith(2, "websocket/main", expect.any(Function));
     expect(redis.client.publish).toHaveBeenCalledWith(
       "websocket/chat",
-      `{"event":"received","data":{"text":"test","user":"alice"}}`,
+      `{"event":"received","data":{"text":"test","user":"alice"},"tenant":"t1"}`,
     );
   });
 });

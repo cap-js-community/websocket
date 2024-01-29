@@ -13,13 +13,13 @@ describe("Chat", () => {
     socket = await connect("/ws/chat");
   });
 
-  afterAll(() => {
-    disconnect(socket);
+  afterAll(async () => {
+    await disconnect(socket);
   });
 
   test("Chat message", async () => {
     const waitResultPromise = waitForEvent(socket, "received");
-    emitEvent(socket, "message", { text: "test" });
+    await emitEvent(socket, "message", { text: "test" });
     const waitResult = await waitResultPromise;
     expect(waitResult).toEqual({ text: "test", user: "alice" });
   });

@@ -2,7 +2,7 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socketio");
+const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socket.io");
 
 cds.test(__dirname + "/_env");
 
@@ -17,8 +17,8 @@ describe("Chat", () => {
     socket = await connect("chat");
   });
 
-  afterAll(() => {
-    disconnect(socket);
+  afterAll(async () => {
+    await disconnect(socket);
   });
 
   test("Chat message", async () => {

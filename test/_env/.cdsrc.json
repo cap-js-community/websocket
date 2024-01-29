@@ -11,8 +11,9 @@
         },
         "bob": {
           "id": "bob",
+          "tenant": "t2",
           "password": "bob",
-          "roles": []
+          "roles": ["WS_Chat", "WS_Todo"]
         },
         "*": false
       }

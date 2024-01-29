@@ -2,8 +2,8 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/ws");
-const { invalidAuthorization } = require("./_env/util/common");
+const auth = require("./_env/util/auth");
+const { connect, disconnect, emitEvent } = require("./_env/util/ws");
 
 cds.test(__dirname + "/_env");
 
@@ -12,12 +12,12 @@ describe("Auth", () => {
 
   beforeAll(async () => {
     socket = await connect("/ws/chat", {
-      authorization: invalidAuthorization,
+      authorization: auth.invalid,
     });
   });
 
-  afterAll(() => {
-    disconnect(socket);
+  afterAll(async () => {
+    await disconnect(socket);
   });
 
   test("Invalid Auth", async () => {
@@ -28,7 +28,7 @@ describe("Auth", () => {
         resolve();
       });
     });
-    emitEvent(socket, "message", { text: "test" });
+    await emitEvent(socket, "message", { text: "test" });
     cds.ws.close(socket);
     cds.ws.close();
   });

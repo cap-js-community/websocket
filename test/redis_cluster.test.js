@@ -8,7 +8,7 @@ const redis = require("../src/redis");
 
 cds.test(__dirname + "/_env");
 
-jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
+jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri", cluster_mode: true });
 
 cds.env.websocket = {
   kind: "ws",

@@ -25,6 +25,13 @@ module.exports = (srv) => {
     return text;
   });
 
+  srv.on("triggerCustomContextEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customContextEvent", { ID, text });
+    return text;
+  });
+
   srv.on("wsConnect", async (req) => {});
 
   srv.on("wsDisconnect", async (req) => {});

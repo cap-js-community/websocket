@@ -23,7 +23,7 @@ const createPrimaryClientAndConnect = () => {
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
     primaryClientPromise = null;
-    setTimeout(createPrimaryClientAndConnect, TIMEOUT);
+    setTimeout(createPrimaryClientAndConnect, TIMEOUT).unref();
   };
   primaryClientPromise = _createClientAndConnect(errorHandlerCreateClient);
   return primaryClientPromise;
@@ -37,7 +37,7 @@ const createSecondaryClientAndConnect = () => {
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
     secondaryClientPromise = null;
-    setTimeout(createSecondaryClientAndConnect, TIMEOUT);
+    setTimeout(createSecondaryClientAndConnect, TIMEOUT).unref();
   };
   secondaryClientPromise = _createClientAndConnect(errorHandlerCreateClient);
   return secondaryClientPromise;

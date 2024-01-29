@@ -7,7 +7,7 @@ const SocketServer = require("../src/socket/base");
 describe("Base", () => {
   beforeAll(async () => {});
 
-  afterAll(() => {});
+  afterAll(async () => {});
 
   test("Instance", async () => {
     const socketServer = new SocketServer();
@@ -25,9 +25,12 @@ describe("Base", () => {
       context: expect.any(Function),
       on: expect.any(Function),
       emit: expect.any(Function),
+      enter: expect.any(Function),
+      exit: expect.any(Function),
       broadcast: expect.any(Function),
       broadcastAll: expect.any(Function),
       disconnect: expect.any(Function),
+      onDisconnect: expect.any(Function),
     });
     expect(socket.setup()).toBeUndefined();
     expect(socket.context()).toMatchObject({
@@ -38,10 +41,13 @@ describe("Base", () => {
       ws: { service: expect.any(Object), socket: null },
     });
     expect(socket.on()).toBeUndefined();
-    expect(socket.emit()).toBeUndefined();
-    expect(socket.broadcast()).toBeUndefined();
-    expect(socket.broadcastAll()).toBeUndefined();
+    expect(socket.emit()).toEqual(expect.any(Promise));
+    expect(socket.broadcast()).toEqual(expect.any(Promise));
+    expect(socket.broadcastAll()).toEqual(expect.any(Promise));
+    expect(socket.enter()).toEqual(expect.any(Promise));
+    expect(socket.exit()).toEqual(expect.any(Promise));
     expect(socket.disconnect()).toBeUndefined();
+    expect(socket.onDisconnect()).toBeUndefined();
   });
 
   test("Mock Response", async () => {

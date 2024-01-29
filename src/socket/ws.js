@@ -20,25 +20,30 @@ class SocketWSServer extends SocketServer {
     await this.applyAdapter();
     this._middlewares = this.middlewares();
     this.wss.on("connection", async (ws, request) => {
-      const service = this.services[request?.url];
-      if (service) {
-        service(ws, request);
-      }
+      this.services[request?.url]?.(ws, request);
     });
   }
 
   service(service, connected) {
     this.adapter?.on(service);
-    this.services[`${this.path}${service}`] = (ws, request) => {
+    const servicePath = `${this.path}${service}`;
+    this.services[servicePath] = (ws, request) => {
       ws.request = request;
+      ws.events = {};
+      ws.contexts = {};
       DEBUG?.("Connected");
       ws.on("close", () => {
+        Object.keys(ws.contexts).forEach((context) => {
+          ws.contexts[context].delete(ws);
+          if (ws.contexts[context].size === 0) {
+            delete ws.contexts[context];
+          }
+        });
         DEBUG?.("Disconnected");
       });
       ws.on("error", (error) => {
         LOG?.error(error);
       });
-      const events = {};
       ws.on("message", async (message) => {
         let payload = {};
         try {
@@ -47,7 +52,7 @@ class SocketWSServer extends SocketServer {
           // ignore
         }
         try {
-          for (const callback of events[payload?.event] || []) {
+          for (const callback of ws.events[payload?.event] || []) {
             await callback(payload.data);
           }
         } catch (err) {
@@ -56,6 +61,7 @@ class SocketWSServer extends SocketServer {
       });
       this.applyMiddleware(ws, async () => {
         try {
+          ws.tenant = ws.request.tenant;
           const facade = {
             service,
             socket: ws,
@@ -72,51 +78,82 @@ class SocketWSServer extends SocketServer {
               };
             },
             on: (event, callback) => {
-              events[event] ||= [];
-              events[event].push(callback);
+              ws.events[event] ??= [];
+              ws.events[event].push(callback);
             },
-            emit: (event, data) => {
-              ws.send(
-                JSON.stringify({
-                  event,
-                  data,
-                }),
-              );
+            emit: async (event, data, contexts) => {
+              if (
+                !contexts ||
+                contexts.find((context) => {
+                  return ws.contexts[context]?.has(ws);
+                })
+              ) {
+                await ws.send(
+                  JSON.stringify({
+                    event,
+                    data,
+                  }),
+                );
+              }
             },
-            broadcast: (event, data) => {
-              this.broadcast(service, event, data, ws, true);
+            broadcast: async (event, data, contexts) => {
+              await this.broadcast({ service, event, data, tenant: ws.tenant, contexts, socket: ws, remote: true });
             },
-            broadcastAll: (event, data) => {
-              this.broadcast(service, event, data, null, true);
+            broadcastAll: async (event, data, contexts) => {
+              await this.broadcast({ service, event, data, tenant: ws.tenant, contexts, socket: null, remote: true });
+            },
+            enter: async (context) => {
+              ws.contexts[context] ??= new Set();
+              ws.contexts[context].add(ws);
+            },
+            exit: async (context) => {
+              ws.contexts[context] ??= new Set();
+              ws.contexts[context].delete(ws);
             },
             disconnect() {
               ws.close();
             },
+            onDisconnect: (callback) => {
+              ws.on("close", callback);
+            },
           };
+          ws.facade = facade;
           connected && connected(facade);
         } catch (err) {
           LOG?.error(err);
         }
       });
-    }
+    };
   }
 
-  async broadcast(service, event, data, socket, remote) {
+  async broadcast({ service, event, data, tenant, contexts, socket, remote }) {
+    if (!data) {
+      const message = JSON.parse(event);
+      data = message.data;
+      tenant = message.tenant;
+      contexts = message.contexts;
+    }
+    const servicePath = `${this.path}${service}`;
     const clients = [];
     this.wss.clients.forEach((client) => {
       if (
-        client.readyState === WebSocket.OPEN &&
         client !== socket &&
-        client.request?.url === `${this.path}${service}`
+        client.readyState === WebSocket.OPEN &&
+        client.request?.url === servicePath &&
+        client.tenant === tenant &&
+        (!contexts ||
+          contexts.find((context) => {
+            return client.contexts[context]?.has(client);
+          }))
       ) {
         clients.push(client);
       }
     });
     if (clients.length > 0 || remote) {
-      const message = !data ? event : JSON.stringify({ event, data });
-      clients.forEach((client) => {
-        client.send(message);
-      });
+      const message = !data ? event : JSON.stringify({ event, data, tenant, contexts });
+      for (const client of clients) {
+        await client.send(message);
+      }
       if (remote) {
         await this.adapter?.emit(service, message);
       }
@@ -152,6 +189,7 @@ class SocketWSServer extends SocketServer {
 
   applyMiddleware(ws, next) {
     const middlewares = this._middlewares.slice(0);
+
     function call() {
       const middleware = middlewares.shift();
       if (!middleware) {
@@ -165,6 +203,7 @@ class SocketWSServer extends SocketServer {
         }
       });
     }
+
     call();
   }
 

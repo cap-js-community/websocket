@@ -3,14 +3,14 @@
 const cds = require("@sap/cds");
 const ioc = require("socket.io-client");
 
-const { authorization } = require("./common");
+const auth = require("./auth");
 
 async function connect(service, options = {}) {
   const port = cds.app.server.address().port;
   const socket = ioc(`http://localhost:${port}/${service}`, {
     path: "/ws",
     extraHeaders: {
-      authorization: options?.authorization || authorization,
+      authorization: options?.authorization || auth.alice,
     },
   });
   cds.io.of(service).on("connection", (serverSocket) => {
@@ -47,9 +47,32 @@ async function waitForEvent(socket, event) {
   });
 }
 
+async function waitForNoEvent(socket, event, timeout = 100) {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      resolve();
+    }, timeout);
+    socket.once(event, (result) => {
+      clearTimeout(timeoutId);
+      reject(result);
+    });
+  });
+}
+
+async function enterContext(socket, context) {
+  return await emitEvent(socket, "wsContext", { context });
+}
+
+async function exitContext(socket, context) {
+  return await emitEvent(socket, "wsContext", { context, exit: true });
+}
+
 module.exports = {
   connect,
   disconnect,
   emitEvent,
   waitForEvent,
+  waitForNoEvent,
+  enterContext,
+  exitContext,
 };

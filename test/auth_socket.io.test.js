@@ -2,8 +2,8 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socketio");
-const { invalidAuthorization } = require("./_env/util/common");
+const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socket.io");
+const auth = require("./_env/util/auth");
 
 cds.test(__dirname + "/_env");
 
@@ -16,12 +16,12 @@ describe("Auth", () => {
 
   beforeAll(async () => {
     socket = await connect("chat", {
-      authorization: invalidAuthorization,
+      authorization: auth.invalid,
     });
   });
 
-  afterAll(() => {
-    disconnect(socket);
+  afterAll(async () => {
+    await disconnect(socket);
   });
 
   // TODO: CDS basic-auth does not call next(err). Socket.IO client is not connected and promise is pending
@@ -31,7 +31,7 @@ describe("Auth", () => {
         resolve();
       });
     });
-    emitEvent(socket, "message", { text: "test" });
+    await emitEvent(socket, "message", { text: "test" });
     cds.ws.close(socket);
     cds.ws.close();
   });

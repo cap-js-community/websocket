@@ -2,8 +2,8 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/ws");
-const { authorization } = require("./_env/util/common");
+const auth = require("./_env/util/auth");
+const { connect, disconnect, waitForEvent } = require("./_env/util/ws");
 
 cds.test(__dirname + "/_env");
 
@@ -16,8 +16,8 @@ describe("OData", () => {
     service = await cds.connect.to("TodoService");
   });
 
-  afterAll(() => {
-    disconnect(socket);
+  afterAll(async () => {
+    await disconnect(socket);
   });
 
   test("Event", async () => {
@@ -25,15 +25,15 @@ describe("OData", () => {
     const waitReceivedTooPromise = waitForEvent(socket, "receivedToo");
     const response = await fetch(cds.server.url + "/odata/v4/odata/Header", {
       method: "POST",
-      headers: { "content-type": "application/json", authorization },
+      headers: { "content-type": "application/json", authorization: auth.alice },
       body: JSON.stringify({ name: "Test" }),
     });
     const result = await response.json();
     expect(result.ID).toBeDefined();
     const ID = result.ID;
     const waitResult = await waitReceivedPromise;
-    expect(waitResult).toMatchObject({});
+    expect(waitResult).toMatchObject({ ID });
     const waitResultToo = await waitReceivedTooPromise;
-    expect(waitResultToo).toMatchObject({});
+    expect(waitResultToo).toMatchObject({ ID });
   });
 });

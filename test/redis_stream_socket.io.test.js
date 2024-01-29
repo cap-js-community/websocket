@@ -2,7 +2,7 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socketio");
+const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socket.io");
 const xsenv = require("@sap/xsenv");
 const redis = require("redis");
 
@@ -30,8 +30,8 @@ describe("Redis", () => {
     socket = await connect("chat");
   });
 
-  afterAll(() => {
-    disconnect(socket);
+  afterAll(async () => {
+    await disconnect(socket);
   });
 
   test("Redis Adapter", async () => {

@@ -31,7 +31,7 @@ class SocketServer {
   /**
    * Connect a service to websocket
    * @param {string} service service path, e.g. "/chat"
-   * @param {function} connected Callback function to be called on every websocket connection passing socket functions (i.e. ws.on("connection", connected))
+   * @param {function<object>} connected Callback function to be called on every websocket connection passing socket functions (i.e. ws.on("connection", connected)) passing the facade
    */
   service(service, connected) {
     const facade = {
@@ -48,10 +48,23 @@ class SocketServer {
         };
       },
       on: (event, callback) => {},
-      emit: (event, data) => {},
-      broadcast: (event, data) => {},
-      broadcastAll: (event, data) => {},
+      emit: async (event, data, contexts) => {
+        return Promise.resolve();
+      },
+      broadcast: async (event, data, contexts) => {
+        return Promise.resolve();
+      },
+      broadcastAll: async (event, data, contexts) => {
+        return Promise.resolve();
+      },
+      enter: async (context) => {
+        return Promise.resolve();
+      },
+      exit: async (context) => {
+        return Promise.resolve();
+      },
       disconnect() {},
+      onDisconnect: (callback) => {},
     };
     connected && connected(facade);
   }
@@ -59,17 +72,19 @@ class SocketServer {
   /**
    * Broadcast to all websocket clients
    * @param {string} service service path, e.g. "/chat"
-   * @param {string} event Event name
+   * @param {string} event Event name or message content (if data is not provided)
    * @param {Object} data Data object
+   * @param {string} tenant Tenant
+   * @param {[string]} contexts Array of contexts
    * @param {Object} socket Broadcast client to be excluded
    * @param {boolean} remote Broadcast also remote (e.g. via redis)
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast(service, event, data, socket, remote) {}
+  async broadcast({ service, event, data, tenant, contexts, socket, remote }) {}
 
   /**
    * Handle HTTP request response
-   * @param {object} Server socket
+   * @param {object} socket Server socket
    * @param {Number} statusCode Response status code
    * @param {string} body Response body
    */
@@ -82,7 +97,7 @@ class SocketServer {
   /**
    * Close socket and disconnect client. If no socket is passed the server is closed
    * @param {object} socket Socket to be disconnected
-   * @param {integer} code Reason code for close
+   * @param {Number} code Reason code for close
    * @param {string} reason Reason text for close
    */
   close(socket, code, reason) {}

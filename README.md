@@ -175,12 +175,75 @@ Events can be directly emitted via the native `socket`, bypassing CDS runtime, i
 For each server websocket connection the standard CDS middlewares are applied. That means, that especially the correct CDS
 context is set up and the configured authorization strategy is applied.
 
+### Tenant Isolation
+
+WebSockets are processed tenant aware. Especially for broadcasting events tenant isolation is ensured, that only
+websocket clients connected for the same tenant are notified in tenant context. Tenant isolation is also ensured
+over remote distribution via Redis.
+
 ### Authentication & Authorization
 
 Authentication only works via AppRouter (e.g. using a UAA configuration), as the auth token is forwarded
 via authorization header bearer token by AppRouter to backend instance. CDS middlewares process the auth token and
 set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and
 authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
+
+### Event Contexts
+
+It is possible to broadcast events to a subset of clients. By entering or existing contexts, the server can be instructed to
+determined based on the event data, to which subset of clients the event shall be emitted. To specify which data parts of the
+event are leveraged for setting up the context, the annotation `@websocket.context` or `@ws.context` is available on
+event data element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`):
+
+```cds
+event received {
+  @websocket.context
+  ID: UUID;
+  text: String;
+}
+```
+
+This sets up the event context based on the unique ID of the event data. The annotation can be used on multiple event
+data elements setting up different event contexts in parallel, if event shall be broadcast/emitted into multiple contexts at the same time.
+
+To manage event contexts the following options exist:
+
+- **Server side**: Call websocket service facade
+  - CDS context object `req` exposes the websocket facade via `req.context.ws.service` providing the following context functions
+    - **Enter Context**: `enter(context)` - Enter the current server socket into the passed context
+    - **Exit Context**: `exit(context)` - Exit the current server socket from the passed context
+- **Client side**: Emit `wsContext` event from client socket
+  - **Enter Context**:
+    - WS Standard:
+      ```js
+      socket.send(JSON.stringify({ event: "wsContext", data: { context: "..." } }));
+      ```
+    - Socket.IO:
+      ```js
+      socket.emit("wsContext", { context: "..." });
+      ```
+  - **Exit**:
+    - WS Standard:
+      ```js
+      socket.send(JSON.stringify({ event: "wsContext", data: { context: "...", exit: true } }));
+      ```
+    - Socket.IO:
+      ```js
+      socket.emit("wsContext", { context: "...", exit: true });
+      ```
+
+Multiple contexts can be entered for the same server socket at the same time. Furthermore, a service operation named
+`wsContext` is invoked, if existing on the websocket enabled CDS service. Event context isolation is also ensured
+over remote distribution via Redis.
+
+For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
+
+### Connect & Disconnect
+
+Every time a server socket is connected via websocket client, the CDS service is notified by calling the corresponding service operation:
+
+- `Connect`: Invoke service operation `wsConnect`, if available
+- `Disconnect`: Invoke service operation `wsDisconnect`, if available
 
 #### Approuter
 

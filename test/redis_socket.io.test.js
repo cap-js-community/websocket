@@ -2,7 +2,7 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socketio");
+const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socket.io");
 const xsenv = require("@sap/xsenv");
 const redis = require("redis");
 
@@ -30,7 +30,7 @@ describe("Redis", () => {
     socket = await connect("chat");
   });
 
-  afterAll(() => {
+  afterAll(async () => {
     disconnect(socket);
   });
 
@@ -47,6 +47,6 @@ describe("Redis", () => {
     expect(redis.client.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function));
     expect(redis.client.on).toHaveBeenNthCalledWith(3, "error", expect.any(Function));
     expect(redis.client.subscribe).toHaveBeenCalled();
-    expect(redis.client.publish).toHaveBeenCalledWith("websocket#/chat#", expect.anything());
+    expect(redis.client.publish).toHaveBeenCalledWith("websocket#/chat#/tenant:t1#/context:##", expect.anything());
   });
 });

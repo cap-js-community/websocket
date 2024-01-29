@@ -31,6 +31,8 @@ class SocketIOServer extends SocketServer {
     const io = this.applyMiddleware(this.io.of(service));
     io.on("connection", async (socket) => {
       try {
+        socket.tenant = socket.request.tenant;
+        socket.join(room(socket.tenant));
         DEBUG?.("Connected", socket.id);
         socket.on("disconnect", () => {
           DEBUG?.("Disconnected", socket.id);
@@ -53,19 +55,37 @@ class SocketIOServer extends SocketServer {
           on: (event, callback) => {
             socket.on(event, callback);
           },
-          emit: (event, data) => {
-            socket.emit(event, data);
+          emit: async (event, data, contexts) => {
+            let to = socket;
+            if (contexts) {
+              for (const context of contexts || []) {
+                to = to.to(room(socket.tenant, context));
+              }
+            } else {
+              to.to(room(socket.tenant));
+            }
+            await to.emit(event, data);
           },
-          broadcast: (event, data) => {
-            this.broadcast(service, event, data, socket, true);
+          broadcast: async (event, data, contexts) => {
+            await this.broadcast({ service, event, data, tenant: socket.tenant, contexts, socket, remote: true });
           },
-          broadcastAll: (event, data) => {
-            this.broadcast(service, event, data, null, true);
+          broadcastAll: async (event, data, contexts) => {
+            await this.broadcast({ service, event, data, tenant: socket.tenant, contexts, socket: null, remote: true });
+          },
+          enter: async (context) => {
+            await socket.join(room(socket.tenant, context));
+          },
+          exit: async (context) => {
+            await socket.leave(room(socket.tenant, context));
           },
           disconnect() {
             socket.disconnect();
           },
+          onDisconnect: (callback) => {
+            socket.on("disconnect", callback);
+          },
         };
+        socket.facade = facade;
         connected && connected(facade);
       } catch (err) {
         LOG?.error(err);
@@ -73,13 +93,16 @@ class SocketIOServer extends SocketServer {
     });
   }
 
-  async broadcast(service, event, data, socket, remote) {
-    if (socket) {
-      socket.broadcast.emit(event, data);
+  async broadcast({ service, event, data, tenant, contexts, socket, remote }) {
+    let to = socket?.broadcast || this.io.of(service);
+    if (contexts) {
+      for (const context of contexts || []) {
+        to = to.to(room(tenant, context));
+      }
     } else {
-      const io = this.io.of(service);
-      io.emit(event, data);
+      to = to.to(room(tenant));
     }
+    to.emit(event, data);
   }
 
   close(socket) {
@@ -140,6 +163,10 @@ class SocketIOServer extends SocketServer {
       throw new Error("403 - Forbidden");
     }
   }
+}
+
+function room(tenant, context = "") {
+  return `/tenant:${tenant}#/context:${context}#`;
 }
 
 module.exports = SocketIOServer;

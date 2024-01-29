@@ -64,6 +64,10 @@ module.exports = {
     return client;
   }),
   createCluster: jest.fn(() => {
+    if (createClientError) {
+      createClientError = false;
+      throw new Error("create cluster error");
+    }
     return client;
   }),
 };

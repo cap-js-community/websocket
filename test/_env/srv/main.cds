@@ -24,8 +24,18 @@ service MainService {
         text: String;
     }
 
+    function triggerCustomContextEvent(ID: UUID, num: Integer, text: String) returns Result;
+
+    event customContextEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+    }
+
     action wsConnect();
     action wsDisconnect();
+    action wsContext(context: String, exit: Boolean);
 }
 
 @websocket

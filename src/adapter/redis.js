@@ -25,7 +25,7 @@ class RedisAdapter {
       await this.client.subscribe(channel, async (message, messageChannel) => {
         try {
           if (messageChannel === channel) {
-            await this.server.broadcast(service, message);
+            await this.server.broadcast({ service, event: message });
           }
         } catch (err) {
           LOG?.error(err);

@@ -1,9 +1,5 @@
 "use strict";
 
-const credentials = "alice:alice";
-const authorization = `Basic ${Buffer.from(credentials).toString("base64")}`; // Basic YWxpY2U6YWxpY2U
-const invalidAuthorization = `Basic ${Buffer.from("invalid:invalid").toString("base64")}`; // Basic aW52YWxpZDppbnZhbGlk
-
 function cleanData(data) {
   const isArray = Array.isArray(data);
   data = isArray ? data : [data];
@@ -21,9 +17,11 @@ function cleanData(data) {
   return isArray ? result : result[0];
 }
 
+async function wait(timeout = 100) {
+  await new Promise((resolve) => setTimeout(resolve, timeout));
+}
+
 module.exports = {
-  credentials,
-  authorization,
-  invalidAuthorization,
   cleanData,
+  wait,
 };
