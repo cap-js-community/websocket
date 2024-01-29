@@ -28,7 +28,7 @@ class SocketIOServer extends SocketServer {
   }
 
   service(service, connected) {
-    const io = this.applyMiddleware(this.io.of(service));
+    const io = this.applyMiddlewares(this.io.of(service));
     io.on("connection", async (socket) => {
       try {
         socket.tenant = socket.request.tenant;
@@ -151,7 +151,7 @@ class SocketIOServer extends SocketServer {
     }
   }
 
-  applyMiddleware(io) {
+  applyMiddlewares(io) {
     for (const middleware of this.middlewares()) {
       io.use(middleware);
     }

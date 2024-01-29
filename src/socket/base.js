@@ -31,7 +31,7 @@ class SocketServer {
   /**
    * Connect a service to websocket
    * @param {string} service service path, e.g. "/chat"
-   * @param {function<object>} connected Callback function to be called on every websocket connection passing socket functions (i.e. ws.on("connection", connected)) passing the facade
+   * @param {function} connected Callback function to be called on every websocket connection passing socket facade (i.e. ws.on("connection", connected))
    */
   service(service, connected) {
     const facade = {

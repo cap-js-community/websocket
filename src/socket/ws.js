@@ -59,7 +59,7 @@ class SocketWSServer extends SocketServer {
           LOG?.error(err);
         }
       });
-      this.applyMiddleware(ws, async () => {
+      this.applyMiddlewares(ws, async () => {
         try {
           ws.tenant = ws.request.tenant;
           const facade = {
@@ -187,21 +187,25 @@ class SocketWSServer extends SocketServer {
     }
   }
 
-  applyMiddleware(ws, next) {
+  applyMiddlewares(ws, next) {
     const middlewares = this._middlewares.slice(0);
 
     function call() {
-      const middleware = middlewares.shift();
-      if (!middleware) {
-        return next(null);
-      }
-      middleware(ws, (err) => {
-        if (err) {
-          next(err);
-        } else {
-          call();
+      try {
+        const middleware = middlewares.shift();
+        if (!middleware) {
+          return next(null);
         }
-      });
+        middleware(ws, (err) => {
+          if (err) {
+            next(err);
+          } else {
+            call();
+          }
+        });
+      } catch (err) {
+        next(err);
+      }
     }
 
     call();
