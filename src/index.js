@@ -321,7 +321,7 @@ function deriveContexts(event, data) {
         element["@websocket.context"] ||
         element["@ws.context"] ||
         element["@websocket.broadcast.context"] ||
-          element["@ws.broadcast.context"];
+        element["@ws.broadcast.context"];
       if (context) {
         isContextEvent = true;
         if (data[name] !== undefined && data[name] !== null) {
