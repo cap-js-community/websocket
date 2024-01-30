@@ -112,7 +112,8 @@ The CDS Websocket module supports the following use-cases:
 - Process websockets messages as CDS entity CRUD, action and function calls
 - Broadcast CDS events across local server websockets and multi-instance server websockets (via Redis)
 - Broadcast CDS events across multiple CAP server applications and application instances (via Redis)
-- Emit/Broadcast CDS events from server websockets to websocket clients (browser and non-browser)
+- Tenant-ware emit/broadcast CDS events from server websockets to websocket clients (browser and non-browser)
+- Emit/Broadcast CDS events to a subset of websocket clients leveraging event contexts
 
 ### WebSocket Server
 
