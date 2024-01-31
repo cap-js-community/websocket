@@ -51,8 +51,8 @@
   "devDependencies": {
     "@cap-js-community/websocket": "./",
     "@cap-js/sqlite": "^1.4.0",
-    "@sap/cds": "^7.5.3",
-    "@sap/cds-dk": "^7.5.1",
+    "@sap/cds": "^7.6.1",
+    "@sap/cds-dk": "^7.6.0",
     "@sap/xssec": "3.6.1",
     "@socket.io/redis-adapter": "^8.2.1",
     "@socket.io/redis-streams-adapter": "^0.1.0",
