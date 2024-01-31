@@ -127,7 +127,8 @@ class SocketWSServer extends SocketServer {
   }
 
   async broadcast({ service, event, data, tenant, contexts, socket, remote }) {
-    if (!data) {
+    const eventMessage = !data;
+    if (eventMessage) {
       const message = JSON.parse(event);
       data = message.data;
       tenant = message.tenant;
@@ -150,7 +151,7 @@ class SocketWSServer extends SocketServer {
       }
     });
     if (clients.length > 0 || remote) {
-      const message = !data ? event : JSON.stringify({ event, data, tenant, contexts });
+      const message = eventMessage ? event : JSON.stringify({ event, data, tenant, contexts });
       for (const client of clients) {
         await client.send(message);
       }

@@ -42,12 +42,13 @@ async function emitEvent(socket, event, data) {
   });
 }
 
-async function waitForEvent(socket, event) {
+async function waitForEvent(socket, event, cb) {
   return new Promise((resolve) => {
     socket.on("message", (message) => {
       const payload = JSON.parse(message);
       if (payload.event === event) {
         resolve(payload.data);
+        cb && cb(payload);
       }
     });
   });

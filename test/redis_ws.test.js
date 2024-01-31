@@ -37,7 +37,10 @@ describe("Redis", () => {
   });
 
   test("Redis adapter", async () => {
-    const waitResultPromise = waitForEvent(socket, "received");
+    const messages = [];
+    const waitResultPromise = waitForEvent(socket, "received", (message) => {
+      messages.push(message);
+    });
     const waitNoResultPromise = waitForNoEvent(socketOtherTenant, "received");
     await emitEvent(socket, "message", { text: "test" });
     const waitResult = await waitResultPromise;
@@ -53,5 +56,25 @@ describe("Redis", () => {
       "websocket/chat",
       `{"event":"received","data":{"text":"test","user":"alice"},"tenant":"t1"}`,
     );
+
+    // Duplicated because Redis mock publishes to same client (not done for real Redis)
+    expect(messages).toEqual([
+      {
+        data: {
+          text: "test",
+          user: "alice",
+        },
+        event: "received",
+        tenant: "t1",
+      },
+      {
+        data: {
+          text: "test",
+          user: "alice",
+        },
+        event: "received",
+        tenant: "t1",
+      },
+    ]);
   });
 });
