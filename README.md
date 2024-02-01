@@ -298,10 +298,11 @@ Operation result will be provided as part of acknowledgment callback.
 
 ##### Special operations
 
-The websocket adapter tries to call the following special operations on the service, if available in service:
+The websocket adapter tries to call the following special operations on the CDS service, if available:
 
 - `wsConnect`: Callback to notify that a socket was connected
 - `wsDisconnect`: Callback to notify that a socket was disconnected
+- `wsContext`: Callback to notify that a socket changed the event context (details see section Event Contexts)
 
 #### Bound
 
