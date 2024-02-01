@@ -543,7 +543,7 @@ This module also works on a deployed infrastructure like Cloud Foundry (CF) or K
 
 An example Cloud Foundry deployment can be found in `test/_env`:
 
-- `cd test/_env`:
+- `cd test/_env`
   - Use [manifest.yml](test/_env/manifest.yml)
 - `npm run cf:push`
   - Prepares modules `approuter` and `backend` in `test/_env` and pushes to Cloud Foundry
