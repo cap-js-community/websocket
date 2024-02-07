@@ -3,6 +3,8 @@
 const cds = require("@sap/cds");
 const LOG = cds.log("websocket");
 
+const SocketServer = require("./socket/base");
+
 const WebSocketAction = {
   Connect: "wsConnect",
   Disconnect: "wsDisconnect",
@@ -90,7 +92,8 @@ async function initWebSocketServer(server, path) {
   try {
     cds.env.websocket ??= {};
     cds.env.websocket.kind ??= "ws";
-    const socketModule = require(`./socket/${cds.env.websocket.kind}`);
+    const serverImpl = cds.env.websocket.impl || cds.env.websocket.kind;
+    const socketModule = SocketServer.require(serverImpl, "socket");
     socketServer = new socketModule(server, path);
     await socketServer.setup();
     return socketServer;

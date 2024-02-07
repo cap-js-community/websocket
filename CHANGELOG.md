@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 0.6.2 - 2024-02-xx
 
-### Fixed
+### Added
 
-- tbd
+- Allow custom server implementations via `cds.websocket.impl`
+- Allow custom adapter implementations via `cds.websocket.adapter.impl` (kind `ws` only)
 
 ## Version 0.6.1 - 2024-01-31
 

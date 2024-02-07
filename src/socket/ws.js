@@ -178,7 +178,7 @@ class SocketWSServer extends SocketServer {
           options = { ...options, ...cds.env.websocket?.adapter?.options };
         }
         const prefix = options?.key ?? "websocket";
-        const adapterFactory = require(`../adapter/${adapterImpl}`);
+        const adapterFactory = SocketServer.require(adapterImpl, "adapter");
         this.adapter = new adapterFactory(this, prefix, options);
         await this.adapter?.setup();
         this.adapterActive = !!this.adapter?.client;

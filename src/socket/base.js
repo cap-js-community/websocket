@@ -3,6 +3,7 @@
 const cds = require("@sap/cds");
 const cookie = require("cookie");
 const crypto = require("crypto");
+const path = require("path");
 
 /**
  * Base class for a websocket server
@@ -217,6 +218,22 @@ class SocketServer {
       error = err;
     } finally {
       next(error);
+    }
+  }
+
+  /**
+   * Require implementation
+   * @param {string} impl Implementation name or path
+   * @param {string} context Implementation context
+   * @returns {*} Implementation module
+   */
+  static require(impl, context = "") {
+    if (impl.startsWith("./") || impl.startsWith("../")) {
+      return require(path.join(process.cwd(), impl));
+    } else if (context) {
+      return require(path.join("..", context, impl));
+    } else {
+      return require(impl);
     }
   }
 }

@@ -129,6 +129,7 @@ The CDS websocket server supports the following two websocket implementations:
 
 - [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.websocket.kind: "ws"` **(default)**
 - [Socket.IO](https://socket.io): `cds.websocket.kind: "socket.io"`
+- Custom Server: A custom websocket server implementation can be provided via `cds.websocket.impl` 
 
 The server implementation abstracts from the concrete websocket implementation. The websocket client still needs to be implemented websocket implementation specific.
 
@@ -502,6 +503,10 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
     - File `default-env.json` need to exist with Redis configuration
 - Redis Adapter options can be specified via `cds.websocket.adapter.options`
 - Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
+
+###### Custom Adapter
+
+A custom websocket adapter implementation can be provided via relative path set configuration of `cds.websocket.adapter.impl`.
 
 ##### Socket.IO
 

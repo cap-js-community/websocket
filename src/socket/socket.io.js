@@ -123,7 +123,7 @@ class SocketIOServer extends SocketServer {
         }
         let client;
         let subClient;
-        const adapterFactory = require(adapterImpl);
+        const adapterFactory = SocketServer.require(adapterImpl);
         switch (adapterImpl) {
           case "@socket.io/redis-adapter":
             client = await redis.createPrimaryClientAndConnect();
