@@ -205,8 +205,38 @@ event received {
 }
 ```
 
-This sets up the event context based on the unique ID of the event data. The annotation can be used on multiple event
-data elements setting up different event contexts in parallel, if event shall be broadcast/emitted into multiple contexts at the same time.
+This sets up the event context based on the unique ID of the event data.
+
+The annotation can be used on multiple event data elements setting up different event contexts in parallel,
+if event shall be broadcast/emitted into multiple contexts at the same time.
+
+```cds
+event received {
+  @websocket.context
+  ID: UUID;
+  @websocket.context
+  name: String;
+  text: String;
+}
+```
+
+Event contexts can also be established via event type elements of `many` or `array of` type:
+
+```cds
+event received {
+  @websocket.context
+  ID: many UUID;
+  text: String;
+}
+```
+
+This allows setting up an unspecified number of different event contexts in parallel during runtime.
+
+Event contexts support all CDS/JS types. The serialization is performed as follows:
+
+- `Date`: `context.toISOString()`
+- `Object`: `JSON.stringify(context)`
+- other: `String(context)`
 
 To manage event contexts the following options exist:
 
