@@ -135,6 +135,7 @@ describe("Chat", () => {
     let result = await emitEvent(socket, "triggerCustomContextEvent", { ID, num: 1, text: "test" });
     expect(result).toBeNull();
     let eventResult = await eventResultPromise;
+    expect(eventResult.ID).toBe(ID);
     expect(eventResult.text).toBe("test1");
     await eventNoResultPromise;
 
@@ -170,7 +171,44 @@ describe("Chat", () => {
     await eventNoOtherResultPromise;
 
     await enterContext(socket, ID);
-    await disconnect(socket);
+  });
+
+  test("Event Context Mass", async () => {
+    const ID1 = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
+    const ID2 = "e67af09e-71bc-4293-80f9-cf1ed7fba973";
+
+    await enterContext(socket, ID1);
+    await enterContext(socketOther, ID2);
     await wait();
+    let eventResultPromise = waitForEvent(socket, "customContextMassEvent");
+    let eventResultPromiseOther = waitForEvent(socketOther, "customContextMassEvent");
+    let result = await emitEvent(socket, "triggerCustomContextMassEvent", { ID1, ID2, num: 1, text: "test" });
+    expect(result).toBeNull();
+    const eventResult = await eventResultPromise;
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.IDs).toEqual([ID1, ID2]);
+    const eventResultOther = await eventResultPromiseOther;
+    expect(eventResultOther.text).toBe("test1");
+    expect(eventResultOther.IDs).toEqual([ID1, ID2]);
+
+    await exitContext(socket, ID1);
+    await exitContext(socketOther, ID2);
+    await wait();
+    const eventNoResultPromise = waitForNoEvent(socket, "customContextMassEvent");
+    const eventNoOtherResultPromise = waitForNoEvent(socketOther, "customContextMassEvent");
+    result = await emitEvent(socket, "triggerCustomContextMassEvent", { ID1, ID2, num: 1, text: "test" });
+    expect(result).toBeNull();
+    await eventNoResultPromise;
+    await eventNoOtherResultPromise;
+
+    await enterContext(socket, ID1);
+    await enterContext(socketOther, ID2);
+  });
+
+  test("Disconnects socket (last test)", async () => {
+    await disconnect(socket); // for test coverage
+    await wait();
+    const result = await emitEvent(socket, "triggerCustomEvent", { ID: "1234", num: 1, text: "test" });
+    expect(result).toEqual(new Error("WebSocket is not open: readyState 3 (CLOSED)"));
   });
 });

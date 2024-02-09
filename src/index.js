@@ -328,12 +328,27 @@ function deriveContexts(event, data) {
       if (context) {
         isContextEvent = true;
         if (data[name] !== undefined && data[name] !== null) {
-          contexts.push(String(data[name]));
+          if (Array.isArray(data[name])) {
+            data[name].forEach((entry) => {
+              contexts.push(contextString(entry));
+            });
+          } else {
+            contexts.push(contextString(data[name]));
+          }
         }
       }
     }
   }
   return isContextEvent ? contexts : undefined;
+}
+
+function contextString(value) {
+  if (value instanceof Date) {
+    return value.toISOString();
+  } else if (value instanceof Object) {
+    return JSON.stringify(value);
+  }
+  return String(value);
 }
 
 function getDeepEntityColumns(entity) {

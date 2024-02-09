@@ -32,6 +32,14 @@ module.exports = (srv) => {
     return text;
   });
 
+  srv.on("triggerCustomContextMassEvent", async (req) => {
+    const ID1 = req.data.ID1;
+    const ID2 = req.data.ID2;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customContextMassEvent", { IDs: [ID1, ID2], text });
+    return text;
+  });
+
   srv.on("wsConnect", async (req) => {});
 
   srv.on("wsDisconnect", async (req) => {});

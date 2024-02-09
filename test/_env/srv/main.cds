@@ -25,10 +25,18 @@ service MainService {
     }
 
     function triggerCustomContextEvent(ID: UUID, num: Integer, text: String) returns Result;
+    function triggerCustomContextMassEvent(ID1: UUID, ID2: UUID, num: Integer, text: String) returns Result;
 
     event customContextEvent {
         @websocket.context
         ID: UUID;
+        num: Integer;
+        text: String;
+    }
+
+    event customContextMassEvent {
+        @websocket.context
+        IDs: array of UUID;
         num: Integer;
         text: String;
     }

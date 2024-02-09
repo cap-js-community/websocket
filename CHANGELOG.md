@@ -5,12 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 0.6.2 - 2024-02-xx
+## Version 0.7.0 - 2024-02-09
 
 ### Added
 
 - Allow custom server implementations via `cds.websocket.impl`
 - Allow custom adapter implementations via `cds.websocket.adapter.impl` (kind `ws` only)
+- Allow processing of multiple event contexts by annotating event type elements of `many` or `array of` type
+- Support for type `date` event contexts as ISO string representation
+- Support for type `object` event contexts as JSON stringified representation
 
 ## Version 0.6.1 - 2024-01-31
 
