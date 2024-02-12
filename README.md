@@ -192,7 +192,7 @@ authorization restrictions are checked as defined in the CDS services `@restrict
 
 ### Event Contexts
 
-It is possible to broadcast events to a subset of clients. By entering or existing contexts, the server can be instructed to
+It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed to
 determined based on the event data, to which subset of clients the event shall be emitted. To specify which data parts of the
 event are leveraged for setting up the context, the annotation `@websocket.context` or `@ws.context` is available on
 event data element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`):
