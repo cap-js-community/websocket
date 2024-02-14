@@ -20,10 +20,11 @@ const {
   exitContext,
 } = require("./_env/util/socket.io");
 
-describe("Chat", () => {
+describe("Main", () => {
   let socket;
   let socketOther;
   let socketOtherTenant;
+  let socketOtherUser;
 
   beforeAll(async () => {
     socket = await connect("main");
@@ -31,12 +32,16 @@ describe("Chat", () => {
     socketOtherTenant = await connect("main", {
       authorization: auth.bob,
     });
+    socketOtherUser = await connect("main", {
+      authorization: auth.carol,
+    });
   });
 
   afterAll(async () => {
     await disconnect(socket);
     await disconnect(socketOther);
     await disconnect(socketOtherTenant);
+    await disconnect(socketOtherUser);
   });
 
   test("Unbound function", async () => {
@@ -207,6 +212,62 @@ describe("Chat", () => {
 
     await enterContext(socket, ID1);
     await enterContext(socketOther, ID2);
+  });
+
+  test("Event Context User - Static", async () => {
+    const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
+    await enterContext(socket, ID);
+    await enterContext(socketOther, ID);
+    await enterContext(socketOtherUser, ID);
+    await wait();
+    let eventNoResultPromise = waitForNoEvent(socket, "customContextUserEvent");
+    let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserEvent");
+    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserEvent");
+    let result = await emitEvent(socket, "triggerCustomContextUserEvent", { ID, num: 1, text: "test" });
+    expect(result).toBe("test1-alice");
+    await eventNoResultPromise;
+    await eventNoResultOtherPromise;
+    let eventResult = await eventResultOtherUserPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("alice");
+  });
+
+  test("Event Context User - Dynamic", async () => {
+    const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
+    await enterContext(socket, ID);
+    await enterContext(socketOther, ID);
+    await enterContext(socketOtherUser, ID);
+    await wait();
+    let eventNoResultPromise = waitForNoEvent(socket, "customContextUserDynamicEvent");
+    let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserDynamicEvent");
+    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserDynamicEvent");
+    let result = await emitEvent(socket, "triggerCustomContextUserDynamicEvent", { ID, num: 1, text: "test" });
+    expect(result).toBe("test1-alice");
+    await eventNoResultPromise;
+    await eventNoResultOtherPromise;
+    let eventResult = await eventResultOtherUserPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("alice");
+
+    let eventResultPromise = waitForEvent(socket, "customContextUserDynamicEvent");
+    let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserDynamicEvent");
+    eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserDynamicEvent");
+    result = await emitEvent(socketOtherUser, "triggerCustomContextUserDynamicEvent", { ID, num: 1, text: "test" });
+    expect(result).toBe("test1-carol");
+    eventResult = await eventResultPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("carol");
+    eventResult = await eventResultOtherPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("carol");
+    eventResult = await eventResultOtherUserPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("carol");
   });
 
   test("Disconnects socket (last test)", async () => {

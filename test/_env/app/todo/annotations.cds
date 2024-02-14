@@ -39,7 +39,7 @@ annotate TodoService.Todo {
 };
 
 annotate TodoService.Todo {
-	status @ValueList: { entity: 'Status', type: #fixed } @Common.Text: status.name @Common.TextArrangement: #TextFirst;
+	status @Common.Text: status.name @Common.TextArrangement: #TextFirst;
 };
 
 annotate TodoService.Todo.texts with @(

@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 0.7.1 - 2024-03-xx
+## Version 0.8.0 - 2024-02-15
+
+### Added
+
+- Introduce optional `user` concept to broadcast event expect to current context user via annotation `@websocket.user` or `@ws.user`
+- Allow to suppress CRUD event broadcast via `@websocket.broadcast = 'none'` or `@ws.broadcast = 'none'`
+- Match CRUD broadcast event with CDS service event to filter broadcast data
 
 ### Fixed
 
-- tbd
+- Fix leakage of internal processing information to websocket clients
 
 ## Version 0.7.0 - 2024-02-09
 
@@ -38,7 +44,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Provide user context in examples and tests, to verify authorization flow
-- Introduce optional `context` concept to broadcast to a client subset via annotation `@websocket.context` or `@websocket.ws`
+- Introduce optional `context` concept to broadcast to a client subset via annotation `@websocket.context` or `@ws.context`
 
 ### Fixed
 

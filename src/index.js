@@ -117,7 +117,6 @@ function serveWebSocketService(socketServer, service, options) {
         bindServiceEvents(socketServer, servicePath, service);
         socketServer.service(servicePath, (socket) => {
           try {
-            socket.setup();
             bindServiceDefaults(socket, service);
             bindServiceOperations(socket, service);
             bindServiceEntities(socket, service);
@@ -139,12 +138,14 @@ function bindServiceEvents(socketServer, servicePath, service) {
     service.on(event, async (req) => {
       const localEventName = serviceLocalName(service, event.name);
       try {
+        const user = deriveUser(event, req.data, req);
         const contexts = deriveContexts(event, req.data);
         await socketServer.broadcast({
           service: servicePath,
           event: localEventName,
           data: req.data,
           tenant: req.tenant,
+          user,
           contexts,
           socket: null,
           remote: true,
@@ -194,7 +195,7 @@ function bindServiceEntities(socket, service) {
     socket.on(`${localEntityName}:create`, async (data, callback) => {
       await processEvent(socket, service, entity, "create", data, async (response) => {
         callback && callback(response);
-        await broadcast(socket, `${localEntityName}:created`, entity, response);
+        await broadcastEvent(socket, service, `${localEntityName}:created`, entity, response);
       });
     });
     socket.on(`${localEntityName}:read`, async (data, callback) => {
@@ -206,13 +207,13 @@ function bindServiceEntities(socket, service) {
     socket.on(`${localEntityName}:update`, async (data, callback) => {
       await processEvent(socket, service, entity, "update", data, async (response) => {
         callback && callback(response);
-        await broadcast(socket, `${localEntityName}:updated`, entity, response);
+        await broadcastEvent(socket, service, `${localEntityName}:updated`, entity, response);
       });
     });
     socket.on(`${localEntityName}:delete`, async (data, callback) => {
       await processEvent(socket, service, entity, "delete", data, async (response) => {
         callback && callback(response);
-        await broadcast(socket, `${localEntityName}:deleted`, entity, { ...response, ...data });
+        await broadcastEvent(socket, service, `${localEntityName}:deleted`, entity, { ...response, ...data });
       });
     });
     socket.on(`${localEntityName}:list`, async (data, callback) => {
@@ -255,7 +256,7 @@ async function processEvent(socket, service, entity, event, data, callback) {
 
 async function call(socket, service, entity, event, data) {
   data = data || {};
-  return await service.tx(socket.context(), async (srv) => {
+  return await service.tx(socket.context, async (srv) => {
     if (!entity) {
       return await srv.send({
         event,
@@ -286,25 +287,43 @@ async function call(socket, service, entity, event, data) {
   });
 }
 
-async function broadcast(socket, event, entity, data) {
-  const contexts = deriveContexts(event, data);
-  if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
-    await socket.broadcastAll(event, broadcastData(entity, data), contexts);
-  } else {
-    await socket.broadcast(event, broadcastData(entity, data), contexts);
+async function broadcastEvent(socket, service, event, entity, data) {
+  let user;
+  let contexts;
+  const events = service.events();
+  const eventDefinition = events[event] || events[event.replaceAll(/:/g, ".")];
+  if (eventDefinition) {
+    user = deriveUser(eventDefinition, data, socket);
+    contexts = deriveContexts(eventDefinition, data);
+  }
+  const contentData = broadcastData(entity, data, eventDefinition);
+  if (contentData) {
+    if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
+      await socket.broadcastAll(event, contentData, user, contexts);
+    } else {
+      await socket.broadcast(event, contentData, user, contexts);
+    }
   }
 }
 
-function broadcastData(entity, data) {
-  if (
-    (entity["@websocket.broadcast.content"] ||
-      entity["@ws.broadcast.content"] ||
-      entity["@websocket.broadcast"] ||
-      entity["@ws.broadcast"]) === "data"
-  ) {
-    return data;
+function broadcastData(entity, data, event) {
+  if (event) {
+    return deriveElements(event, data);
   }
-  return deriveKey(entity, data);
+  const content =
+    entity["@websocket.broadcast.content"] ||
+    entity["@ws.broadcast.content"] ||
+    entity["@websocket.broadcast"] ||
+    entity["@ws.broadcast"];
+  switch (content) {
+    case "key":
+    default:
+      return deriveKey(entity, data);
+    case "data":
+      return data;
+    case "none":
+      return;
+  }
 }
 
 function deriveKey(entity, data) {
@@ -312,6 +331,36 @@ function deriveKey(entity, data) {
     result[key] = data[key];
     return result;
   }, {});
+}
+
+function deriveElements(event, data) {
+  return Object.keys(event.elements).reduce((result, element) => {
+    result[element] = data[element];
+    return result;
+  }, {});
+}
+
+function deriveUser(event, data, req) {
+  let user =
+    event["@websocket.user"] || event["@ws.user"] || event["@websocket.broadcast.user"] || event["@ws.broadcast.user"];
+  switch (user) {
+    case "excludeCurrent":
+      return req.context.user.id;
+  }
+  if (event.elements) {
+    for (const name in event.elements) {
+      const element = event.elements[name];
+      user =
+        element["@websocket.user"] ||
+        element["@ws.user"] ||
+        element["@websocket.broadcast.user"] ||
+        element["@ws.broadcast.user"];
+      switch (user) {
+        case "excludeCurrent":
+          return data[name] ? req.context.user.id : undefined;
+      }
+    }
+  }
 }
 
 function deriveContexts(event, data) {

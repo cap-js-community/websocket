@@ -2,7 +2,7 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socket.io");
+const { connect, disconnect, waitForEvent, waitForNoEvent } = require("./_env/util/socket.io");
 
 cds.test(__dirname + "/_env");
 
@@ -12,13 +12,16 @@ cds.env.websocket = {
 
 describe("Facade", () => {
   let socket;
+  let socketOther;
 
   beforeAll(async () => {
     socket = await connect("chat");
+    socketOther = await connect("chat");
   });
 
   afterAll(async () => {
     await disconnect(socket);
+    await disconnect(socketOther);
   });
 
   test("Facade", async () => {
@@ -26,8 +29,8 @@ describe("Facade", () => {
     expect(facade).toBeDefined();
     expect(facade.service).toEqual("/chat");
     expect(facade.socket).toBeDefined();
-    expect(facade.setup).toEqual(expect.any(Function));
-    const context = facade.context();
+    const context = facade.context;
+    expect(context).toBeDefined();
     expect(context.id).toEqual(expect.any(String));
     expect(context.user).toEqual(
       expect.objectContaining({
@@ -49,9 +52,10 @@ describe("Facade", () => {
     expect(facade.disconnect).toEqual(expect.any(Function));
     expect(facade.onDisconnect).toEqual(expect.any(Function));
     const waitResultPromise = waitForEvent(socket, "message");
+    const waitNoResultPromise = waitForNoEvent(socketOther, "message");
     expect(facade.emit("message", { text: "test" })).toEqual(expect.any(Promise));
-    expect(facade.emit("message", { text: "test" }, ["t1"])).toEqual(expect.any(Promise));
     const waitResult = await waitResultPromise;
     expect(waitResult).toEqual({ text: "test" });
+    await waitNoResultPromise;
   });
 });

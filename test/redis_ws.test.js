@@ -65,7 +65,6 @@ describe("Redis", () => {
           user: "alice",
         },
         event: "received",
-        tenant: "t1",
       },
       {
         data: {
@@ -73,7 +72,6 @@ describe("Redis", () => {
           user: "alice",
         },
         event: "received",
-        tenant: "t1",
       },
     ]);
   });

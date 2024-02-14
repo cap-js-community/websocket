@@ -12,20 +12,26 @@ cds.env.websocket = {
 
 describe("Chat", () => {
   let socket;
+  let socketOther;
 
   beforeAll(async () => {
     socket = await connect("chat");
+    socketOther = await connect("chat");
   });
 
   afterAll(async () => {
     await disconnect(socket);
+    await disconnect(socketOther);
   });
 
   test("Chat message", async () => {
     const waitResultPromise = waitForEvent(socket, "received");
+    const waitOtherResultPromise = waitForEvent(socketOther, "received");
     const result = await emitEvent(socket, "message", { text: "test" });
     expect(result).toBe("test");
     const waitResult = await waitResultPromise;
     expect(waitResult).toEqual({ text: "test", user: "alice" });
+    const waitOtherResult = await waitOtherResultPromise;
+    expect(waitOtherResult).toEqual({ text: "test", user: "alice" });
   });
 });

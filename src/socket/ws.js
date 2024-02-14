@@ -33,12 +33,7 @@ class SocketWSServer extends SocketServer {
       ws.contexts = {};
       DEBUG?.("Connected");
       ws.on("close", () => {
-        Object.keys(ws.contexts).forEach((context) => {
-          ws.contexts[context].delete(ws);
-          if (ws.contexts[context].size === 0) {
-            delete ws.contexts[context];
-          }
-        });
+        ws.contexts = {};
         DEBUG?.("Disconnected");
       });
       ws.on("error", (error) => {
@@ -61,14 +56,13 @@ class SocketWSServer extends SocketServer {
       });
       this.applyMiddlewares(ws, async () => {
         try {
+          this.enforceAuth(ws);
           ws.tenant = ws.request.tenant;
+          ws.user = ws.request.user.id;
           const facade = {
             service,
             socket: ws,
-            setup: () => {
-              this.enforceAuth(ws);
-            },
-            context: () => {
+            get context() {
               return {
                 id: ws.request.correlationId,
                 user: ws.request.user,
@@ -81,34 +75,43 @@ class SocketWSServer extends SocketServer {
               ws.events[event] ??= [];
               ws.events[event].push(callback);
             },
-            emit: async (event, data, contexts) => {
-              if (
-                !contexts ||
-                contexts.find((context) => {
-                  return ws.contexts[context]?.has(ws);
-                })
-              ) {
-                await ws.send(
-                  JSON.stringify({
-                    event,
-                    data,
-                  }),
-                );
-              }
+            emit: async (event, data) => {
+              await ws.send(
+                JSON.stringify({
+                  event,
+                  data,
+                }),
+              );
             },
-            broadcast: async (event, data, contexts) => {
-              await this.broadcast({ service, event, data, tenant: ws.tenant, contexts, socket: ws, remote: true });
+            broadcast: async (event, data, user, contexts) => {
+              await this.broadcast({
+                service,
+                event,
+                data,
+                tenant: ws.tenant,
+                user,
+                contexts,
+                socket: ws,
+                remote: true,
+              });
             },
-            broadcastAll: async (event, data, contexts) => {
-              await this.broadcast({ service, event, data, tenant: ws.tenant, contexts, socket: null, remote: true });
+            broadcastAll: async (event, data, user, contexts) => {
+              await this.broadcast({
+                service,
+                event,
+                data,
+                tenant: ws.tenant,
+                user,
+                contexts,
+                socket: null,
+                remote: true,
+              });
             },
             enter: async (context) => {
-              ws.contexts[context] ??= new Set();
-              ws.contexts[context].add(ws);
+              ws.contexts[context] = true;
             },
             exit: async (context) => {
-              ws.contexts[context] ??= new Set();
-              ws.contexts[context].delete(ws);
+              delete ws.contexts[context];
             },
             disconnect() {
               ws.close();
@@ -126,12 +129,15 @@ class SocketWSServer extends SocketServer {
     };
   }
 
-  async broadcast({ service, event, data, tenant, contexts, socket, remote }) {
-    const eventMessage = !data;
-    if (eventMessage) {
-      const message = JSON.parse(event);
+  async broadcast({ service, event, data, tenant, user, contexts, socket, remote }) {
+    const eventMessage = event;
+    const isEventMessage = !data;
+    if (isEventMessage) {
+      const message = JSON.parse(eventMessage);
+      event = message.event;
       data = message.data;
       tenant = message.tenant;
+      user = message.user;
       contexts = message.contexts;
     }
     const servicePath = `${this.path}${service}`;
@@ -142,22 +148,27 @@ class SocketWSServer extends SocketServer {
         client.readyState === WebSocket.OPEN &&
         client.request?.url === servicePath &&
         client.tenant === tenant &&
+        (!user || client.user !== user) &&
         (!contexts ||
           contexts.find((context) => {
-            return client.contexts[context]?.has(client);
+            return !!client.contexts[context];
           }))
       ) {
         clients.push(client);
       }
     });
-    if (clients.length > 0 || remote) {
-      const message = eventMessage ? event : JSON.stringify({ event, data, tenant, contexts });
+    if (clients.length > 0) {
+      const clientMessage = JSON.stringify({
+        event,
+        data,
+      });
       for (const client of clients) {
-        await client.send(message);
+        await client.send(clientMessage);
       }
-      if (remote) {
-        await this.adapter?.emit(service, message);
-      }
+    }
+    if (remote) {
+      const adapterMessage = isEventMessage ? eventMessage : JSON.stringify({ event, data, tenant, user, contexts });
+      await this.adapter?.emit(service, adapterMessage);
     }
   }
 
@@ -210,12 +221,6 @@ class SocketWSServer extends SocketServer {
     }
 
     call();
-  }
-
-  enforceAuth(ws) {
-    if (ws.request.isAuthenticated && !ws.request.isAuthenticated()) {
-      throw new Error("403 - Forbidden");
-    }
   }
 }
 

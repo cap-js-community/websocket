@@ -36,10 +36,21 @@ class SocketServer {
    */
   service(service, connected) {
     const facade = {
+      /**
+       * Service name/path
+       * @returns {String}
+       */
       service,
+      /**
+       * Server Socket
+       * @returns {Object}
+       */
       socket: null,
-      setup: () => {},
-      context: () => {
+      /**
+       * Current CDS context object for the websocket server socket
+       * @returns {Object}
+       */
+      get context() {
         return {
           id: null,
           user: null,
@@ -48,23 +59,67 @@ class SocketServer {
           ws: { service: facade, socket: null },
         };
       },
+      /**
+       * Register websocket event
+       * @param {String} event Event
+       * @param {function} callback Callback
+       */
       on: (event, callback) => {},
-      emit: async (event, data, contexts) => {
+      /**
+       * Emit websocket event with data
+       * @param {String} event Event
+       * @param {Object} data Data
+       * @returns {Promise<void>}
+       */
+      emit: async (event, data) => {
         return Promise.resolve();
       },
-      broadcast: async (event, data, contexts) => {
+      /**
+       * Broadcast websocket event (except to sender) by excluding an user (optional) or restricting to contexts (optional)
+       * @param {String} event Event
+       * @param {Object} data Data
+       * @param {String} [user] User to be excluding
+       * @param {String[]} [contexts] Contexts for restrictions
+       * @returns {Promise<void>}
+       */
+      broadcast: async (event, data, user, contexts) => {
         return Promise.resolve();
       },
-      broadcastAll: async (event, data, contexts) => {
+      /**
+       * Broadcast websocket event (including to sender) by excluding an user (optional) or restricting to contexts (optional)
+       * @param {String} event Event
+       * @param {Object} data Data
+       * @param {String} [user] User to be excluding
+       * @param {String[]} [contexts] Contexts for restrictions
+       * @returns {Promise<void>}
+       */
+      broadcastAll: async (event, data, user, contexts) => {
         return Promise.resolve();
       },
+      /**
+       * Enter a context
+       * @param {String} context Context
+       * @returns {Promise<void>}
+       */
       enter: async (context) => {
         return Promise.resolve();
       },
+      /**
+       * Exit a context
+       * @param {String} context Context
+       * @returns {Promise<void>}
+       */
       exit: async (context) => {
         return Promise.resolve();
       },
+      /**
+       * Disconnect server socket
+       */
       disconnect() {},
+      /**
+       * Register callback function called on disconnect of server socket
+       * @param {function} callback Callback function
+       */
       onDisconnect: (callback) => {},
     };
     connected && connected(facade);
@@ -75,13 +130,14 @@ class SocketServer {
    * @param {string} service service path, e.g. "/chat"
    * @param {string} event Event name or message content (if data is not provided)
    * @param {Object} data Data object
-   * @param {string} tenant Tenant
-   * @param {[string]} contexts Array of contexts
-   * @param {Object} socket Broadcast client to be excluded
-   * @param {boolean} remote Broadcast also remote (e.g. via redis)
+   * @param {string} tenant Tenant for isolation
+   * @param {string} user User to be excluded, undefined: no exclusion
+   * @param {[string]} contexts Array of contexts to restrict, undefined: no restriction
+   * @param {Object} socket Broadcast client to be excluded, undefined: no exclusion
+   * @param {boolean} remote Broadcast also remote (e.g. via redis), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast({ service, event, data, tenant, contexts, socket, remote }) {}
+  async broadcast({ service, event, data, tenant, user, contexts, socket, remote }) {}
 
   /**
    * Handle HTTP request response
@@ -102,6 +158,16 @@ class SocketServer {
    * @param {string} reason Reason text for close
    */
   close(socket, code, reason) {}
+
+  /**
+   * Enforce that socket request is authenticated
+   * @param {object} socket Server socket
+   */
+  enforceAuth(socket) {
+    if (socket.request.isAuthenticated && !socket.request.isAuthenticated()) {
+      throw new Error("403 - Forbidden");
+    }
+  }
 
   /**
    * Middlewares executed before

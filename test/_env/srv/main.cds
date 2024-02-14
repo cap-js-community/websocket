@@ -26,6 +26,8 @@ service MainService {
 
     function triggerCustomContextEvent(ID: UUID, num: Integer, text: String) returns Result;
     function triggerCustomContextMassEvent(ID1: UUID, ID2: UUID, num: Integer, text: String) returns Result;
+    function triggerCustomContextUserEvent(ID: UUID, num: Integer, text: String) returns Result;
+    function triggerCustomContextUserDynamicEvent(ID: UUID, num: Integer, text: String) returns Result;
 
     event customContextEvent {
         @websocket.context
@@ -39,6 +41,30 @@ service MainService {
         IDs: array of UUID;
         num: Integer;
         text: String;
+    }
+
+    @websocket.user: 'excludeCurrent'
+    event customContextUserEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+    }
+
+    event customContextUserDynamicEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        @websocket.user: 'excludeCurrent'
+        flag: Boolean;
+    }
+
+    event Header.created {
+        ID: UUID;
+        stock: Integer;
     }
 
     action wsConnect();

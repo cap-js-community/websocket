@@ -40,6 +40,25 @@ module.exports = (srv) => {
     return text;
   });
 
+  srv.on("triggerCustomContextUserEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customContextUserEvent", { ID, text, user: req.context.user.id });
+    return text + "-" + req.context.user.id;
+  });
+
+  srv.on("triggerCustomContextUserDynamicEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customContextUserDynamicEvent", {
+      ID,
+      text,
+      user: req.context.user.id,
+      flag: req.context.user.id === "alice",
+    });
+    return text + "-" + req.context.user.id;
+  });
+
   srv.on("wsConnect", async (req) => {});
 
   srv.on("wsDisconnect", async (req) => {});

@@ -144,7 +144,20 @@ Websocket client connection happens as follows for exposed endpoints:
 
 #### WebSocket Event
 
-Non-websocket services can contain events that are exposed as websocket events:
+Websocket services can contain events that are exposed as websocket events. Emitting an event on the service,
+broadcasts the event to all websocket clients.
+
+```cds
+  @protocol: 'ws'
+  @path: 'chat'
+  service ChatService {
+    event received {
+      text: String;
+    }
+  }
+```
+
+In addition, also non-websocket services can contain events that are exposed as websocket events:
 
 ```cds
   @protocol: 'odata'
@@ -172,6 +185,23 @@ It can be accessed via the service websocket facade via `req.context.ws.service`
 In addition the native websocket server socket can be accessed via `req.context.ws.socket` or `cds.context.ws.socket`.
 Events can be directly emitted via the native `socket`, bypassing CDS runtime, if necessary.
 
+#### Service Facade
+
+The service facade provides native access to websocket implementation independent of CDS context. It abstracts from the
+concrete websocket implementation by exposing the following public interface:
+
+- `service: String`: Service name/path
+- `socket: Object`: Server socket
+- `context: Object`: Current CDS context object for the websocket server socket
+- `on(event: String, callback: Function)`: Register websocket event
+- `async emit(event, data)`: Emit websocket event with data
+- `async broadcast(event: String, data: Object, user: String?, contexts: String[]?)`: Broadcast websocket event (except to sender) by excluding an user (optional) or restricting to contexts (optional)
+- `async broadcastAll(event: String, data: Object, user: String?, contexts: String[]?)`: Broadcast websocket event (including to sender) by excluding an user (optional) or restricting to contexts (optional)
+- `async enter(context: String)`: Enter a context
+- `async exit(context: String)`: Exit a context
+- `async disconnect()`: Disconnect server socket
+- `onDisconnect(callback: Function)`: Register callback function called on disconnect of server socket
+
 ### Middlewares
 
 For each server websocket connection the standard CDS middlewares are applied. That means, that especially the correct CDS
@@ -190,12 +220,29 @@ via authorization header bearer token by AppRouter to backend instance. CDS midd
 set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and
 authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
 
+### Event User
+
+Events are broadcast to all websocket clients, including clients established in context of current event context user.
+To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is available on
+event type level and entity type element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
+
+#### Entity Type:
+
+- `'excludeCurrent'`: Current event context user is statically excluded everytime during broadcasting to websocket clients.
+  All websocket clients established in context to that user are not respected during event broadcast.
+
+#### Entity Type Element:
+
+- `'excludeCurrent'`: Current event context user is dynamically excluded during broadcasting to websocket clients,
+  based on the value of the annotated event type element.
+  If truthy, all websocket clients established in context to that user are not respected during event broadcast.
+
 ### Event Contexts
 
 It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed to
-determined based on the event data, to which subset of clients the event shall be emitted. To specify which data parts of the
+determined based on the event type, to which subset of clients the event shall be emitted. To specify which data parts of the
 event are leveraged for setting up the context, the annotation `@websocket.context` or `@ws.context` is available on
-event data element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`):
+event type element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`):
 
 ```cds
 event received {
@@ -205,9 +252,9 @@ event received {
 }
 ```
 
-This sets up the event context based on the unique ID of the event data.
+This sets up the event context based on the unique ID of the event type data.
 
-The annotation can be used on multiple event data elements setting up different event contexts in parallel,
+The annotation can be used on multiple event type elements setting up different event contexts in parallel,
 if event shall be broadcast/emitted into multiple contexts at the same time.
 
 ```cds
@@ -369,7 +416,7 @@ CRUD events that modify entities automatically emit another event after successf
 Because of security concerns, it can be controlled which data of those events is broadcast,
 via annotations `@websocket.broadcast` or `@ws.broadcast` on entity level.
 
-- Propagate only key via one of the following options (default, if no annotation is present):
+- Propagate only key via one of the following options (default, if no annotation is present and event is not part of CDS service):
   - `@websocket.broadcast = 'key'`
   - `@websocket.broadcast.content = 'key'`
   - `@ws.broadcast = 'key'`
@@ -379,8 +426,20 @@ via annotations `@websocket.broadcast` or `@ws.broadcast` on entity level.
   - `@websocket.broadcast.content = 'data'`
   - `@ws.broadcast = 'data'`
   - `@ws.broadcast.content = 'data'`
+- Propagate no data (hence suppress CRUD broadcast event) via one of the following options:
+  - `@websocket.broadcast = 'none'`
+  - `@websocket.broadcast.content = 'none'`
+  - `@ws.broadcast = 'none'`
+  - `@ws.broadcast.content = 'none'`
 
-Per default, this event is broadcast to every connected socket, expect the socket, that was called with the CRUD event.
+If the CRUD broadcast event is modeled as part of CDS service the annotations above are ignored for that event,
+and the broadcast data is filtered along the event type elements. As `:` is not allowed in CDS service event names,
+`:` is replaced by a scoped event name using `.`.
+
+**Example:**
+WebSocket Event: `Object:created` is mapped to CDS Service Event: `Object.created`
+
+Per default, events are broadcast to every connected socket, expect the socket, that was called with the CRUD event.
 To also include the triggering socket within the broadcast, this can be controlled via annotations
 `@websocket.broadcast.all` or `@ws.broadcast.all` on entity level.
 

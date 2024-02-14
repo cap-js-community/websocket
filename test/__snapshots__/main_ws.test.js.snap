@@ -1,7 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Chat CRUD entity 1`] = `{}`;
+exports[`Main CRUD entity 1`] = `
+{
+  "stock": 11,
+}
+`;
 
-exports[`Chat CRUD entity 2`] = `{}`;
+exports[`Main CRUD entity 2`] = `{}`;
 
-exports[`Chat CRUD entity 3`] = `{}`;
+exports[`Main CRUD entity 3`] = `{}`;

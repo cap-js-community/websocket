@@ -31,8 +31,11 @@ class SocketIOServer extends SocketServer {
     const io = this.applyMiddlewares(this.io.of(service));
     io.on("connection", async (socket) => {
       try {
+        this.enforceAuth(socket);
         socket.tenant = socket.request.tenant;
-        socket.join(room(socket.tenant));
+        socket.user = socket.request.user.id;
+        socket.join(room({ tenant: socket.tenant }));
+        socket.join(room({ tenant: socket.tenant, user: socket.user }));
         DEBUG?.("Connected", socket.id);
         socket.on("disconnect", () => {
           DEBUG?.("Disconnected", socket.id);
@@ -40,10 +43,7 @@ class SocketIOServer extends SocketServer {
         const facade = {
           service,
           socket,
-          setup: () => {
-            this.enforceAuth(socket);
-          },
-          context: () => {
+          get context() {
             return {
               id: socket.request.correlationId,
               user: socket.request.user,
@@ -55,28 +55,29 @@ class SocketIOServer extends SocketServer {
           on: (event, callback) => {
             socket.on(event, callback);
           },
-          emit: async (event, data, contexts) => {
-            let to = socket;
-            if (contexts) {
-              for (const context of contexts || []) {
-                to = to.to(room(socket.tenant, context));
-              }
-            } else {
-              to.to(room(socket.tenant));
-            }
-            await to.emit(event, data);
+          emit: async (event, data) => {
+            await socket.emit(event, data);
           },
-          broadcast: async (event, data, contexts) => {
-            await this.broadcast({ service, event, data, tenant: socket.tenant, contexts, socket, remote: true });
+          broadcast: async (event, data, user, contexts) => {
+            await this.broadcast({ service, event, data, tenant: socket.tenant, user, contexts, socket, remote: true });
           },
-          broadcastAll: async (event, data, contexts) => {
-            await this.broadcast({ service, event, data, tenant: socket.tenant, contexts, socket: null, remote: true });
+          broadcastAll: async (event, data, user, contexts) => {
+            await this.broadcast({
+              service,
+              event,
+              data,
+              tenant: socket.tenant,
+              user,
+              contexts,
+              socket: null,
+              remote: true,
+            });
           },
           enter: async (context) => {
-            await socket.join(room(socket.tenant, context));
+            await socket.join(room({ tenant: socket.tenant, context }));
           },
           exit: async (context) => {
-            await socket.leave(room(socket.tenant, context));
+            await socket.leave(room({ tenant: socket.tenant, context }));
           },
           disconnect() {
             socket.disconnect();
@@ -93,14 +94,17 @@ class SocketIOServer extends SocketServer {
     });
   }
 
-  async broadcast({ service, event, data, tenant, contexts, socket, remote }) {
+  async broadcast({ service, event, data, tenant, user, contexts, socket, remote }) {
     let to = socket?.broadcast || this.io.of(service);
     if (contexts) {
       for (const context of contexts || []) {
-        to = to.to(room(tenant, context));
+        to = to.to(room({ tenant, context }));
       }
     } else {
-      to = to.to(room(tenant));
+      to = to.to(room({ tenant }));
+    }
+    if (user) {
+      to = to.except(room({ tenant, user }));
     }
     to.emit(event, data);
   }
@@ -157,16 +161,10 @@ class SocketIOServer extends SocketServer {
     }
     return io;
   }
-
-  enforceAuth(socket) {
-    if (socket.request.isAuthenticated && !socket.request.isAuthenticated()) {
-      throw new Error("403 - Forbidden");
-    }
-  }
 }
 
-function room(tenant, context = "") {
-  return `/tenant:${tenant}#/context:${context}#`;
+function room({ tenant, user, context }) {
+  return `${tenant ? `/tenant:${tenant}#` : ""}${user ? `/user:${user}#` : ""}${context ? `/context:${context}#` : ""}`;
 }
 
 module.exports = SocketIOServer;

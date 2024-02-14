@@ -13,14 +13,14 @@ async function connect(service, options = {}) {
       authorization: options?.authorization || auth.alice,
     },
   });
-  cds.io.of(service).on("connection", (serverSocket) => {
+  cds.io.of(service).once("connection", (serverSocket) => {
     socket.serverSocket = serverSocket;
   });
   return new Promise((resolve, reject) => {
-    socket.on("connect", () => {
+    socket.once("connect", () => {
       resolve(socket);
     });
-    socket.on("connect_error", reject);
+    socket.once("connect_error", reject);
   });
 }
 

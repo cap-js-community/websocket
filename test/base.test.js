@@ -21,8 +21,7 @@ describe("Base", () => {
     expect(socket).toEqual({
       service: "test",
       socket: null,
-      setup: expect.any(Function),
-      context: expect.any(Function),
+      context: expect.any(Object),
       on: expect.any(Function),
       emit: expect.any(Function),
       enter: expect.any(Function),
@@ -32,8 +31,7 @@ describe("Base", () => {
       disconnect: expect.any(Function),
       onDisconnect: expect.any(Function),
     });
-    expect(socket.setup()).toBeUndefined();
-    expect(socket.context()).toMatchObject({
+    expect(socket.context).toMatchObject({
       id: null,
       user: null,
       tenant: null,

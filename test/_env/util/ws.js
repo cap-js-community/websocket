@@ -12,14 +12,14 @@ async function connect(service, options = {}) {
       authorization: options?.authorization || auth.alice,
     },
   });
-  cds.wss.on("connection", async (serverSocket) => {
+  cds.wss.once("connection", async (serverSocket) => {
     socket.serverSocket = serverSocket;
   });
   return new Promise((resolve, reject) => {
-    socket.on("open", () => {
+    socket.once("open", () => {
       resolve(socket);
     });
-    socket.on("error", reject);
+    socket.once("error", reject);
   });
 }
 

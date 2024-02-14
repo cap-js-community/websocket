@@ -15,6 +15,12 @@
           "password": "bob",
           "roles": ["WS_Chat", "WS_Todo"]
         },
+        "carol": {
+          "id": "carol",
+          "tenant": "t1",
+          "password": "carol",
+          "roles": ["WS_Chat", "WS_Todo"]
+        },
         "*": false
       }
     },
