@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Introduce optional `user` concept to broadcast event expect to current context user via annotation `@websocket.user` or `@ws.user`
+- Introduce optional `user` concept to broadcast event, except to current context user via annotation `@websocket.user` or `@ws.user`
 - Allow to suppress CRUD event broadcast via `@websocket.broadcast = 'none'` or `@ws.broadcast = 'none'`
 - Match CRUD broadcast event with CDS service event to filter broadcast data
 

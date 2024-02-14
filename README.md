@@ -226,16 +226,15 @@ Events are broadcast to all websocket clients, including clients established in 
 To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is available on
 event type level and entity type element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
 
-#### Entity Type:
+Valid annotation values are:
 
-- `'excludeCurrent'`: Current event context user is statically excluded everytime during broadcasting to websocket clients.
-  All websocket clients established in context to that user are not respected during event broadcast.
-
-#### Entity Type Element:
-
-- `'excludeCurrent'`: Current event context user is dynamically excluded during broadcasting to websocket clients,
-  based on the value of the annotated event type element.
-  If truthy, all websocket clients established in context to that user are not respected during event broadcast.
+- **Entity type level**:
+  - `'excludeCurrent'`: Current event context user is statically excluded everytime during broadcasting to websocket clients.
+    All websocket clients established in context to that user are not respected during event broadcast.
+- **Entity type element level**:
+  - `'excludeCurrent'`: Current event context user is dynamically excluded during broadcasting to websocket clients,
+    based on the value of the annotated event type element.
+    If truthy, all websocket clients established in context to that user are not respected during event broadcast.
 
 ### Event Contexts
 
@@ -416,7 +415,7 @@ CRUD events that modify entities automatically emit another event after successf
 Because of security concerns, it can be controlled which data of those events is broadcast,
 via annotations `@websocket.broadcast` or `@ws.broadcast` on entity level.
 
-- Propagate only key via one of the following options (default, if no annotation is present and event is not part of CDS service):
+- Propagate only key via one of the following options (default, if no annotation is present):
   - `@websocket.broadcast = 'key'`
   - `@websocket.broadcast.content = 'key'`
   - `@ws.broadcast = 'key'`
@@ -433,8 +432,8 @@ via annotations `@websocket.broadcast` or `@ws.broadcast` on entity level.
   - `@ws.broadcast.content = 'none'`
 
 If the CRUD broadcast event is modeled as part of CDS service the annotations above are ignored for that event,
-and the broadcast data is filtered along the event type elements. As `:` is not allowed in CDS service event names,
-`:` is replaced by a scoped event name using `.`.
+and the broadcast data is filtered along the event type elements. As character `:` is not allowed in CDS service event names,
+character `:` is replaced by a scoped event name using character `.`.
 
 **Example:**
 WebSocket Event: `Object:created` is mapped to CDS Service Event: `Object.created`
