@@ -220,6 +220,39 @@ via authorization header bearer token by AppRouter to backend instance. CDS midd
 set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and
 authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
 
+### Transactional Safety
+
+In most situations only websocket events shall be broadcast, in case the primary transaction succeeded.
+It can be done manually, by emitting CDS event as part of the `req.on("succeeded")` handler.
+
+```js
+req.on("succeeded", async () => {
+  await srv.emit("received", req.data);
+});
+```
+
+This has the benefit, that the event emitting is coupled to the success of the primary transaction,
+but still the asynchronous event processing could fail, and would not be retried anymore.
+That's where the CDS persistent outbox comes into play.
+
+#### CDS Persistent Outbox
+
+Websocket events can also be sent via the CDS persistent outbox. That means, the CDS events triggering the websocket broadcast
+are added to the CDS persistent outbox when the primary transaction succeeded. The events are processed asynchronously
+and transactional safe in a separate transaction. It is ensured, that the event is processed in any case, as outbox keeps the
+outbox entry open, until the event processing succeeded.
+
+The transactional safety can be achieved using `cds.outboxed` as follows:
+
+```js
+const chatService = cds.outboxed(await cds.connect.to("ChatService"), {
+  kind: "persistent-outbox",
+});
+await chatService.emit("received", req.data);
+```
+
+In that case, the websocket event is broadcast to websocket clients only exactly once, when the primary transaction succeeds. 
+
 ### Event User
 
 Events are broadcast to all websocket clients, including clients established in context of current event context user.

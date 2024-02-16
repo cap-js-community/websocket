@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Describe the usage of CDS persistent outbox for websocket events
 
 ## Version 0.8.0 - 2024-02-15
 
