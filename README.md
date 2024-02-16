@@ -251,7 +251,7 @@ const chatService = cds.outboxed(await cds.connect.to("ChatService"), {
 await chatService.emit("received", req.data);
 ```
 
-In that case, the websocket event is broadcast to websocket clients only exactly once, when the primary transaction succeeds. 
+In that case, the websocket event is broadcast to websocket clients only exactly once, when the primary transaction succeeds.
 
 ### Event User
 
