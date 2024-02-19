@@ -231,8 +231,15 @@ req.on("succeeded", async () => {
 });
 ```
 
-This has the benefit, that the event emitting is coupled to the success of the primary transaction,
-but still the asynchronous event processing could fail, and would not be retried anymore.
+Alternatively you can leverage the CAP in-memory outbox via `cds.outboxed` as follows:
+
+```js
+const chatService = cds.outboxed(await cds.connect.to("ChatService"));
+await chatService.emit("received", req.data);
+```
+
+This has the benefit, that the event emitting is coupled to the success of the primary transaction.
+Still the asynchronous event processing could fail, and would not be retried anymore.
 That's where the CDS persistent outbox comes into play.
 
 #### CDS Persistent Outbox
@@ -242,7 +249,7 @@ are added to the CDS persistent outbox when the primary transaction succeeded. T
 and transactional safe in a separate transaction. It is ensured, that the event is processed in any case, as outbox keeps the
 outbox entry open, until the event processing succeeded.
 
-The transactional safety can be achieved using `cds.outboxed` as follows:
+The transactional safety can be achieved using `cds.outboxed` with kind `persistent-outbox` as follows:
 
 ```js
 const chatService = cds.outboxed(await cds.connect.to("ChatService"), {
@@ -251,7 +258,8 @@ const chatService = cds.outboxed(await cds.connect.to("ChatService"), {
 await chatService.emit("received", req.data);
 ```
 
-In that case, the websocket event is broadcast to websocket clients only exactly once, when the primary transaction succeeds.
+In that case, the websocket event is broadcast to websocket clients exactly once, when the primary transaction succeeds.
+In case of execution errors, the event broadcast is retried automatically, while processing the persistent outbox.
 
 ### Event User
 
