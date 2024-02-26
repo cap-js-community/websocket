@@ -3,31 +3,27 @@ using test from '../db/model';
 @protocol: 'websocket'
 service MainService {
 
-    type Result {
-        name: String;
-        code: String;
-    }
-
     @websocket.broadcast: 'key'
     entity Header as projection on test.Header actions {
-        action boundAction(num: Integer, text: String) returns Result;
-        function boundFunction(num: Integer, text: String) returns Result;
+        action boundAction(num: Integer, text: String) returns String;
+        function boundFunction(num: Integer, text: String) returns String;
     };
     entity HeaderItem as projection on test.HeaderItem;
 
-    action unboundAction(num: Integer, text: String) returns Result;
-    function unboundFunction(num: Integer, text: String) returns Result;
+    action unboundAction(num: Integer, text: String) returns String;
+    function unboundFunction(num: Integer, text: String) returns String;
 
-    function triggerCustomEvent(num: Integer, text: String) returns Result;
+    function triggerCustomEvent(num: Integer, text: String) returns String;
     event customEvent {
         num: Integer;
         text: String;
     }
 
-    function triggerCustomContextEvent(ID: UUID, num: Integer, text: String) returns Result;
-    function triggerCustomContextMassEvent(ID1: UUID, ID2: UUID, num: Integer, text: String) returns Result;
-    function triggerCustomContextUserEvent(ID: UUID, num: Integer, text: String) returns Result;
-    function triggerCustomContextUserDynamicEvent(ID: UUID, num: Integer, text: String) returns Result;
+    function triggerCustomContextEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomContextMassEvent(ID1: UUID, ID2: UUID, num: Integer, text: String) returns String;
+    function triggerCustomContextUserEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomContextUserDynamicEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomContextHeaderEvent(ID: UUID, num: Integer, text: String) returns String;
 
     event customContextEvent {
         @websocket.context
@@ -60,6 +56,11 @@ service MainService {
         user: String;
         @websocket.user: 'excludeCurrent'
         flag: Boolean;
+    }
+
+    event customContextHeaderEvent {
+        num: Integer;
+        text: String;
     }
 
     event Header.created {

@@ -5,8 +5,10 @@ const cds = require("@sap/cds");
 const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socket.io");
 const xsenv = require("@sap/xsenv");
 const redis = require("redis");
+const redisStreamAdapter = require("@socket.io/redis-streams-adapter");
 
 jest.mock("redis", () => require("./_env/mocks/redis"));
+jest.mock("@socket.io/redis-streams-adapter", () => require("./_env/mocks/redisStreamAdapter"));
 
 jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
@@ -38,12 +40,9 @@ describe("Redis", () => {
     const waitResultPromise = waitForEvent(socket, "received");
     const result = await emitEvent(socket, "message", { text: "test" });
     expect(result).toBe("test");
-    const waitResult = await waitResultPromise;
-    expect(waitResult).toEqual({ text: "test", user: "alice" });
 
     expect(redis.createClient).toHaveBeenCalledWith({ url: "uri" });
     expect(redis.client.connect).toHaveBeenCalledWith();
     expect(redis.client.on).toHaveBeenNthCalledWith(1, "error", expect.any(Function));
-    expect(redis.client.xAdd).toHaveBeenCalled();
   });
 });

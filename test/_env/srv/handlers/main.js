@@ -59,6 +59,20 @@ module.exports = (srv) => {
     return text + "-" + req.context.user.id;
   });
 
+  srv.on("triggerCustomContextHeaderEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit(
+      "customContextHeaderEvent",
+      { ID, text },
+      {
+        contexts: [ID],
+        excludeCurrentUser: req.data.num === 1,
+      },
+    );
+    return text + "-" + req.context.user.id;
+  });
+
   srv.on("wsConnect", async (req) => {});
 
   srv.on("wsDisconnect", async (req) => {});

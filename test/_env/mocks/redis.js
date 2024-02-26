@@ -24,10 +24,16 @@ const client = {
         break;
     }
   }),
-  xAdd: jest.fn(() => {}),
+  xRead: jest.fn(() => {
+    return Promise.resolve([{ messages: [] }]);
+  }),
+  xAdd: jest.fn(() => {
+    return Promise.resolve();
+  }),
   subscribe: jest.fn((channel, cb) => {
     onSubscribe.push(cb);
   }),
+  sSubscribe: jest.fn(() => {}),
   pSubscribe: jest.fn(() => {}),
   publish: jest.fn((channel, message) => {
     for (const on of onMessage) {
@@ -69,5 +75,8 @@ module.exports = {
       throw new Error("create cluster error");
     }
     return client;
+  }),
+  commandOptions: jest.fn(() => {
+    return {};
   }),
 };

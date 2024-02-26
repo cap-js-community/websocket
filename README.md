@@ -357,6 +357,26 @@ over remote distribution via Redis.
 
 For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
 
+### Event Emit Headers
+
+The websocket implementation allows to provide event emit headers to dynamically control websocket processing.
+The following headers are available:
+
+- `excludeCurrentUser: boolean`: Exclude current user from event broadcasting (see section Event User)
+- `contexts: String[]`: Provide an array of context strings to identify a subset of clients (see section Event Contexts)
+
+Emitting events with headers can be performed as follows:
+
+```js
+await srv.emit("customContextHeaderEvent", req.data, {
+  contexts: ["..."],
+  excludeCurrentUser: req.data.type === "1",
+});
+```
+
+The respective event annotations (described in sections above) are respected in addition to event emit header specification,
+so that primitive typed values have priority when specified as part of headers and array-like data is unified.
+
 ### Connect & Disconnect
 
 Every time a server socket is connected via websocket client, the CDS service is notified by calling the corresponding service operation:

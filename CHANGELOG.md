@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 0.8.1 - 2024-03-xx
 
+### Added
+
+- Allows to provide event emit headers to dynamically control websocket processing without annotations
+
 ### Fixed
 
 - Describe the usage of CDS persistent outbox for websocket events

@@ -136,10 +136,10 @@ function serveWebSocketService(socketServer, service, options) {
 function bindServiceEvents(socketServer, servicePath, service) {
   for (const event of service.events()) {
     service.on(event, async (req) => {
-      const localEventName = serviceLocalName(service, event.name);
       try {
-        const user = deriveUser(event, req.data, req);
-        const contexts = deriveContexts(event, req.data);
+        const localEventName = serviceLocalName(service, event.name);
+        const user = deriveUser(event, req.data, req.headers, req);
+        const contexts = deriveContexts(event, req.data, req.headers);
         await socketServer.broadcast({
           service: servicePath,
           event: localEventName,
@@ -293,8 +293,8 @@ async function broadcastEvent(socket, service, event, entity, data) {
   const events = service.events();
   const eventDefinition = events[event] || events[event.replaceAll(/:/g, ".")];
   if (eventDefinition) {
-    user = deriveUser(eventDefinition, data, socket);
-    contexts = deriveContexts(eventDefinition, data);
+    user = deriveUser(eventDefinition, data, {}, socket);
+    contexts = deriveContexts(eventDefinition, data, {});
   }
   const contentData = broadcastData(entity, data, eventDefinition);
   if (contentData) {
@@ -340,7 +340,13 @@ function deriveElements(event, data) {
   }, {});
 }
 
-function deriveUser(event, data, req) {
+function deriveUser(event, data, headers, req) {
+  if (headers?.excludeCurrentUser !== undefined) {
+    if (headers?.excludeCurrentUser) {
+      return req.context.user.id;
+    }
+    return;
+  }
   let user =
     event["@websocket.user"] || event["@ws.user"] || event["@websocket.broadcast.user"] || event["@ws.broadcast.user"];
   switch (user) {
@@ -363,9 +369,9 @@ function deriveUser(event, data, req) {
   }
 }
 
-function deriveContexts(event, data) {
-  const contexts = [];
-  let isContextEvent = false;
+function deriveContexts(event, data, headers) {
+  let isContextEvent = !!Array.isArray(headers?.contexts);
+  const contexts = isContextEvent ? headers.contexts : [];
   if (event.elements) {
     for (const name in event.elements) {
       const element = event.elements[name];

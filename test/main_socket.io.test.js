@@ -270,6 +270,43 @@ describe("Main", () => {
     expect(eventResult.user).toBe("carol");
   });
 
+  test("Event Context Header", async () => {
+    const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
+    await enterContext(socket, ID);
+    await enterContext(socketOtherUser, ID);
+    await wait();
+    let eventNoResultPromise = waitForNoEvent(socket, "customContextHeaderEvent");
+    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextHeaderEvent");
+    let result = await emitEvent(socket, "triggerCustomContextHeaderEvent", { ID, num: 1, text: "test" });
+    expect(result).toBe("test1-alice");
+    await eventNoResultPromise;
+    let eventResult = await eventResultOtherUserPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+
+    let eventResultPromise = waitForEvent(socket, "customContextHeaderEvent");
+    eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextHeaderEvent");
+    result = await emitEvent(socket, "triggerCustomContextHeaderEvent", { ID, num: 2, text: "test" });
+    expect(result).toBe("test2-alice");
+    eventResult = await eventResultPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test2");
+    eventResult = await eventResultOtherUserPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test2");
+
+    await exitContext(socketOtherUser, ID);
+    await wait();
+    eventResultPromise = waitForEvent(socket, "customContextHeaderEvent");
+    const eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customContextHeaderEvent");
+    result = await emitEvent(socket, "triggerCustomContextHeaderEvent", { ID, num: 2, text: "test" });
+    expect(result).toBe("test2-alice");
+    eventResult = await eventResultPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test2");
+    await eventNoResultOtherUserPromise;
+  });
+
   test("Disconnects socket (last test)", async () => {
     await disconnect(socket); // for test coverage
     await wait();
