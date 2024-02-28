@@ -52,7 +52,7 @@
     "@cap-js-community/websocket": "./",
     "@cap-js/sqlite": "^1.5.1",
     "@sap/cds": "^7.7.0",
-    "@sap/cds-dk": "^7.6.1",
+    "@sap/cds-dk": "^7.7.0",
     "@sap/xssec": "3.6.1",
     "@socket.io/redis-adapter": "^8.2.1",
     "@socket.io/redis-streams-adapter": "^0.2.0",
