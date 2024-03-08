@@ -43,8 +43,14 @@ const createSecondaryClientAndConnect = () => {
   return secondaryClientPromise;
 };
 const _createClientBase = () => {
+  const adapterActive = cds.env.websocket?.adapter?.active !== false;
+  if (!adapterActive) {
+    LOG?.info("Redis adapter is disabled");
+    return;
+  }
+  const adapterActiveExplicit = !!cds.env.websocket?.adapter?.active;
   const adapterLocal = !!cds.env.websocket?.adapter?.local;
-  if (!(IS_ON_CF || adapterLocal)) {
+  if (!(IS_ON_CF || adapterActiveExplicit || adapterLocal)) {
     LOG?.info("Redis not available in local environment");
     return;
   }

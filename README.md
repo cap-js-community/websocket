@@ -646,9 +646,12 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
 
 - Set `cds.websocket.adapter.impl: "redis"`
 - Application needs to be bound to a Redis instance
-  - Cloud Foundry: Redis automatically active
-  - Local (or other):
-    - Option `cds.websocket.adapter.local: true` needs to be set
+  - Cloud Foundry: Redis is automatically active
+    - Use option `cds.websocket.adapter.active: false` to disable Redis adapter
+  - Other Environment (e.g. Kyma): Redis is NOT automatically active
+    - Use option `cds.websocket.adapter.active: true` to enable Redis adapter
+  - Local: Redis is NOT automatically active
+    - Use option `cds.websocket.adapter.local: true` to enable Redis adapter
     - File `default-env.json` need to exist with Redis configuration
 - Redis Adapter options can be specified via `cds.websocket.adapter.options`
 - Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
