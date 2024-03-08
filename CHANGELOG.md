@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Add option to activate Redis adapter in other (non-local) environments (e.g. Kyma)
 
 ## Version 0.8.1 - 2024-03-04
 
