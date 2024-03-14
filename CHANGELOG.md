@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 0.8.2 - 2024-04-xx
+## Version 0.9.0 - 2024-04-xx
 
 ### Fixed
 
 - Add option to activate Redis adapter in other (non-local) environments (e.g. Kyma)
+- Fix Redis re-connect behavior to prevent Redis overload
 
 ## Version 0.8.1 - 2024-03-04
 

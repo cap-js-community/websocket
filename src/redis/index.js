@@ -10,22 +10,22 @@ const LOG = cds.log("websocket/redis");
 xsenv.loadEnv(path.join(process.cwd(), "default-env.json"));
 
 const IS_ON_CF = process.env.USER === "vcap";
-const TIMEOUT = 5 * 1000;
+const LOG_AFTER_SEC = 5;
 
 let primaryClientPromise;
 let secondaryClientPromise;
+let lastErrorLog = Date.now();
 
 const createPrimaryClientAndConnect = () => {
   if (primaryClientPromise) {
     return primaryClientPromise;
   }
-
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
     primaryClientPromise = null;
-    setTimeout(createPrimaryClientAndConnect, TIMEOUT).unref();
+    setTimeout(createPrimaryClientAndConnect, LOG_AFTER_SEC * 1000).unref();
   };
-  primaryClientPromise = _createClientAndConnect(errorHandlerCreateClient);
+  primaryClientPromise = createClientAndConnect(errorHandlerCreateClient);
   return primaryClientPromise;
 };
 
@@ -33,16 +33,16 @@ const createSecondaryClientAndConnect = () => {
   if (secondaryClientPromise) {
     return secondaryClientPromise;
   }
-
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
     secondaryClientPromise = null;
-    setTimeout(createSecondaryClientAndConnect, TIMEOUT).unref();
+    setTimeout(createSecondaryClientAndConnect, LOG_AFTER_SEC * 1000).unref();
   };
-  secondaryClientPromise = _createClientAndConnect(errorHandlerCreateClient);
+  secondaryClientPromise = createClientAndConnect(errorHandlerCreateClient);
   return secondaryClientPromise;
 };
-const _createClientBase = () => {
+
+const createClientBase = () => {
   const adapterActive = cds.env.websocket?.adapter?.active !== false;
   if (!adapterActive) {
     LOG?.info("Redis adapter is disabled");
@@ -85,26 +85,29 @@ const _createClientBase = () => {
   }
 };
 
-const _createClientAndConnect = async (errorHandlerCreateClient) => {
-  let client;
+const createClientAndConnect = async (errorHandlerCreateClient) => {
   try {
-    client = _createClientBase();
-  } catch (err) {
-    errorHandlerCreateClient(new Error("Error during create client with redis-cache service:" + err));
-    return;
-  }
-  if (!client) {
-    return;
-  }
-  client.on("error", errorHandlerCreateClient);
-  try {
+    const client = createClientBase();
     await client.connect();
-    LOG?.info("Service redis-cache connected");
+    client.on("error", (err) => {
+      const dateNow = Date.now();
+      if (dateNow - lastErrorLog > LOG_AFTER_SEC * 1000) {
+        LOG?.error("Error from redis client for pub/sub failed", err);
+        lastErrorLog = dateNow;
+      }
+    });
+
+    client.on("reconnecting", () => {
+      const dateNow = Date.now();
+      if (dateNow - lastErrorLog > LOG_AFTER_SEC * 1000) {
+        LOG?.info("Redis client trying reconnect...");
+        lastErrorLog = dateNow;
+      }
+    });
+    return client;
   } catch (err) {
     errorHandlerCreateClient(err);
-    return;
   }
-  return client;
 };
 
 const clearClients = () => {
