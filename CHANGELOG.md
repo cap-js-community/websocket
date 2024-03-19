@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add option to activate Redis adapter in other (non-local) environments (e.g. Kyma)
 - Fix Redis re-connect behavior to prevent Redis overload
+- Pass adapter configurations to Redis client creation
 
 ## Version 0.8.1 - 2024-03-04
 

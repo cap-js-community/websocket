@@ -655,6 +655,7 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
     - File `default-env.json` need to exist with Redis configuration
 - Redis Adapter options can be specified via `cds.websocket.adapter.options`
 - Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
+- Redis client connection configuration can be passed via `cds.websocket.adapter.config`
 
 ###### Custom Adapter
 

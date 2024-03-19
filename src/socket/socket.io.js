@@ -125,14 +125,18 @@ class SocketIOServer extends SocketServer {
         if (cds.env.websocket?.adapter?.options) {
           options = { ...options, ...cds.env.websocket?.adapter?.options };
         }
+        let config = {};
+        if (cds.env.websocket?.adapter?.config) {
+          config = { ...config, ...cds.env.websocket?.adapter?.config };
+        }
         let client;
         let subClient;
         const adapterFactory = SocketServer.require(adapterImpl);
         switch (adapterImpl) {
           case "@socket.io/redis-adapter":
-            client = await redis.createPrimaryClientAndConnect();
+            client = await redis.createPrimaryClientAndConnect(config);
             if (client) {
-              subClient = await redis.createSecondaryClientAndConnect();
+              subClient = await redis.createSecondaryClientAndConnect(config);
               if (subClient) {
                 this.adapter = adapterFactory.createAdapter(client, subClient, options);
               }

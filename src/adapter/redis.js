@@ -6,14 +6,15 @@ const cds = require("@sap/cds");
 const LOG = cds.log("websocket/redis");
 
 class RedisAdapter {
-  constructor(server, prefix, options) {
+  constructor(server, prefix, options, config) {
     this.server = server;
     this.prefix = prefix;
     this.options = options;
+    this.config = config;
   }
 
   async setup() {
-    this.client = await redis.createPrimaryClientAndConnect();
+    this.client = await redis.createPrimaryClientAndConnect(this.config);
   }
 
   async on(service) {

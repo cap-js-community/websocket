@@ -16,7 +16,7 @@ let primaryClientPromise;
 let secondaryClientPromise;
 let lastErrorLog = Date.now();
 
-const createPrimaryClientAndConnect = () => {
+const createPrimaryClientAndConnect = (options) => {
   if (primaryClientPromise) {
     return primaryClientPromise;
   }
@@ -25,11 +25,11 @@ const createPrimaryClientAndConnect = () => {
     primaryClientPromise = null;
     setTimeout(createPrimaryClientAndConnect, LOG_AFTER_SEC * 1000).unref();
   };
-  primaryClientPromise = createClientAndConnect(errorHandlerCreateClient);
+  primaryClientPromise = createClientAndConnect(errorHandlerCreateClient, options);
   return primaryClientPromise;
 };
 
-const createSecondaryClientAndConnect = () => {
+const createSecondaryClientAndConnect = (options) => {
   if (secondaryClientPromise) {
     return secondaryClientPromise;
   }
@@ -38,11 +38,11 @@ const createSecondaryClientAndConnect = () => {
     secondaryClientPromise = null;
     setTimeout(createSecondaryClientAndConnect, LOG_AFTER_SEC * 1000).unref();
   };
-  secondaryClientPromise = createClientAndConnect(errorHandlerCreateClient);
+  secondaryClientPromise = createClientAndConnect(errorHandlerCreateClient, options);
   return secondaryClientPromise;
 };
 
-const createClientBase = () => {
+const createClientBase = (options = {}) => {
   const adapterActive = cds.env.websocket?.adapter?.active !== false;
   if (!adapterActive) {
     LOG?.info("Redis adapter is disabled");
@@ -76,18 +76,22 @@ const createClientBase = () => {
         defaults: {
           password: credentials.password,
           socket: { tls: credentials.tls },
+          ...options,
         },
       });
     }
-    return redis.createClient({ url });
+    return redis.createClient({ url, ...options });
   } catch (err) {
-    throw new Error("error during create client with redis-cache service:" + err);
+    throw new Error("Error during create client with redis-cache service:" + err);
   }
 };
 
-const createClientAndConnect = async (errorHandlerCreateClient) => {
+const createClientAndConnect = async (errorHandlerCreateClient, options) => {
   try {
-    const client = createClientBase();
+    const client = createClientBase(options);
+    if (!client) {
+      return;
+    }
     await client.connect();
     client.on("error", (err) => {
       const dateNow = Date.now();
