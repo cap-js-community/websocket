@@ -43,14 +43,14 @@
   "dependencies": {
     "@sap/xsenv": "^4.2.0",
     "cookie": "^0.6.0",
-    "express": "^4.18.3",
+    "express": "^4.19.1",
     "redis": "^4.6.13",
     "socket.io": "^4.7.5",
     "ws": "^8.15.1"
   },
   "devDependencies": {
     "@cap-js-community/websocket": "./",
-    "@cap-js/sqlite": "^1.5.1",
+    "@cap-js/sqlite": "^1.6.0",
     "@sap/cds": "^7.7.3",
     "@sap/cds-dk": "^7.7.2",
     "@sap/xssec": "3.6.1",
