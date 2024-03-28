@@ -41,7 +41,7 @@
     "audit": "npm audit --only=prod"
   },
   "dependencies": {
-    "@sap/xsenv": "^4.2.0",
+    "@sap/xsenv": "^5.0.0",
     "cookie": "^0.6.0",
     "express": "^4.19.1",
     "redis": "^4.6.13",
