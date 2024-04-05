@@ -38,7 +38,7 @@ describe("Redis", () => {
   });
 
   test("Client createClient exception", async () => {
-    redis.clearClients();
+    await redis.closeClients();
     redisMock.throwError("createClient");
     let main = await redis.createPrimaryClientAndConnect();
     expect(main).toBeUndefined();
@@ -48,7 +48,7 @@ describe("Redis", () => {
   });
 
   test("Client connect exception", async () => {
-    redis.clearClients();
+    await redis.closeClients();
     redisMock.throwError("connect");
     let main = await redis.createPrimaryClientAndConnect();
     expect(main).toBeUndefined();

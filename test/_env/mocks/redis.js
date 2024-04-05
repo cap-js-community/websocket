@@ -14,6 +14,7 @@ const client = {
       throw new Error("connect error");
     }
   }),
+  quit: jest.fn(),
   on: jest.fn((event, cb) => {
     switch (event) {
       case "message":
@@ -30,14 +31,14 @@ const client = {
   xAdd: jest.fn(() => {
     return Promise.resolve();
   }),
-  off: jest.fn(() => {}),
+  off: jest.fn(),
   subscribe: jest.fn((channel, cb) => {
     onSubscribe.push(cb);
   }),
-  sSubscribe: jest.fn(() => {}),
-  pSubscribe: jest.fn(() => {}),
-  unsubscribe: jest.fn(() => {}),
-  pUnsubscribe: jest.fn(() => {}),
+  sSubscribe: jest.fn(),
+  pSubscribe: jest.fn(),
+  unsubscribe: jest.fn(),
+  pUnsubscribe: jest.fn(),
   publish: jest.fn((channel, message) => {
     for (const on of onMessage) {
       on(channel, message);

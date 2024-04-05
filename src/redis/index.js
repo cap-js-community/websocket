@@ -5,7 +5,7 @@ const redis = require("redis");
 const xsenv = require("@sap/xsenv");
 const cds = require("@sap/cds");
 
-const LOG = cds.log("websocket/redis");
+const LOG = cds.log("/websocket/redis");
 
 xsenv.loadEnv(path.join(process.cwd(), "default-env.json"));
 
@@ -23,9 +23,9 @@ const createPrimaryClientAndConnect = (options) => {
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
     primaryClientPromise = null;
-    setTimeout(createPrimaryClientAndConnect, LOG_AFTER_SEC * 1000).unref();
+    setTimeout(() => createPrimaryClientAndConnect(options), LOG_AFTER_SEC * 1000).unref();
   };
-  primaryClientPromise = createClientAndConnect(errorHandlerCreateClient, options);
+  primaryClientPromise = createClientAndConnect(options, errorHandlerCreateClient);
   return primaryClientPromise;
 };
 
@@ -36,9 +36,9 @@ const createSecondaryClientAndConnect = (options) => {
   const errorHandlerCreateClient = (err) => {
     LOG?.error("Error from redis client for pub/sub failed", err);
     secondaryClientPromise = null;
-    setTimeout(createSecondaryClientAndConnect, LOG_AFTER_SEC * 1000).unref();
+    setTimeout(() => createSecondaryClientAndConnect(options), LOG_AFTER_SEC * 1000).unref();
   };
-  secondaryClientPromise = createClientAndConnect(errorHandlerCreateClient, options);
+  secondaryClientPromise = createClientAndConnect(options, errorHandlerCreateClient);
   return secondaryClientPromise;
 };
 
@@ -65,8 +65,6 @@ const createClientBase = (options = {}) => {
     return;
   }
   try {
-    // NOTE: settings the user explicitly to empty resolves auth problems, see
-    // https://github.com/go-redis/redis/issues/1343
     const redisIsCluster = credentials.cluster_mode;
     const url = credentials.uri.replace(/(?<=rediss:\/\/)[\w-]+?(?=:)/, "");
     if (redisIsCluster) {
@@ -86,7 +84,7 @@ const createClientBase = (options = {}) => {
   }
 };
 
-const createClientAndConnect = async (errorHandlerCreateClient, options) => {
+const createClientAndConnect = async (options, errorHandlerCreateClient) => {
   try {
     const client = createClientBase(options);
     if (!client) {
@@ -114,13 +112,59 @@ const createClientAndConnect = async (errorHandlerCreateClient, options) => {
   }
 };
 
-const clearClients = () => {
-  primaryClientPromise = null;
-  secondaryClientPromise = null;
+const closePrimaryClient = async () => {
+  try {
+    await resilientClientClose(await primaryClientPromise);
+    primaryClientPromise = null;
+  } catch (err) {
+    // ignore errors during shutdown
+  }
+};
+
+const closeSecondaryClient = async () => {
+  try {
+    await resilientClientClose(await secondaryClientPromise);
+    secondaryClientPromise = null;
+  } catch (err) {
+    // ignore errors during shutdown
+  }
+};
+
+const resilientClientClose = async (client) => {
+  try {
+    if (client?.quit) {
+      await client.quit();
+    }
+  } catch (err) {
+    // ignore errors during shutdown
+  }
+};
+
+const connectionCheck = async (options) => {
+  return new Promise((resolve, reject) => {
+    createClientAndConnect(options, reject)
+      .then((client) => {
+        if (client) {
+          resilientClientClose(client);
+          resolve();
+        } else {
+          reject(new Error());
+        }
+      })
+      .catch(reject);
+  })
+    .then(() => true)
+    .catch(() => false);
+};
+
+const closeClients = async () => {
+  await closePrimaryClient();
+  await closeSecondaryClient();
 };
 
 module.exports = {
+  connectionCheck,
   createPrimaryClientAndConnect,
   createSecondaryClientAndConnect,
-  clearClients,
+  closeClients,
 };

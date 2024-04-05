@@ -1,9 +1,10 @@
 "use strict";
 
 const cds = require("@sap/cds");
-const LOG = cds.log("websocket");
+const LOG = cds.log("/websocket");
 
 const SocketServer = require("./socket/base");
+const redis = require("./redis");
 
 const WebSocketAction = {
   Connect: "wsConnect",
@@ -20,6 +21,9 @@ const collectServicesAndMountAdapter = (srv, options) => {
     cds.on("served", () => {
       options.services = services;
       serveWebSocketServer(options);
+    });
+    cds.on("shutdown", async () => {
+      await redis.closeClients();
     });
   }
   services[srv.name] = srv;

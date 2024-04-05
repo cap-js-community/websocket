@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - First major release
 
+### Fixed
+
+- Clear existing redis clients before shutdown
+- Call unknown adapter implementations for Socket.IO
+- Normalize logging layer
+
 ## Version 0.9.0 - 2024-04-02
 
 ### Fixed

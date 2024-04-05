@@ -4,7 +4,7 @@ const SocketServer = require("./base");
 const WebSocket = require("ws");
 const cds = require("@sap/cds");
 
-const LOG = cds.log("websocket/ws");
+const LOG = cds.log("/websocket/ws");
 const DEBUG = cds.debug("websocket");
 
 class SocketWSServer extends SocketServer {
@@ -192,10 +192,9 @@ class SocketWSServer extends SocketServer {
         if (cds.env.websocket?.adapter?.config) {
           config = { ...config, ...cds.env.websocket?.adapter?.config };
         }
-        const prefix = options?.key ?? "websocket";
         const adapterFactory = SocketServer.require(adapterImpl, "adapter");
-        this.adapter = new adapterFactory(this, prefix, options, config);
-        await this.adapter?.setup();
+        this.adapter = new adapterFactory(this, options, config);
+        await this.adapter?.setup?.();
         this.adapterActive = !!this.adapter?.client;
       }
     } catch (err) {

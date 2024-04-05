@@ -6,7 +6,7 @@ const { Server } = require("socket.io");
 const SocketServer = require("./base");
 const redis = require("../redis");
 
-const LOG = cds.log("websocket/socket.io");
+const LOG = cds.log("/websocket/socket.io");
 const DEBUG = cds.debug("websocket");
 
 class SocketIOServer extends SocketServer {
@@ -134,19 +134,27 @@ class SocketIOServer extends SocketServer {
         const adapterFactory = SocketServer.require(adapterImpl);
         switch (adapterImpl) {
           case "@socket.io/redis-adapter":
-            client = await redis.createPrimaryClientAndConnect(config);
-            if (client) {
-              subClient = await redis.createSecondaryClientAndConnect(config);
-              if (subClient) {
-                this.adapter = adapterFactory.createAdapter(client, subClient, options);
+            if (await redis.connectionCheck(config)) {
+              client = await redis.createPrimaryClientAndConnect(config);
+              if (client) {
+                subClient = await redis.createSecondaryClientAndConnect(config);
+                if (subClient) {
+                  this.adapter = adapterFactory.createAdapter(client, subClient, options);
+                }
               }
             }
             break;
           case "@socket.io/redis-streams-adapter":
-            client = await redis.createPrimaryClientAndConnect();
-            if (client) {
-              this.adapter = adapterFactory.createAdapter(client, options);
+            if (await redis.connectionCheck(config)) {
+              client = await redis.createPrimaryClientAndConnect(config);
+              if (client) {
+                this.adapter = adapterFactory.createAdapter(client, options);
+              }
             }
+            break;
+          default:
+            this.adapter = new adapterFactory(this, options, config);
+            await this.adapter?.setup?.();
             break;
         }
         if (this.adapter) {
