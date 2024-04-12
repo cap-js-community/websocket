@@ -27,7 +27,8 @@ describe("Auth", () => {
   // TODO: CDS basic-auth does not call next(err). Socket.IO client is not connected and promise is pending
   test.skip("Invalid Auth", async () => {
     await new Promise((resolve) => {
-      socket.on("disconnect", () => {
+      socket.on("disconnect", (event) => {
+        expect(event).toBeDefined();
         resolve();
       });
     });

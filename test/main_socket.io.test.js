@@ -310,5 +310,6 @@ describe("Main", () => {
   test("Disconnects socket (last test)", async () => {
     await disconnect(socket); // for test coverage
     await wait();
+    expect(socket).toBeDefined();
   });
 });
