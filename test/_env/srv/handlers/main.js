@@ -32,6 +32,12 @@ module.exports = (srv) => {
     return text;
   });
 
+  srv.on("triggerCustomContextStaticEvent", async (req) => {
+    const text = req.data.text + req.data.num;
+    await srv.emit("customContextStaticEvent", { text });
+    return text;
+  });
+
   srv.on("triggerCustomContextMassEvent", async (req) => {
     const ID1 = req.data.ID1;
     const ID2 = req.data.ID2;
@@ -66,11 +72,17 @@ module.exports = (srv) => {
       "customContextHeaderEvent",
       { ID, text },
       {
+        wsContexts: [ID],
         contexts: [ID],
+        wsExcludeCurrentUser: req.data.num === 1,
         excludeCurrentUser: req.data.num === 1,
       },
     );
     return text + "-" + req.context.user.id;
+  });
+
+  srv.on("eventException", (req) => {
+    throw new Error("An error occurred");
   });
 
   srv.on("wsConnect", async (req) => {});

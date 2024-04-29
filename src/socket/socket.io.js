@@ -17,6 +17,7 @@ class SocketIOServer extends SocketServer {
       ...cds.env.websocket?.options,
     });
     this.io.engine.on("connection_error", (err) => {
+      delete err.req;
       LOG?.error(err);
     });
     cds.ws = this;
@@ -36,6 +37,9 @@ class SocketIOServer extends SocketServer {
         socket.user = socket.request.user.id;
         socket.join(room({ tenant: socket.tenant }));
         socket.join(room({ tenant: socket.tenant, user: socket.user }));
+        if (socket.request._query?.id) {
+          socket.join(room({ tenant: socket.tenant, identifier: socket.request._query?.id }));
+        }
         DEBUG?.("Connected", socket.id);
         socket.on("disconnect", () => {
           DEBUG?.("Disconnected", socket.id);
@@ -58,10 +62,7 @@ class SocketIOServer extends SocketServer {
           emit: async (event, data) => {
             await socket.emit(event, data);
           },
-          broadcast: async (event, data, user, contexts) => {
-            await this.broadcast({ service, event, data, tenant: socket.tenant, user, contexts, socket, remote: true });
-          },
-          broadcastAll: async (event, data, user, contexts) => {
+          broadcast: async (event, data, user, contexts, identifier) => {
             await this.broadcast({
               service,
               event,
@@ -69,6 +70,20 @@ class SocketIOServer extends SocketServer {
               tenant: socket.tenant,
               user,
               contexts,
+              identifier,
+              socket,
+              remote: true,
+            });
+          },
+          broadcastAll: async (event, data, user, contexts, identifier) => {
+            await this.broadcast({
+              service,
+              event,
+              data,
+              tenant: socket.tenant,
+              user,
+              contexts,
+              identifier,
               socket: null,
               remote: true,
             });
@@ -94,7 +109,7 @@ class SocketIOServer extends SocketServer {
     });
   }
 
-  async broadcast({ service, event, data, tenant, user, contexts, socket, remote }) {
+  async broadcast({ service, event, data, tenant, user, contexts, identifier, socket }) {
     let to = socket?.broadcast || this.io.of(service);
     if (contexts) {
       for (const context of contexts || []) {
@@ -105,6 +120,9 @@ class SocketIOServer extends SocketServer {
     }
     if (user) {
       to = to.except(room({ tenant, user }));
+    }
+    if (identifier) {
+      to = to.except(room({ tenant, identifier }));
     }
     to.emit(event, data);
   }
@@ -153,8 +171,7 @@ class SocketIOServer extends SocketServer {
             }
             break;
           default:
-            this.adapter = new adapterFactory(this, options, config);
-            await this.adapter?.setup?.();
+            this.adapter = adapterFactory.createAdapter(this, options, config);
             break;
         }
         if (this.adapter) {
@@ -175,8 +192,8 @@ class SocketIOServer extends SocketServer {
   }
 }
 
-function room({ tenant, user, context }) {
-  return `${tenant ? `/tenant:${tenant}#` : ""}${user ? `/user:${user}#` : ""}${context ? `/context:${context}#` : ""}`;
+function room({ tenant, user, context, identifier }) {
+  return `${tenant ? `/tenant:${tenant}#` : ""}${user ? `/user:${user}#` : ""}${context ? `/context:${context}#` : ""}${identifier ? `/identifier:${identifier}#` : ""}`;
 }
 
 module.exports = SocketIOServer;

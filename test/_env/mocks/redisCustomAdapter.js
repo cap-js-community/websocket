@@ -13,7 +13,10 @@ const adapter = {
 };
 
 module.exports = {
-  createAdapter: () => {
+  createAdapter: (server, options, config) => {
+    adapter.server = server;
+    adapter.options = options;
+    adapter.config = config;
     return function (nsp) {
       adapter.nsp = nsp;
       return adapter;

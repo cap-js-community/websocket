@@ -20,13 +20,23 @@ service MainService {
     }
 
     function triggerCustomContextEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomContextStaticEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextMassEvent(ID1: UUID, ID2: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextUserEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextUserDynamicEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextHeaderEvent(ID: UUID, num: Integer, text: String) returns String;
 
+    function eventException() returns String;
+
     event customContextEvent {
         @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+    }
+
+    @websocket.context: ['context']
+    event customContextStaticEvent {
         ID: UUID;
         num: Integer;
         text: String;

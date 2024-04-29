@@ -3,17 +3,16 @@
 const cds = require("@sap/cds");
 
 const auth = require("./_env/util/auth");
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/ws");
+const { connect, disconnect, waitForEvent } = require("./_env/util/ws");
 
 cds.test(__dirname + "/_env");
 
 describe("Todo", () => {
   let socket;
-  let service;
 
   beforeAll(async () => {
     socket = await connect("/ws/todo");
-    service = await cds.connect.to("TodoService");
+    await cds.connect.to("TodoService");
   });
 
   afterAll(async () => {

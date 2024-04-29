@@ -265,14 +265,14 @@ In case of execution errors, the event broadcast is retried automatically, while
 
 Events are broadcast to all websocket clients, including clients established in context of current event context user.
 To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is available on
-event type level and entity type element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
+event type level and event type element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
 
 Valid annotation values are:
 
-- **Entity type level**:
+- **Event type level**:
   - `'excludeCurrent'`: Current event context user is statically excluded everytime during broadcasting to websocket clients.
     All websocket clients established in context to that user are not respected during event broadcast.
-- **Entity type element level**:
+- **Event type element level**:
   - `'excludeCurrent'`: Current event context user is dynamically excluded during broadcasting to websocket clients,
     based on the value of the annotated event type element.
     If truthy, all websocket clients established in context to that user are not respected during event broadcast.
@@ -282,7 +282,8 @@ Valid annotation values are:
 It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed to
 determined based on the event type, to which subset of clients the event shall be emitted. To specify which data parts of the
 event are leveraged for setting up the context, the annotation `@websocket.context` or `@ws.context` is available on
-event type element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`):
+event type element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`). For static contexts
+the annotation can also be used on event type level, providing a static event context string.
 
 ```cds
 event received {
@@ -357,20 +358,49 @@ over remote distribution via Redis.
 
 For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
 
+### Event Client Identifier
+
+Events are broadcast to all websocket clients, including clients that performed certain action. In some cases, the  
+websocket client shall not be informed about the event, that was triggered by the same client (maybe via a different channel, e.g. OData).
+Therefore, websocket clients can be identified optionally by a unique identifier provided as URL parameter option `?id=<globally unique value>`.
+The annotation `@websocket.identifier` or `@ws.identifier` is available on event type level and event type element level
+to influence event broadcasting based websocket client identifier (alternatives include `@websocket.broadcast.identifier` or `@ws.broadcast.identifier`):
+
+Valid annotation values are:
+
+- **Event type level**:
+  - Provide a static unique identifier to exclude the client from event broadcasting
+- **Event type element level**:
+  - Value from event data for the annotated element is used as unique identifier to exclude the websocket client from event broadcasting
+  - First annotated element with an defined event data value is taken
+
+The unique identifier can be provided for a websocket client as follows:
+
+- WS Standard:
+  ```js
+  socket = new WebSocket("ws://localhost:4004/ws/chat?id=1234");
+  ```
+- Socket.IO:
+  ```js
+  const socket = io("/chat?id=1234", { path: "/ws" });
+  ```
+
 ### Event Emit Headers
 
 The websocket implementation allows to provide event emit headers to dynamically control websocket processing.
 The following headers are available:
 
-- `excludeCurrentUser: boolean`: Exclude current user from event broadcasting (see section Event User)
-- `contexts: String[]`: Provide an array of context strings to identify a subset of clients (see section Event Contexts)
+- `excludeCurrentUser: boolean, wsExcludeCurrentUser: boolean`: Exclude current user from event broadcasting (see section Event User)
+- `contexts: String[], wsContexts: String[]`: Provide an array of context strings to identify a subset of clients (see section Event Contexts)
+- `identifier: String, wsIdentifier: String`: Exclude an websocket client via its identifier (see section Event Client Identifier)
 
 Emitting events with headers can be performed as follows:
 
 ```js
-await srv.emit("customContextHeaderEvent", req.data, {
+await srv.emit("customEvent", { ... }, {
   contexts: ["..."],
   excludeCurrentUser: req.data.type === "1",
+  identifier: "...",
 });
 ```
 

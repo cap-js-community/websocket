@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 "use strict";
 
 const cds = require("@sap/cds");
@@ -133,11 +134,12 @@ class SocketServer {
    * @param {string} tenant Tenant for isolation
    * @param {string} user User to be excluded, undefined: no exclusion
    * @param {[string]} contexts Array of contexts to restrict, undefined: no restriction
+   * @param {string} identifier Unique consumer-provided socket client identifier, undefined: no restriction
    * @param {Object} socket Broadcast client to be excluded, undefined: no exclusion
    * @param {boolean} remote Broadcast also remote (e.g. via redis), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast({ service, event, data, tenant, user, contexts, socket, remote }) {}
+  async broadcast({ service, event, data, tenant, user, contexts, identifier, socket, remote }) {}
 
   /**
    * Handle HTTP request response

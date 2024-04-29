@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - First major release
+- Support for excluding a consumer-defined socket instance by identifier
 
 ### Fixed
 

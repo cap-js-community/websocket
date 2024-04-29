@@ -144,6 +144,7 @@ function bindServiceEvents(socketServer, servicePath, service) {
         const localEventName = serviceLocalName(service, event.name);
         const user = deriveUser(event, req.data, req.headers, req);
         const contexts = deriveContexts(event, req.data, req.headers);
+        const identifier = deriveIdentifier(event, req.data, req.headers);
         await socketServer.broadcast({
           service: servicePath,
           event: localEventName,
@@ -151,6 +152,7 @@ function bindServiceEvents(socketServer, servicePath, service) {
           tenant: req.tenant,
           user,
           contexts,
+          identifier,
           socket: null,
           remote: true,
         });
@@ -176,7 +178,7 @@ function bindServiceDefaults(socket, service) {
     if (service.operations(WebSocketAction.Context).length) {
       await processEvent(socket, service, undefined, WebSocketAction.Context, data, callback);
     } else {
-      callback && callback();
+      callback && (await callback());
     }
   });
 }
@@ -198,7 +200,7 @@ function bindServiceEntities(socket, service) {
     const localEntityName = serviceLocalName(service, entity.name);
     socket.on(`${localEntityName}:create`, async (data, callback) => {
       await processEvent(socket, service, entity, "create", data, async (response) => {
-        callback && callback(response);
+        callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:created`, entity, response);
       });
     });
@@ -210,13 +212,13 @@ function bindServiceEntities(socket, service) {
     });
     socket.on(`${localEntityName}:update`, async (data, callback) => {
       await processEvent(socket, service, entity, "update", data, async (response) => {
-        callback && callback(response);
+        callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:updated`, entity, response);
       });
     });
     socket.on(`${localEntityName}:delete`, async (data, callback) => {
       await processEvent(socket, service, entity, "delete", data, async (response) => {
-        callback && callback(response);
+        callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:deleted`, entity, { ...response, ...data });
       });
     });
@@ -294,18 +296,20 @@ async function call(socket, service, entity, event, data) {
 async function broadcastEvent(socket, service, event, entity, data) {
   let user;
   let contexts;
+  let identifier;
   const events = service.events();
   const eventDefinition = events[event] || events[event.replaceAll(/:/g, ".")];
   if (eventDefinition) {
     user = deriveUser(eventDefinition, data, {}, socket);
     contexts = deriveContexts(eventDefinition, data, {});
+    identifier = deriveIdentifier(eventDefinition, data, {});
   }
   const contentData = broadcastData(entity, data, eventDefinition);
   if (contentData) {
     if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
-      await socket.broadcastAll(event, contentData, user, contexts);
+      await socket.broadcastAll(event, contentData, user, contexts, identifier);
     } else {
-      await socket.broadcast(event, contentData, user, contexts);
+      await socket.broadcast(event, contentData, user, contexts, identifier);
     }
   }
 }
@@ -345,8 +349,8 @@ function deriveElements(event, data) {
 }
 
 function deriveUser(event, data, headers, req) {
-  if (headers?.excludeCurrentUser !== undefined) {
-    if (headers?.excludeCurrentUser) {
+  if ((headers?.wsExcludeCurrentUser || headers?.excludeCurrentUser) !== undefined) {
+    if (headers?.wsExcludeCurrentUser || headers?.excludeCurrentUser) {
       return req.context.user.id;
     }
     return;
@@ -374,8 +378,23 @@ function deriveUser(event, data, headers, req) {
 }
 
 function deriveContexts(event, data, headers) {
-  let isContextEvent = !!Array.isArray(headers?.contexts);
-  const contexts = isContextEvent ? headers.contexts : [];
+  const headerContexts = headers?.wsContexts || headers?.contexts;
+  let isContextEvent = !!Array.isArray(headerContexts);
+  let contexts = isContextEvent ? headerContexts : [];
+  let eventContexts =
+    event["@websocket.context"] ||
+    event["@ws.context"] ||
+    event["@websocket.broadcast.context"] ||
+    event["@ws.broadcast.context"];
+  if (eventContexts) {
+    if (Array.isArray(eventContexts)) {
+      contexts = contexts.concat(eventContexts);
+      isContextEvent = true;
+    } else {
+      contexts.push(eventContexts);
+      isContextEvent = true;
+    }
+  }
   if (event.elements) {
     for (const name in event.elements) {
       const element = event.elements[name];
@@ -399,6 +418,34 @@ function deriveContexts(event, data, headers) {
     }
   }
   return isContextEvent ? contexts : undefined;
+}
+
+function deriveIdentifier(event, data, headers) {
+  let headerIdentifier = headers?.wsIdentifier || headers?.identifier;
+  if (headerIdentifier) {
+    return headerIdentifier;
+  }
+  let eventIdentifier =
+    event["@websocket.identifier"] ||
+    event["@ws.identifier"] ||
+    event["@websocket.broadcast.identifier"] ||
+    event["@ws.broadcast.identifier"];
+  if (eventIdentifier) {
+    return eventIdentifier;
+  }
+  if (event.elements) {
+    for (const name in event.elements) {
+      const element = event.elements[name];
+      const identifier =
+        element["@websocket.identifier"] ||
+        element["@ws.identifier"] ||
+        element["@websocket.broadcast.identifier"] ||
+        element["@ws.broadcast.identifier"];
+      if (identifier) {
+        return data[name] ? data[name] : undefined;
+      }
+    }
+  }
 }
 
 function contextString(value) {

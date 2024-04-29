@@ -9,11 +9,10 @@ cds.test(__dirname + "/_env");
 
 describe("OData", () => {
   let socket;
-  let service;
 
   beforeAll(async () => {
     socket = await connect("/ws/odata");
-    service = await cds.connect.to("TodoService");
+    await cds.connect.to("TodoService");
   });
 
   afterAll(async () => {

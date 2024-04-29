@@ -1,8 +1,10 @@
 "use strict";
 
-const SocketServer = require("./base");
-const WebSocket = require("ws");
+const URL = require("url");
 const cds = require("@sap/cds");
+const WebSocket = require("ws");
+
+const SocketServer = require("./base");
 
 const LOG = cds.log("/websocket/ws");
 const DEBUG = cds.debug("websocket");
@@ -20,7 +22,13 @@ class SocketWSServer extends SocketServer {
     await this.applyAdapter();
     this._middlewares = this.middlewares();
     this.wss.on("connection", async (ws, request) => {
-      this.services[request?.url]?.(ws, request);
+      const url = request?.url;
+      if (url) {
+        const urlObj = URL.parse(url, true);
+        request.queryOptions = urlObj.query;
+        request.url = urlObj.pathname;
+        this.services[request.url]?.(ws, request);
+      }
     });
   }
 
@@ -43,7 +51,7 @@ class SocketWSServer extends SocketServer {
         let payload = {};
         try {
           payload = JSON.parse(message);
-        } catch (_) {
+        } catch {
           // ignore
         }
         try {
@@ -83,7 +91,7 @@ class SocketWSServer extends SocketServer {
                 }),
               );
             },
-            broadcast: async (event, data, user, contexts) => {
+            broadcast: async (event, data, user, contexts, identifier) => {
               await this.broadcast({
                 service,
                 event,
@@ -91,11 +99,12 @@ class SocketWSServer extends SocketServer {
                 tenant: ws.tenant,
                 user,
                 contexts,
+                identifier,
                 socket: ws,
                 remote: true,
               });
             },
-            broadcastAll: async (event, data, user, contexts) => {
+            broadcastAll: async (event, data, user, contexts, identifier) => {
               await this.broadcast({
                 service,
                 event,
@@ -103,6 +112,7 @@ class SocketWSServer extends SocketServer {
                 tenant: ws.tenant,
                 user,
                 contexts,
+                identifier,
                 socket: null,
                 remote: true,
               });
@@ -129,7 +139,7 @@ class SocketWSServer extends SocketServer {
     };
   }
 
-  async broadcast({ service, event, data, tenant, user, contexts, socket, remote }) {
+  async broadcast({ service, event, data, tenant, user, contexts, identifier, socket, remote }) {
     const eventMessage = event;
     const isEventMessage = !data;
     if (isEventMessage) {
@@ -139,6 +149,7 @@ class SocketWSServer extends SocketServer {
       tenant = message.tenant;
       user = message.user;
       contexts = message.contexts;
+      identifier = message.identifier;
     }
     const servicePath = `${this.path}${service}`;
     const clients = [];
@@ -152,7 +163,8 @@ class SocketWSServer extends SocketServer {
         (!contexts ||
           contexts.find((context) => {
             return !!client.contexts[context];
-          }))
+          })) &&
+        (!identifier || client.request?.queryOptions?.id !== identifier)
       ) {
         clients.push(client);
       }
@@ -167,7 +179,9 @@ class SocketWSServer extends SocketServer {
       }
     }
     if (remote) {
-      const adapterMessage = isEventMessage ? eventMessage : JSON.stringify({ event, data, tenant, user, contexts });
+      const adapterMessage = isEventMessage
+        ? eventMessage
+        : JSON.stringify({ event, data, tenant, user, contexts, identifier });
       await this.adapter?.emit(service, adapterMessage);
     }
   }

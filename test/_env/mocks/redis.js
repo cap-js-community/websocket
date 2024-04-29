@@ -3,6 +3,7 @@
 const onMessage = [];
 const onSubscribe = [];
 const onError = [];
+const onReconnecting = [];
 
 let createClientError = false;
 let connectError = false;
@@ -22,6 +23,9 @@ const client = {
         break;
       case "error":
         onError.push(cb);
+        break;
+      case "reconnecting":
+        onReconnecting.push(cb);
         break;
     }
   }),
@@ -49,6 +53,11 @@ const client = {
   }),
   error: jest.fn((err) => {
     for (const on of onError) {
+      on(err);
+    }
+  }),
+  reconnect: jest.fn((err) => {
+    for (const on of onReconnecting) {
       on(err);
     }
   }),

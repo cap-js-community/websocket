@@ -116,6 +116,14 @@ describe("Main", () => {
     expect(result).toBe("test2");
   });
 
+  test("Event Exception", async () => {
+    try {
+      await emitEvent(socket, "eventException", {});
+    } catch (err) {
+      expect(err.message).toEqual("An error occurred");
+    }
+  });
+
   test("Event", async () => {
     const eventResultPromise = waitForEvent(socketOther, "customEvent");
     const result = await emitEvent(socket, "triggerCustomEvent", { num: 1, text: "test" });
@@ -180,6 +188,53 @@ describe("Main", () => {
     await eventNoOtherResultPromise;
 
     await enterContext(socket, ID);
+  });
+
+  test("Event Context Static", async () => {
+    const context = "context";
+
+    await enterContext(socket, context);
+    await wait();
+    let eventResultPromise = waitForEvent(socket, "customContextStaticEvent");
+    let eventNoResultPromise = waitForNoEvent(socketOther, "customContextStaticEvent");
+    let result = await emitEvent(socket, "triggerCustomContextStaticEvent", { num: 1, text: "test" });
+    expect(result).toBe("test1");
+    let eventResult = await eventResultPromise;
+    expect(eventResult.text).toBe("test1");
+    await eventNoResultPromise;
+
+    await enterContext(socketOther, context);
+    await wait();
+    eventResultPromise = waitForEvent(socket, "customContextStaticEvent");
+    const eventResultOtherPromise = waitForEvent(socketOther, "customContextStaticEvent");
+    result = await emitEvent(socket, "triggerCustomContextStaticEvent", { num: 1, text: "test" });
+    expect(result).toBe("test1");
+    eventResult = await eventResultPromise;
+    expect(eventResult.text).toBe("test1");
+    const eventResultOther = await eventResultOtherPromise;
+    expect(eventResultOther.text).toBe("test1");
+
+    await exitContext(socketOther, context);
+    await wait();
+    eventResultPromise = waitForEvent(socket, "customContextStaticEvent");
+    eventNoResultPromise = waitForNoEvent(socketOther, "customContextStaticEvent");
+    result = await emitEvent(socket, "triggerCustomContextStaticEvent", { num: 1, text: "test" });
+    expect(result).toBe("test1");
+    eventResult = await eventResultPromise;
+    expect(eventResult.text).toBe("test1");
+    await eventNoResultPromise;
+
+    await exitContext(socket, context);
+    await exitContext(socketOther, context);
+    await wait();
+    eventNoResultPromise = waitForNoEvent(socket, "customContextStaticEvent");
+    const eventNoOtherResultPromise = waitForNoEvent(socketOther, "customContextStaticEvent");
+    result = await emitEvent(socket, "triggerCustomContextStaticEvent", { num: 1, text: "test" });
+    expect(result).toBe("test1");
+    await eventNoResultPromise;
+    await eventNoOtherResultPromise;
+
+    await enterContext(socket, context);
   });
 
   test("Event Context Mass", async () => {

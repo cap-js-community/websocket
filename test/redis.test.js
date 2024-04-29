@@ -56,4 +56,18 @@ describe("Redis", () => {
     let secondary = await redis.createSecondaryClientAndConnect();
     expect(secondary).toBeUndefined();
   });
+
+  test("Client error", async () => {
+    await redis.closeClients();
+    const main = await redis.createPrimaryClientAndConnect();
+    expect(main).toBeDefined();
+    main.error(new Error("error"));
+  });
+
+  test("Client reconnect", async () => {
+    await redis.closeClients();
+    const main = await redis.createPrimaryClientAndConnect();
+    expect(main).toBeDefined();
+    main.reconnect();
+  });
 });

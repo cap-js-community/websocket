@@ -40,7 +40,7 @@ module.exports = [
     rules: {
       strict: ["error"],
       curly: ["error"],
-      "no-unused-vars": ["off"],
+      "no-unused-vars": ["error", { argsIgnorePattern: "err|req|res|next", caughtErrors: "none" }],
       "no-restricted-modules": ["off"],
       "no-eval": ["error"],
       "no-implied-eval": ["error"],
