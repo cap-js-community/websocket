@@ -5,12 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 1.0.0 - 2024-05-xx
+## Version 1.0.0 - 2024-05-03
 
 ### Added
 
 - First major release
-- Support for excluding a consumer-defined socket instance by identifier
+- Exclude a client socket instance via a consumer-defined identifier
 
 ### Fixed
 
