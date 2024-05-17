@@ -26,6 +26,7 @@ async function connect(service, options = {}) {
 async function disconnect(socket) {
   cds.ws.close();
   socket.close();
+  socket._listeners = [];
 }
 
 async function emitEvent(socket, event, data) {
@@ -43,8 +44,9 @@ async function emitEvent(socket, event, data) {
 }
 
 async function waitForEvent(socket, event, cb) {
+  _initListeners(socket);
   return new Promise((resolve) => {
-    socket.on("message", (message) => {
+    socket._listeners.push((message) => {
       const payload = JSON.parse(message);
       if (payload.event === event) {
         resolve(payload.data);
@@ -55,11 +57,12 @@ async function waitForEvent(socket, event, cb) {
 }
 
 async function waitForNoEvent(socket, event, timeout = 100) {
+  _initListeners(socket);
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       resolve();
     }, timeout);
-    socket.on("message", (message) => {
+    socket._listeners.push((message) => {
       const payload = JSON.parse(message);
       if (payload.event === event) {
         clearTimeout(timeoutId);
@@ -75,6 +78,17 @@ async function enterContext(socket, context) {
 
 async function exitContext(socket, context) {
   return await emitEvent(socket, "wsContext", { context, exit: true });
+}
+
+function _initListeners(socket) {
+  if (!socket._listeners) {
+    socket._listeners ||= [];
+    socket.on("message", (message) => {
+      for (const listener of socket._listeners) {
+        listener(message);
+      }
+    });
+  }
 }
 
 module.exports = {
