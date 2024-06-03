@@ -34,7 +34,7 @@ class SocketIOServer extends SocketServer {
       try {
         this.enforceAuth(socket);
         socket.tenant = socket.request.tenant;
-        socket.user = socket.request.user.id;
+        socket.user = socket.request.user?.id;
         socket.join(room({ tenant: socket.tenant }));
         socket.join(room({ tenant: socket.tenant, user: socket.user }));
         if (socket.request._query?.id) {

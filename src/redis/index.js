@@ -56,7 +56,7 @@ const createClientBase = (options = {}) => {
   }
   let credentials;
   try {
-    credentials = xsenv.serviceCredentials({ label: "redis-cache" });
+    credentials = xsenv.serviceCredentials({ label: "redis-cache", ...cds.env.websocket?.adapter?.vcap });
   } catch (err) {
     LOG?.info(err.message);
   }

@@ -351,7 +351,7 @@ function deriveElements(event, data) {
 function deriveUser(event, data, headers, req) {
   if ((headers?.wsExcludeCurrentUser || headers?.excludeCurrentUser) !== undefined) {
     if (headers?.wsExcludeCurrentUser || headers?.excludeCurrentUser) {
-      return req.context.user.id;
+      return req.context.user?.id;
     }
     return;
   }
@@ -359,7 +359,7 @@ function deriveUser(event, data, headers, req) {
     event["@websocket.user"] || event["@ws.user"] || event["@websocket.broadcast.user"] || event["@ws.broadcast.user"];
   switch (user) {
     case "excludeCurrent":
-      return req.context.user.id;
+      return req.context.user?.id;
   }
   if (event.elements) {
     for (const name in event.elements) {
@@ -371,7 +371,7 @@ function deriveUser(event, data, headers, req) {
         element["@ws.broadcast.user"];
       switch (user) {
         case "excludeCurrent":
-          return data[name] ? req.context.user.id : undefined;
+          return data[name] ? req.context.user?.id : undefined;
       }
     }
   }

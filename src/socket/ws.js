@@ -66,7 +66,7 @@ class SocketWSServer extends SocketServer {
         try {
           this.enforceAuth(ws);
           ws.tenant = ws.request.tenant;
-          ws.user = ws.request.user.id;
+          ws.user = ws.request.user?.id;
           const facade = {
             service,
             socket: ws,
