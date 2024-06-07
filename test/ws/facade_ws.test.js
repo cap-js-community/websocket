@@ -2,21 +2,17 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, waitForEvent, waitForNoEvent } = require("./_env/util/socket.io");
+const { connect, disconnect, waitForEvent, waitForNoEvent } = require("../_env/util/ws");
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-};
-
-describe("Facade", () => {
+describe("Chat", () => {
   let socket;
   let socketOther;
 
   beforeAll(async () => {
-    socket = await connect("chat");
-    socketOther = await connect("chat");
+    socket = await connect("/ws/chat");
+    socketOther = await connect("/ws/chat");
   });
 
   afterAll(async () => {
@@ -42,7 +38,6 @@ describe("Facade", () => {
     expect(context.http.res).toEqual(expect.any(Object));
     expect(context.ws.service).toEqual(facade);
     expect(context.ws.socket).toEqual(facade.socket);
-    expect(context.ws.io).toBeDefined();
     expect(facade.on).toEqual(expect.any(Function));
     expect(facade.emit).toEqual(expect.any(Function));
     expect(facade.broadcast).toEqual(expect.any(Function));

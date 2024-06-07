@@ -2,20 +2,21 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent } = require("./_env/util/socket.io");
+const { connect, disconnect, emitEvent } = require("../_env/util/socket.io");
 const xsenv = require("@sap/xsenv");
 const redis = require("redis");
 require("@socket.io/redis-streams-adapter");
 
-jest.mock("redis", () => require("./_env/mocks/redis"));
-jest.mock("@socket.io/redis-streams-adapter", () => require("./_env/mocks/redisStreamAdapter"));
+jest.mock("redis", () => require("../_env/mocks/redis"));
+jest.mock("@socket.io/redis-streams-adapter", () => require("../_env/mocks/redisStreamAdapter"));
 
 jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
 
 cds.env.websocket = {
   kind: "socket.io",
+  impl: null,
   adapter: {
     impl: "@socket.io/redis-streams-adapter",
     local: true,

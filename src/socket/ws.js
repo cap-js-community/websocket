@@ -10,8 +10,8 @@ const LOG = cds.log("/websocket/ws");
 const DEBUG = cds.debug("websocket");
 
 class SocketWSServer extends SocketServer {
-  constructor(server, path) {
-    super(server, path);
+  constructor(server, path, config) {
+    super(server, path, config);
     this.wss = new WebSocket.Server({ server });
     this.services = {};
     cds.ws = this;
@@ -196,18 +196,10 @@ class SocketWSServer extends SocketServer {
 
   async applyAdapter() {
     try {
-      const adapterImpl = cds.env.websocket?.adapter?.impl;
-      if (adapterImpl) {
-        let options = {};
-        if (cds.env.websocket?.adapter?.options) {
-          options = { ...options, ...cds.env.websocket?.adapter?.options };
-        }
-        let config = {};
-        if (cds.env.websocket?.adapter?.config) {
-          config = { ...config, ...cds.env.websocket?.adapter?.config };
-        }
-        const adapterFactory = SocketServer.require(adapterImpl, "adapter");
-        this.adapter = new adapterFactory(this, options, config);
+      const config = { ...this.config?.adapter };
+      if (config.impl) {
+        const adapterFactory = SocketServer.require(config.impl, "adapter");
+        this.adapter = new adapterFactory(this, config);
         await this.adapter?.setup?.();
         this.adapterActive = !!this.adapter?.client;
       }

@@ -10,11 +10,11 @@ const LOG = cds.log("/websocket/socket.io");
 const DEBUG = cds.debug("websocket");
 
 class SocketIOServer extends SocketServer {
-  constructor(server, path) {
-    super(server, path);
+  constructor(server, path, config) {
+    super(server, path, config);
     this.io = new Server(server, {
       path,
-      ...cds.env.websocket?.options,
+      ...config?.options,
     });
     this.io.engine.on("connection_error", (err) => {
       delete err.req;
@@ -137,20 +137,13 @@ class SocketIOServer extends SocketServer {
 
   async applyAdapter() {
     try {
-      const adapterImpl = cds.env.websocket?.adapter?.impl;
-      if (adapterImpl) {
-        let options = {};
-        if (cds.env.websocket?.adapter?.options) {
-          options = { ...options, ...cds.env.websocket?.adapter?.options };
-        }
-        let config = {};
-        if (cds.env.websocket?.adapter?.config) {
-          config = { ...config, ...cds.env.websocket?.adapter?.config };
-        }
+      const config = { ...this.config?.adapter };
+      if (config.impl) {
         let client;
         let subClient;
-        const adapterFactory = SocketServer.require(adapterImpl);
-        switch (adapterImpl) {
+        const options = { ...config?.options };
+        const adapterFactory = SocketServer.require(config.impl);
+        switch (config.impl) {
           case "@socket.io/redis-adapter":
             if (await redis.connectionCheck(config)) {
               client = await redis.createPrimaryClientAndConnect(config);

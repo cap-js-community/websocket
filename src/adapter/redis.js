@@ -6,11 +6,10 @@ const cds = require("@sap/cds");
 const LOG = cds.log("/websocket/redis");
 
 class RedisAdapter {
-  constructor(server, options, config) {
+  constructor(server, config) {
     this.server = server;
-    this.options = options;
     this.config = config;
-    this.prefix = options?.key ?? "websocket";
+    this.prefix = config?.options?.key ?? "websocket";
   }
 
   async setup() {

@@ -2,20 +2,16 @@
 
 const cds = require("@sap/cds");
 
-const auth = require("./_env/util/auth");
-const { connect, disconnect, waitForEvent } = require("./_env/util/socket.io");
+const auth = require("../_env/util/auth");
+const { connect, disconnect, waitForEvent } = require("../_env/util/ws");
 
-cds.test(__dirname + "/_env");
-
-cds.env.websocket = {
-  kind: "socket.io",
-};
+cds.test(__dirname + "/../_env");
 
 describe("OData", () => {
   let socket;
 
   beforeAll(async () => {
-    socket = await connect("odata");
+    socket = await connect("/ws/odata");
     await cds.connect.to("TodoService");
   });
 

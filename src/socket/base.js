@@ -14,11 +14,13 @@ class SocketServer {
    * Constructor for websocket server
    * @param {Object} server HTTP server from express app
    * @param {string} path Protocol path, e.g. '/ws'
+   * @param {Object} config Websocket server configuration
    */
-  constructor(server, path) {
+  constructor(server, path, config) {
     this.id = crypto.randomUUID();
     this.server = server;
     this.path = path;
+    this.config = config;
     this.adapter = null;
     this.adapterActive = false;
     cds.ws = null;
@@ -299,10 +301,13 @@ class SocketServer {
     if (impl.startsWith("./") || impl.startsWith("../")) {
       return require(path.join(process.cwd(), impl));
     } else if (context) {
-      return require(path.join("..", context, impl));
-    } else {
-      return require(impl);
+      try {
+        return require(path.join("..", context, impl));
+      } catch {
+        // ignore
+      }
     }
+    return require(impl);
   }
 }
 

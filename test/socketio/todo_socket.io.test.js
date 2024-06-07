@@ -2,16 +2,21 @@
 
 const cds = require("@sap/cds");
 
-const auth = require("./_env/util/auth");
-const { connect, disconnect, waitForEvent } = require("./_env/util/ws");
+const auth = require("../_env/util/auth");
+const { connect, disconnect, waitForEvent } = require("../_env/util/socket.io");
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
+
+cds.env.websocket = {
+  kind: "socket.io",
+  impl: null,
+};
 
 describe("Todo", () => {
   let socket;
 
   beforeAll(async () => {
-    socket = await connect("/ws/todo");
+    socket = await connect("todo");
     await cds.connect.to("TodoService");
   });
 

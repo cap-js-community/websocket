@@ -3,15 +3,15 @@
 const cds = require("@sap/cds");
 const xsenv = require("@sap/xsenv");
 
-jest.mock("redis", () => require("./_env/mocks/redis"));
+jest.mock("redis", () => require("../_env/mocks/redis"));
 const redis = require("redis");
 
-const auth = require("./_env/util/auth");
-const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent } = require("./_env/util/ws");
+const auth = require("../_env/util/auth");
+const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent } = require("../_env/util/ws");
 
 jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
 
 cds.env.websocket = {
   kind: "ws",

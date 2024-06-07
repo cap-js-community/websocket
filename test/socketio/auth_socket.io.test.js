@@ -2,13 +2,14 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent } = require("./_env/util/socket.io");
-const auth = require("./_env/util/auth");
+const { connect, disconnect, emitEvent } = require("../_env/util/socket.io");
+const auth = require("../_env/util/auth");
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
 
 cds.env.websocket = {
   kind: "socket.io",
+  impl: null,
 };
 
 describe("Auth", () => {

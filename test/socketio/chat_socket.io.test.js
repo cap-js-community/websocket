@@ -2,12 +2,13 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/socket.io");
+const { connect, disconnect, emitEvent, waitForEvent } = require("../_env/util/socket.io");
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
 
 cds.env.websocket = {
   kind: "socket.io",
+  impl: null,
 };
 
 describe("Chat", () => {

@@ -43,20 +43,20 @@ const createSecondaryClientAndConnect = (options) => {
 };
 
 const createClientBase = (options = {}) => {
-  const adapterActive = cds.env.websocket?.adapter?.active !== false;
+  const adapterActive = options?.active !== false;
   if (!adapterActive) {
     LOG?.info("Redis adapter is disabled");
     return;
   }
-  const adapterActiveExplicit = !!cds.env.websocket?.adapter?.active;
-  const adapterLocal = !!cds.env.websocket?.adapter?.local;
+  const adapterActiveExplicit = !!options?.active;
+  const adapterLocal = !!options?.local;
   if (!(IS_ON_CF || adapterActiveExplicit || adapterLocal)) {
     LOG?.info("Redis not available in local environment");
     return;
   }
   let credentials;
   try {
-    credentials = xsenv.serviceCredentials({ label: "redis-cache", ...cds.env.websocket?.adapter?.vcap });
+    credentials = xsenv.serviceCredentials({ label: "redis-cache", ...options?.vcap });
   } catch (err) {
     LOG?.info(err.message);
   }
@@ -74,11 +74,11 @@ const createClientBase = (options = {}) => {
         defaults: {
           password: credentials.password,
           socket: { tls: credentials.tls },
-          ...options,
+          ...options?.config,
         },
       });
     }
-    return redis.createClient({ url, ...options });
+    return redis.createClient({ url, ...options?.config });
   } catch (err) {
     throw new Error("Error during create client with redis-cache service:" + err);
   }

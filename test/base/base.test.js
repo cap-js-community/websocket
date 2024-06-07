@@ -2,7 +2,7 @@
 
 const cds = require("@sap/cds");
 
-const SocketServer = require("../src/socket/base");
+const SocketServer = require("../../src/socket/base");
 
 describe("Base", () => {
   beforeAll(async () => {});

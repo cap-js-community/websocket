@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Add `cds.requires.kinds` for websockets and merge config
+- Pass all `cds.env.websocket` config to adapter and redis implementation
+- Streamline `cds.env` access in socket and redis implementation
+- Refactor unit-tests to be grouped by implementation
 
 ## Version 1.0.1 - 2024-06-03
 

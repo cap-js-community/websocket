@@ -2,9 +2,9 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent, waitForEvent } = require("./_env/util/ws");
+const { connect, disconnect, emitEvent, waitForEvent } = require("../_env/util/ws");
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
 
 describe("Chat", () => {
   let socket;

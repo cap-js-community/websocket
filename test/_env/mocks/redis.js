@@ -75,18 +75,20 @@ module.exports = {
         break;
     }
   },
-  createClient: jest.fn(() => {
+  createClient: jest.fn((options) => {
     if (createClientError) {
       createClientError = false;
       throw new Error("create client error");
     }
+    client.options = options;
     return client;
   }),
-  createCluster: jest.fn(() => {
+  createCluster: jest.fn((options) => {
     if (createClientError) {
       createClientError = false;
       throw new Error("create cluster error");
     }
+    client.options = options;
     return client;
   }),
   commandOptions: jest.fn(() => {

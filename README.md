@@ -624,6 +624,7 @@ cds.test(__dirname + "/..");
 
 cds.env.websocket = {
   kind: "socket.io",
+  impl: null,
 };
 
 const authorization = `Basic ${Buffer.from("alice:alice").toString("base64")}`;

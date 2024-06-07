@@ -2,20 +2,26 @@
 
 const cds = require("@sap/cds");
 const xsenv = require("@sap/xsenv");
-const redisMock = require("./_env/mocks/redis");
-jest.mock("redis", () => require("./_env/mocks/redis"));
-const redis = require("../src/redis");
+const redisMock = require("../_env/mocks/redis");
+jest.mock("redis", () => require("../_env/mocks/redis"));
+const redis = require("../../src/redis");
 
-cds.test(__dirname + "/_env");
+cds.test(__dirname + "/../_env");
 
 jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri", cluster_mode: true });
 
+const redisConfig = {
+  a: 1,
+};
+const adapterOptions = {
+  impl: "redis",
+  local: true,
+  config: redisConfig,
+};
+
 cds.env.websocket = {
   kind: "ws",
-  adapter: {
-    impl: "redis",
-    local: true,
-  },
+  adapter: adapterOptions,
 };
 
 describe("Redis", () => {
@@ -24,14 +30,20 @@ describe("Redis", () => {
   afterAll(async () => {});
 
   test("Client", async () => {
-    const main = await redis.createPrimaryClientAndConnect();
+    const main = await redis.createPrimaryClientAndConnect(adapterOptions);
     expect(main).toBeDefined();
-    const second = await redis.createSecondaryClientAndConnect();
+    expect(main.options).toMatchObject({
+      defaults: expect.objectContaining(redisConfig),
+    });
+    const second = await redis.createSecondaryClientAndConnect(adapterOptions);
     expect(second).toBeDefined();
+    expect(second.options).toMatchObject({
+      defaults: expect.objectContaining(redisConfig),
+    });
   });
 
   test("Client fail", async () => {
-    const main = await redis.createPrimaryClientAndConnect();
+    const main = await redis.createPrimaryClientAndConnect(adapterOptions);
     expect(main).toBeDefined();
     main.error(new Error("Failed"));
     expect(main.on).toHaveBeenNthCalledWith(1, "error", expect.any(Function));
@@ -40,20 +52,20 @@ describe("Redis", () => {
   test("Client createClient exception", async () => {
     await redis.closeClients();
     redisMock.throwError("createClient");
-    let main = await redis.createPrimaryClientAndConnect();
+    let main = await redis.createPrimaryClientAndConnect(adapterOptions);
     expect(main).toBeUndefined();
     redisMock.throwError("createClient");
-    let secondary = await redis.createSecondaryClientAndConnect();
+    let secondary = await redis.createSecondaryClientAndConnect(adapterOptions);
     expect(secondary).toBeUndefined();
   });
 
   test("Client connect exception", async () => {
     await redis.closeClients();
     redisMock.throwError("connect");
-    let main = await redis.createPrimaryClientAndConnect();
+    let main = await redis.createPrimaryClientAndConnect(adapterOptions);
     expect(main).toBeUndefined();
     redisMock.throwError("connect");
-    let secondary = await redis.createSecondaryClientAndConnect();
+    let secondary = await redis.createSecondaryClientAndConnect(adapterOptions);
     expect(secondary).toBeUndefined();
   });
 });

@@ -48,6 +48,9 @@
       }
     },
     "requires": {
+      "websocket": {
+        "kind": "ws"
+      },
       "auth": {
         "[production]": {
           "kind": "xsuaa"

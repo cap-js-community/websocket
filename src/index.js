@@ -95,10 +95,11 @@ async function initWebSocketServer(server, path) {
   }
   try {
     cds.env.websocket ??= {};
+    cds.env.websocket = { ...cds.env.requires?.websocket, ...cds.env.websocket };
     cds.env.websocket.kind ??= "ws";
     const serverImpl = cds.env.websocket.impl || cds.env.websocket.kind;
     const socketModule = SocketServer.require(serverImpl, "socket");
-    socketServer = new socketModule(server, path);
+    socketServer = new socketModule(server, path, cds.env.websocket);
     await socketServer.setup();
     return socketServer;
   } catch (err) {
