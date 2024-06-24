@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 1.1.0 - 2024-07-xx
 
-### Fixed
+### Added
 
 - CDS 8 compatibility
 
