@@ -65,16 +65,17 @@ class SocketWSServer extends SocketServer {
       this.applyMiddlewares(ws, async () => {
         try {
           this.enforceAuth(ws);
-          ws.tenant = ws.request.tenant;
-          ws.user = ws.request.user?.id;
+          ws.contextId = cds.context.id;
+          ws.user = cds.context.user;
+          ws.tenant = cds.context.tenant;
           const facade = {
             service,
             socket: ws,
             get context() {
               return {
-                id: ws.request.correlationId,
-                user: ws.request.user,
-                tenant: ws.request.tenant,
+                id: ws.contextId,
+                user: ws.user,
+                tenant: ws.tenant,
                 http: { req: ws.request, res: ws.request.res },
                 ws: { service: facade, socket: ws },
               };
@@ -159,7 +160,7 @@ class SocketWSServer extends SocketServer {
         client.readyState === WebSocket.OPEN &&
         client.request?.url === servicePath &&
         client.tenant === tenant &&
-        (!user || client.user !== user) &&
+        (!user || client.user?.id !== user) &&
         (!contexts ||
           contexts.find((context) => {
             return !!client.contexts[context];
