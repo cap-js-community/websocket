@@ -66,16 +66,16 @@ class SocketWSServer extends SocketServer {
         try {
           this.enforceAuth(ws);
           ws.contextId = cds.context.id;
-          ws.user = cds.context.user;
           ws.tenant = cds.context.tenant;
+          ws.user = cds.context.user;
           const facade = {
             service,
             socket: ws,
             get context() {
               return {
                 id: ws.contextId,
-                user: ws.user,
                 tenant: ws.tenant,
+                user: ws.user,
                 http: { req: ws.request, res: ws.request.res },
                 ws: { service: facade, socket: ws },
               };

@@ -34,8 +34,8 @@ class SocketIOServer extends SocketServer {
       try {
         this.enforceAuth(socket);
         socket.contextId = cds.context.id;
-        socket.user = cds.context.user;
         socket.tenant = cds.context.tenant;
+        socket.user = cds.context.user;
         socket.join(room({ tenant: socket.tenant }));
         socket.join(room({ tenant: socket.tenant, user: socket.user?.id }));
         if (socket.request._query?.id) {
@@ -51,8 +51,8 @@ class SocketIOServer extends SocketServer {
           get context() {
             return {
               id: socket.contextId,
-              user: socket.user,
               tenant: socket.tenant,
+              user: socket.user,
               http: { req: socket.request, res: socket.request.res },
               ws: { service: facade, socket, io },
             };
