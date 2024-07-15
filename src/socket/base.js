@@ -186,7 +186,7 @@ class SocketServer {
    * @returns {[function]} Returns a list of middleware functions
    */
   afterMiddlewares() {
-    return [];
+    return [this.removeWrapNext.bind(this)];
   }
 
   /**
@@ -196,7 +196,16 @@ class SocketServer {
   middlewares() {
     function wrapMiddleware(middleware) {
       return (socket, next) => {
-        return middleware(socket.request, socket.request.res, next);
+        let nextCalled = false;
+        const wrapNext = (err) => {
+          delete socket.request._next;
+          if (!nextCalled) {
+            nextCalled = true;
+            next(err);
+          }
+        };
+        socket.request._next = wrapNext;
+        return middleware(socket.request, socket.request.res, wrapNext);
       };
     }
 
@@ -213,6 +222,18 @@ class SocketServer {
     return middlewares.concat(this.afterMiddlewares());
   }
 
+  removeWrapNext(socket, next) {
+    const req = socket.request;
+    let error;
+    try {
+      delete req._next;
+    } catch (err) {
+      error = err;
+    } finally {
+      next(error);
+    }
+  }
+
   /**
    * Mock the HTTP response object and make available at req.res
    * @param {Object} socket Server socket
@@ -220,7 +241,7 @@ class SocketServer {
    */
   mockResponse(socket, next) {
     const req = socket.request;
-    let error = null;
+    let error;
     try {
       // Mock response (not available in websocket, CDS middlewares need it)
       const res = req.res ?? {};
@@ -245,13 +266,17 @@ class SocketServer {
         return res;
       };
       res.json ??= (json) => {
-        this.respond(socket, res.statusCode, JSON.stringify(json));
-        res.body = json;
+        res.send(JSON.stringify(json));
+        return res;
+      };
+      res.sendStatus ??= (statusCode) => {
+        res.status(statusCode);
+        res.send(res.body || "" + statusCode);
         return res;
       };
       res.send ??= (text) => {
-        this.respond(socket, res.statusCode, text);
         res.body = text;
+        this.respond(socket, res.statusCode, text);
         return res;
       };
       res.end ??= () => {
@@ -275,7 +300,7 @@ class SocketServer {
    */
   applyAuthCookie(socket, next) {
     const req = socket.request;
-    let error = null;
+    let error;
     try {
       // Apply cookie to authorization header
       if (["mocked"].includes(cds.env.requires?.auth?.kind) && !req.headers.authorization && req.headers.cookie) {

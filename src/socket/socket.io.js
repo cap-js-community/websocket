@@ -128,9 +128,16 @@ class SocketIOServer extends SocketServer {
     to.emit(event, data);
   }
 
+  respond(socket, statusCode, body) {
+    super.respond(socket, statusCode, body);
+    if (statusCode >= 400 && socket.request?._next) {
+      socket.request?._next(new Error(body));
+    }
+  }
+
   close(socket) {
     if (socket) {
-      socket.disconnect();
+      socket.disconnect(true);
     } else {
       this.io.close();
     }

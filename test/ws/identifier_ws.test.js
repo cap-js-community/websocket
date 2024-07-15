@@ -19,6 +19,7 @@ describe("OData", () => {
 
   afterAll(async () => {
     await disconnect(socket);
+    await disconnect(socketOther);
   });
 
   test("Identifier Event", async () => {

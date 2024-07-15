@@ -7,7 +7,7 @@ const auth = require("./auth");
 
 async function connect(service, options = {}) {
   const port = cds.app.server.address().port;
-  const socket = ioc(`http://localhost:${port}/${service}${options?.id ? "?id=options?.id" : ""}`, {
+  const socket = ioc(`http://localhost:${port}/${service}${options?.id ? `?id=${options?.id}` : ""}`, {
     path: "/ws",
     extraHeaders: {
       authorization: options?.authorization || auth.alice,
@@ -20,7 +20,9 @@ async function connect(service, options = {}) {
     socket.once("connect", () => {
       resolve(socket);
     });
-    socket.once("connect_error", reject);
+    socket.once("connect_error", (err) => {
+      reject(err);
+    });
   });
 }
 
@@ -51,10 +53,10 @@ async function waitForNoEvent(socket, event, timeout = 100) {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       resolve();
-    }, timeout);
+    }, timeout).unref();
     socket.once(event, (result) => {
       clearTimeout(timeoutId);
-      reject(result);
+      reject(new Error(JSON.stringify(result)));
     });
   });
 }

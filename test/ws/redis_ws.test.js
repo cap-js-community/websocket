@@ -34,6 +34,7 @@ describe("Redis", () => {
 
   afterAll(async () => {
     await disconnect(socket);
+    await disconnect(socketOtherTenant);
   });
 
   test("Redis adapter", async () => {

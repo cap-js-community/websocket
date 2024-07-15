@@ -85,7 +85,8 @@ describe("Base", () => {
       "x-correlation-id": "123",
     });
     expect(req.res.json({ A: 1 })).toBe(req.res);
-    expect(req.res.body).toEqual({ A: 1 });
+    expect(req.res.body).toEqual('{"A":1}');
+    expect(req.res.sendStatus(200)).toBe(req.res);
     expect(req.res.send("Good Day!")).toBe(req.res);
     expect(req.res.body).toEqual("Good Day!");
     expect(req.res.end()).toBe(req.res);

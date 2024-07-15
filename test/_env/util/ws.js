@@ -61,12 +61,12 @@ async function waitForNoEvent(socket, event, timeout = 100) {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       resolve();
-    }, timeout);
+    }, timeout).unref();
     socket._listeners.push((message) => {
       const payload = JSON.parse(message);
       if (payload.event === event) {
         clearTimeout(timeoutId);
-        reject(payload.data);
+        reject(new Error(JSON.stringify(payload.data)));
       }
     });
   });

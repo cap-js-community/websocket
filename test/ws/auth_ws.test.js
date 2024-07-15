@@ -24,7 +24,7 @@ describe("Auth", () => {
     await new Promise((resolve) => {
       socket.on("close", (code, reason) => {
         expect(code).toEqual(4401);
-        expect(String(reason)).toEqual(`{"error":{"code":"401","message":"Unauthorized"}}`);
+        expect(String(reason)).toEqual("401");
         resolve();
       });
     });
