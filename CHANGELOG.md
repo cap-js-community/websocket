@@ -5,11 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 1.1.2 - 2024-09-xx
+## Version 1.2.2 - 2024-09-02
 
-### Fixed
+### Added
 
-- tbd
+- Support SAP Push Channel Protocol (PCP)
+- Option to include or exclude identifiers
+- Option to include or exclude current user
+- Better CDS context handling
 
 ## Version 1.1.1 - 2024-08-01
 

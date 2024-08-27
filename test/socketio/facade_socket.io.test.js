@@ -28,7 +28,8 @@ describe("Facade", () => {
   test("Facade", async () => {
     const facade = socket.serverSocket.facade;
     expect(facade).toBeDefined();
-    expect(facade.service).toEqual("/chat");
+    expect(facade.service).toEqual(expect.any(Object));
+    expect(facade.path).toEqual("/chat");
     expect(facade.socket).toBeDefined();
     const context = facade.context;
     expect(context).toBeDefined();

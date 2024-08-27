@@ -9,16 +9,58 @@ module.exports = (srv) => {
   });
 
   srv.before("CREATE", HeaderItem, async (req) => {
-    await srv.emit("identifierEvent", {
+    await srv.emit("identifierIncludeEvent", {
       ...req.data,
       identifier: req.data.description,
+    });
+    await srv.emit("identifierIncludeContextEvent", {
+      ...req.data,
+      identifier: req.data.description,
+      text: req.data.name,
+    });
+    await srv.emit("identifierExcludeEvent", {
+      ...req.data,
+      identifier: req.data.description,
+    });
+    await srv.emit("identifierExcludeContextEvent", {
+      ...req.data,
+      identifier: req.data.description,
+      text: req.data.name,
     });
   });
 
   srv.on("message", async (req) => {
-    await srv.emit("identifierEvent", req.data.text, {
-      wsIdentifier: req.data.text,
-      identifier: req.data.text,
+    await srv.emit("identifierIncludeEvent", req.data, {
+      wsIdentifier: {
+        include: [req.data.text],
+      },
+      identifier: {
+        include: req.data.text,
+      },
+    });
+    await srv.emit("identifierIncludeContextEvent", req.data, {
+      wsIdentifier: {
+        include: [req.data.text],
+      },
+      identifier: {
+        include: req.data.text,
+      },
+    });
+    await srv.emit("identifierExcludeEvent", req.data, {
+      wsIdentifier: {
+        exclude: [req.data.text],
+      },
+      identifier: {
+        exclude: req.data.text,
+      },
+    });
+    await srv.emit("identifierExcludeContextEvent", req.data, {
+      wsIdentifier: {
+        exclude: [req.data.text],
+      },
+      identifier: {
+        exclude: req.data.text,
+      },
     });
   });
 };

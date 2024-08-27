@@ -28,47 +28,55 @@ class SocketIOServer extends SocketServer {
     await this.applyAdapter();
   }
 
-  service(service, connected) {
-    const io = this.applyMiddlewares(this.io.of(service));
+  service(service, path, connected) {
+    const io = this.applyMiddlewares(this.io.of(path));
+    const format = this.format(service, "json");
     io.on("connection", async (socket) => {
       try {
         this.enforceAuth(socket);
-        socket.contextId = cds.context.id;
-        socket.tenant = cds.context.tenant;
-        socket.user = cds.context.user;
-        socket.join(room({ tenant: socket.tenant }));
-        socket.join(room({ tenant: socket.tenant, user: socket.user?.id }));
+        socket.context = { ...cds.context };
+        socket.join(room({ tenant: socket.context.tenant }));
+        if (socket.context.user?.id) {
+          socket.join(room({ tenant: socket.context.tenant, user: socket.context.user?.id }));
+        }
         if (socket.request._query?.id) {
-          socket.join(room({ tenant: socket.tenant, identifier: socket.request._query?.id }));
+          socket.join(room({ tenant: socket.context.tenant, identifier: socket.request._query?.id }));
+          if (socket.context.user?.id) {
+            socket.join(
+              room({
+                tenant: socket.context.tenant,
+                user: socket.context.user?.id,
+                identifier: socket.request._query?.id,
+              }),
+            );
+          }
         }
         DEBUG?.("Connected", socket.id);
         socket.on("disconnect", () => {
           DEBUG?.("Disconnected", socket.id);
         });
-        const facade = {
+        socket.facade = {
           service,
+          path,
           socket,
           get context() {
-            return {
-              id: socket.contextId,
-              tenant: socket.tenant,
-              user: socket.user,
-              http: { req: socket.request, res: socket.request.res },
-              ws: { service: facade, socket, io },
-            };
+            return socket.context;
           },
           on: (event, callback) => {
-            socket.on(event, callback);
+            socket.on(event, async (data, fn) => {
+              await callback(format.parse(data).data, fn);
+            });
           },
           emit: async (event, data) => {
-            await socket.emit(event, data);
+            await socket.emit(event, format.compose(event, data));
           },
           broadcast: async (event, data, user, contexts, identifier) => {
             await this.broadcast({
               service,
+              path,
               event,
               data,
-              tenant: socket.tenant,
+              tenant: socket.context.tenant,
               user,
               contexts,
               identifier,
@@ -79,9 +87,10 @@ class SocketIOServer extends SocketServer {
           broadcastAll: async (event, data, user, contexts, identifier) => {
             await this.broadcast({
               service,
+              path,
               event,
               data,
-              tenant: socket.tenant,
+              tenant: socket.context.tenant,
               user,
               contexts,
               identifier,
@@ -90,10 +99,54 @@ class SocketIOServer extends SocketServer {
             });
           },
           enter: async (context) => {
-            await socket.join(room({ tenant: socket.tenant, context }));
+            await socket.join(room({ tenant: socket.context.tenant, context }));
+            if (socket.context.user?.id) {
+              await socket.join(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
+            }
+            if (socket.request._query?.id) {
+              await socket.join(
+                room({
+                  tenant: socket.context.tenant,
+                  context,
+                  identifier: socket.request._query?.id,
+                }),
+              );
+              if (socket.context.user?.id) {
+                await socket.join(
+                  room({
+                    tenant: socket.context.tenant,
+                    user: socket.context.user?.id,
+                    context,
+                    identifier: socket.request._query?.id,
+                  }),
+                );
+              }
+            }
           },
           exit: async (context) => {
-            await socket.leave(room({ tenant: socket.tenant, context }));
+            await socket.leave(room({ tenant: socket.context.tenant, context }));
+            if (socket.context.user?.id) {
+              await socket.leave(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
+            }
+            if (socket.request._query?.id) {
+              await socket.leave(
+                room({
+                  tenant: socket.context.tenant,
+                  context,
+                  identifier: socket.request._query?.id,
+                }),
+              );
+              if (socket.context.user?.id) {
+                await socket.leave(
+                  room({
+                    tenant: socket.context.tenant,
+                    user: socket.context.user.id,
+                    context,
+                    identifier: socket.request._query?.id,
+                  }),
+                );
+              }
+            }
           },
           disconnect() {
             socket.disconnect();
@@ -102,30 +155,59 @@ class SocketIOServer extends SocketServer {
             socket.on("disconnect", callback);
           },
         };
-        socket.facade = facade;
-        connected && connected(facade);
+        socket.context.ws = { service: socket.facade, socket: socket, io };
+        connected && connected(socket.facade);
       } catch (err) {
         LOG?.error(err);
       }
     });
   }
 
-  async broadcast({ service, event, data, tenant, user, contexts, identifier, socket }) {
-    let to = socket?.broadcast || this.io.of(service);
-    if (contexts) {
+  async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket }) {
+    let to = socket?.broadcast || this.io.of(path);
+    if (contexts?.length && identifier?.include?.length) {
       for (const context of contexts || []) {
-        to = to.to(room({ tenant, context }));
+        for (const identifierInclude of identifier?.include || []) {
+          if (user?.include) {
+            to = to.to(room({ tenant, user: user.include, context, identifier: identifierInclude }));
+          } else {
+            to = to.to(room({ tenant, context, identifier: identifierInclude }));
+          }
+        }
+      }
+    } else if (contexts?.length) {
+      for (const context of contexts || []) {
+        if (user?.include) {
+          to = to.to(room({ tenant, user: user.include, context }));
+        } else {
+          to = to.to(room({ tenant, context }));
+        }
+      }
+    } else if (identifier?.include?.length) {
+      for (const identifierInclude of identifier?.include || []) {
+        if (user?.include) {
+          to = to.to(room({ tenant, user: user.include, identifier: identifierInclude }));
+        } else {
+          to = to.to(room({ tenant, identifier: identifierInclude }));
+        }
       }
     } else {
-      to = to.to(room({ tenant }));
+      if (user?.include) {
+        to = to.to(room({ tenant, user: user.include }));
+      } else {
+        to = to.to(room({ tenant }));
+      }
     }
-    if (user) {
-      to = to.except(room({ tenant, user }));
+    if (user?.exclude) {
+      to = to.except(room({ tenant, user: user.exclude }));
     }
-    if (identifier) {
-      to = to.except(room({ tenant, identifier }));
+    if (identifier?.exclude?.length) {
+      for (const identifierExclude of identifier.exclude || []) {
+        to = to.except(room({ tenant, identifier: identifierExclude }));
+      }
     }
-    to.emit(event, data);
+    const format = this.format(service, "json");
+    to.emit(event, format.compose(event, data));
   }
 
   respond(socket, statusCode, body) {

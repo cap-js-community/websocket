@@ -42,6 +42,13 @@ service MainService {
         text: String;
     }
 
+    @websocket.context: 'context'
+    event customContextStaticEvent2 {
+        ID: UUID;
+        num: Integer;
+        text: String;
+    }
+
     event customContextMassEvent {
         @websocket.context
         IDs: array of UUID;
@@ -49,8 +56,9 @@ service MainService {
         text: String;
     }
 
-    @websocket.user: 'excludeCurrent'
-    event customContextUserEvent {
+    @websocket.user: 'includeCurrent'
+    @websocket.currentUser.include
+    event customContextUserIncludeEvent {
         @websocket.context
         ID: UUID;
         num: Integer;
@@ -58,7 +66,27 @@ service MainService {
         user: String;
     }
 
-    event customContextUserDynamicEvent {
+    event customContextUserIncludeDynamicEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        @websocket.user: 'includeCurrent'
+        flag: Boolean;
+    }
+
+    @websocket.user: 'excludeCurrent'
+    @websocket.currentUser.exclude
+    event customContextUserExcludeEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+    }
+
+    event customContextUserExcludeDynamicEvent {
         @websocket.context
         ID: UUID;
         num: Integer;

@@ -117,10 +117,10 @@ function normalizeServicePath(servicePath, protocolPath) {
 function serveWebSocketService(socketServer, service, options) {
   for (const endpoint of service.endpoints || []) {
     if (["websocket", "ws"].includes(endpoint.kind)) {
-      const servicePath = normalizeServicePath(endpoint.path, options.path);
+      const path = normalizeServicePath(endpoint.path, options.path);
       try {
-        bindServiceEvents(socketServer, servicePath, service);
-        socketServer.service(servicePath, (socket) => {
+        bindServiceEvents(socketServer, service, path);
+        socketServer.service(service, path, (socket) => {
           try {
             bindServiceDefaults(socket, service);
             bindServiceOperations(socket, service);
@@ -138,7 +138,7 @@ function serveWebSocketService(socketServer, service, options) {
   }
 }
 
-function bindServiceEvents(socketServer, servicePath, service) {
+function bindServiceEvents(socketServer, service, path) {
   for (const event of service.events()) {
     service.on(event, async (req) => {
       try {
@@ -147,7 +147,8 @@ function bindServiceEvents(socketServer, servicePath, service) {
         const contexts = deriveContexts(event, req.data, req.headers);
         const identifier = deriveIdentifier(event, req.data, req.headers);
         await socketServer.broadcast({
-          service: servicePath,
+          service,
+          path,
           event: localEventName,
           data: req.data,
           tenant: req.tenant,
@@ -167,7 +168,7 @@ function bindServiceEvents(socketServer, servicePath, service) {
 function bindServiceDefaults(socket, service) {
   if (service.operations(WebSocketAction.Disconnect).length) {
     socket.onDisconnect(async (reason) => {
-      await processEvent(socket, service, undefined, WebSocketAction.Disconnect, { reason });
+      await processEvent(socket, service, WebSocketAction.Disconnect, { reason });
     });
   }
   socket.on(WebSocketAction.Context, async (data, callback) => {
@@ -177,7 +178,7 @@ function bindServiceDefaults(socket, service) {
       await socket.exit(data?.context);
     }
     if (service.operations(WebSocketAction.Context).length) {
-      await processEvent(socket, service, undefined, WebSocketAction.Context, data, callback);
+      await processEvent(socket, service, WebSocketAction.Context, data, callback);
     } else {
       callback && (await callback());
     }
@@ -191,7 +192,7 @@ function bindServiceOperations(socket, service) {
       continue;
     }
     socket.on(event, async (data, callback) => {
-      await processEvent(socket, service, undefined, event, data, callback);
+      await processEvent(socket, service, event, data, callback);
     });
   }
 }
@@ -200,36 +201,36 @@ function bindServiceEntities(socket, service) {
   for (const entity of service.entities()) {
     const localEntityName = serviceLocalName(service, entity.name);
     socket.on(`${localEntityName}:create`, async (data, callback) => {
-      await processEvent(socket, service, entity, "create", data, async (response) => {
+      await processCRUD(socket, service, entity, "create", data, async (response) => {
         callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:created`, entity, response);
       });
     });
     socket.on(`${localEntityName}:read`, async (data, callback) => {
-      await processEvent(socket, service, entity, "read", data, callback);
+      await processCRUD(socket, service, entity, "read", data, callback);
     });
     socket.on(`${localEntityName}:readDeep`, async (data, callback) => {
-      await processEvent(socket, service, entity, "readDeep", data, callback);
+      await processCRUD(socket, service, entity, "readDeep", data, callback);
     });
     socket.on(`${localEntityName}:update`, async (data, callback) => {
-      await processEvent(socket, service, entity, "update", data, async (response) => {
+      await processCRUD(socket, service, entity, "update", data, async (response) => {
         callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:updated`, entity, response);
       });
     });
     socket.on(`${localEntityName}:delete`, async (data, callback) => {
-      await processEvent(socket, service, entity, "delete", data, async (response) => {
+      await processCRUD(socket, service, entity, "delete", data, async (response) => {
         callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:deleted`, entity, { ...response, ...data });
       });
     });
     socket.on(`${localEntityName}:list`, async (data, callback) => {
-      await processEvent(socket, service, entity, "list", data, callback);
+      await processCRUD(socket, service, entity, "list", data, callback);
     });
     for (const actionName in entity.actions) {
       const action = entity.actions[actionName];
       socket.on(`${localEntityName}:${action.name}`, async (data, callback) => {
-        await processEvent(socket, service, entity, action.name, data, callback);
+        await processCRUD(socket, service, entity, action.name, data, callback);
       });
     }
   }
@@ -237,13 +238,13 @@ function bindServiceEntities(socket, service) {
 
 async function emitConnect(socket, service) {
   if (service.operations(WebSocketAction.Connect).length) {
-    await processEvent(socket, service, undefined, WebSocketAction.Connect);
+    await processEvent(socket, service, WebSocketAction.Connect);
   }
 }
 
-async function processEvent(socket, service, entity, event, data, callback) {
+async function processEvent(socket, service, event, data, callback) {
   try {
-    const response = await call(socket, service, entity, event, data);
+    const response = await callEvent(socket, service, event, data);
     callback && (await callback(response));
   } catch (err) {
     LOG?.error(err);
@@ -261,15 +262,39 @@ async function processEvent(socket, service, entity, event, data, callback) {
   }
 }
 
-async function call(socket, service, entity, event, data) {
+async function callEvent(socket, service, event, data) {
   data = data || {};
   return await service.tx(socket.context, async (srv) => {
-    if (!entity) {
-      return await srv.send({
-        event,
-        data,
-      });
+    return await srv.send({
+      event,
+      data,
+    });
+  });
+}
+
+async function processCRUD(socket, service, entity, event, data, callback) {
+  try {
+    const response = await callCRUD(socket, service, entity, event, data);
+    callback && (await callback(response));
+  } catch (err) {
+    LOG?.error(err);
+    try {
+      callback &&
+        (await callback({
+          error: {
+            code: err.code || err.status || err.statusCode,
+            message: err.message,
+          },
+        }));
+    } catch (err) {
+      LOG?.error(err);
     }
+  }
+}
+
+async function callCRUD(socket, service, entity, event, data) {
+  data = data || {};
+  return await service.tx(socket.context, async (srv) => {
     const key = deriveKey(entity, data);
     switch (event) {
       case "create":
@@ -350,50 +375,152 @@ function deriveElements(event, data) {
 }
 
 function deriveUser(event, data, headers, req) {
-  if ((headers?.wsExcludeCurrentUser || headers?.excludeCurrentUser) !== undefined) {
-    if (headers?.wsExcludeCurrentUser || headers?.excludeCurrentUser) {
-      return req.context.user?.id;
+  let currenUser = { include: undefined, exclude: undefined };
+  if (
+    headers?.wsCurrentUser?.include !== undefined ||
+    headers?.currentUser?.include !== undefined ||
+    headers?.wsIncludeCurrentUser ||
+    headers?.includeCurrentUser !== undefined
+  ) {
+    if (
+      headers?.wsCurrentUser?.include ||
+      headers?.currentUser?.include ||
+      headers?.wsIncludeCurrentUser ||
+      headers?.includeCurrentUser
+    ) {
+      currenUser.include = req.context.user?.id;
     }
-    return;
-  }
-  let user =
-    event["@websocket.user"] || event["@ws.user"] || event["@websocket.broadcast.user"] || event["@ws.broadcast.user"];
-  switch (user) {
-    case "excludeCurrent":
-      return req.context.user?.id;
-  }
-  if (event.elements) {
-    for (const name in event.elements) {
-      const element = event.elements[name];
-      user =
-        element["@websocket.user"] ||
-        element["@ws.user"] ||
-        element["@websocket.broadcast.user"] ||
-        element["@ws.broadcast.user"];
-      switch (user) {
-        case "excludeCurrent":
-          return data[name] ? req.context.user?.id : undefined;
+  } else {
+    let user =
+      event["@websocket.user"] ||
+      event["@ws.user"] ||
+      event["@websocket.broadcast.user"] ||
+      event["@ws.broadcast.user"];
+    if (user === "includeCurrent") {
+      currenUser.include = req.context.user?.id;
+    }
+    let currentUserInclude =
+      event["@websocket.currentUser.include"] ||
+      event["@ws.currentUser.include"] ||
+      event["@websocket.broadcast.currentUser.include"] ||
+      event["@ws.broadcast.currentUser.include"];
+    if (currentUserInclude) {
+      currenUser.include = req.context.user?.id;
+    }
+    if (event.elements) {
+      for (const name in event.elements) {
+        const element = event.elements[name];
+        user =
+          element["@websocket.user"] ||
+          element["@ws.user"] ||
+          element["@websocket.broadcast.user"] ||
+          element["@ws.broadcast.user"];
+        if (user === "includeCurrent") {
+          if (data[name]) {
+            currenUser.include = req.context.user?.id;
+            break;
+          }
+        }
+        currentUserInclude =
+          element["@websocket.currentUser.include"] ||
+          element["@ws.currentUser.include"] ||
+          element["@websocket.broadcast.currentUser.include"] ||
+          element["@ws.broadcast.currentUser.include"];
+        if (currentUserInclude) {
+          if (data[name]) {
+            currenUser.include = req.context.user?.id;
+            break;
+          }
+        }
       }
     }
+  }
+  if (
+    headers?.wsCurrentUser?.exclude !== undefined ||
+    headers?.currentUser?.exclude !== undefined ||
+    headers?.wsExcludeCurrentUser ||
+    headers?.excludeCurrentUser !== undefined
+  ) {
+    if (
+      headers?.wsCurrentUser?.exclude ||
+      headers?.currentUser?.exclude ||
+      headers?.wsExcludeCurrentUser ||
+      headers?.excludeCurrentUser
+    ) {
+      currenUser.exclude = req.context.user?.id;
+    }
+  } else {
+    let user =
+      event["@websocket.user"] ||
+      event["@ws.user"] ||
+      event["@websocket.broadcast.user"] ||
+      event["@ws.broadcast.user"];
+    if (user === "excludeCurrent") {
+      currenUser.exclude = req.context.user?.id;
+    }
+    let currentUserExclude =
+      event["@websocket.currentUser.exclude"] ||
+      event["@ws.currentUser.exclude"] ||
+      event["@websocket.broadcast.currentUser.exclude"] ||
+      event["@ws.broadcast.currentUser.exclude"];
+    if (currentUserExclude) {
+      currenUser.exclude = req.context.user?.id;
+    }
+    if (event.elements) {
+      for (const name in event.elements) {
+        const element = event.elements[name];
+        user =
+          element["@websocket.user"] ||
+          element["@ws.user"] ||
+          element["@websocket.broadcast.user"] ||
+          element["@ws.broadcast.user"];
+        if (user === "excludeCurrent") {
+          if (data[name]) {
+            currenUser.exclude = req.context.user?.id;
+            break;
+          }
+        }
+        currentUserExclude =
+          element["@websocket.currentUser.exclude"] ||
+          element["@ws.currentUser.exclude"] ||
+          element["@websocket.broadcast.currentUser.exclude"] ||
+          element["@ws.broadcast.currentUser.exclude"];
+        if (currentUserExclude) {
+          if (data[name]) {
+            currenUser.exclude = req.context.user?.id;
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (currenUser.include || currenUser.exclude) {
+    return currenUser;
   }
 }
 
 function deriveContexts(event, data, headers) {
-  const headerContexts = headers?.wsContexts || headers?.contexts;
-  let isContextEvent = !!Array.isArray(headerContexts);
-  let contexts = isContextEvent ? headerContexts : [];
+  let contexts = undefined;
+  const headerContexts = headers?.wsContexts || headers?.wsContext || headers?.contexts || headers?.context;
+  if (headerContexts) {
+    contexts ??= [];
+    if (Array.isArray(headerContexts)) {
+      contexts = contexts.concat(headerContexts);
+    } else {
+      contexts.push(headerContexts);
+    }
+  }
   let eventContexts =
     event["@websocket.context"] ||
     event["@ws.context"] ||
     event["@websocket.broadcast.context"] ||
     event["@ws.broadcast.context"];
   if (eventContexts) {
+    contexts ??= [];
     if (Array.isArray(eventContexts)) {
       contexts = contexts.concat(eventContexts);
-      isContextEvent = true;
     } else {
       contexts.push(eventContexts);
-      isContextEvent = true;
     }
   }
   if (event.elements) {
@@ -405,51 +532,126 @@ function deriveContexts(event, data, headers) {
         element["@websocket.broadcast.context"] ||
         element["@ws.broadcast.context"];
       if (context) {
-        isContextEvent = true;
+        contexts ??= [];
         if (data[name] !== undefined && data[name] !== null) {
           if (Array.isArray(data[name])) {
             data[name].forEach((entry) => {
-              contexts.push(contextString(entry));
+              contexts.push(stringValue(entry));
             });
           } else {
-            contexts.push(contextString(data[name]));
+            contexts.push(stringValue(data[name]));
           }
         }
       }
     }
   }
-  return isContextEvent ? contexts : undefined;
+  return contexts;
 }
 
 function deriveIdentifier(event, data, headers) {
-  let headerIdentifier = headers?.wsIdentifier || headers?.identifier;
-  if (headerIdentifier) {
-    return headerIdentifier;
+  let identifier = { include: undefined, exclude: undefined };
+  let headerIdentifierInclude =
+    headers?.wsIdentifier?.include ||
+    headers?.wsIdentifierInclude ||
+    headers?.identifier?.include ||
+    headers?.identifierInclude;
+  if (headerIdentifierInclude) {
+    identifier.include ??= [];
+    if (Array.isArray(headerIdentifierInclude)) {
+      identifier.include = identifier.include.concat(headerIdentifierInclude);
+    } else {
+      identifier.include.push(headerIdentifierInclude);
+    }
   }
-  let eventIdentifier =
-    event["@websocket.identifier"] ||
-    event["@ws.identifier"] ||
-    event["@websocket.broadcast.identifier"] ||
-    event["@ws.broadcast.identifier"];
-  if (eventIdentifier) {
-    return eventIdentifier;
+  let eventIdentifierInclude =
+    event["@websocket.identifier.include"] ||
+    event["@ws.identifier.include"] ||
+    event["@websocket.broadcast.identifier.include"] ||
+    event["@ws.broadcast.identifier.include"];
+  if (eventIdentifierInclude) {
+    identifier.include ??= [];
+    if (Array.isArray(eventIdentifierInclude)) {
+      identifier.include = identifier.include.concat(eventIdentifierInclude);
+    } else {
+      identifier.include.push(eventIdentifierInclude);
+    }
   }
   if (event.elements) {
     for (const name in event.elements) {
       const element = event.elements[name];
-      const identifier =
-        element["@websocket.identifier"] ||
-        element["@ws.identifier"] ||
-        element["@websocket.broadcast.identifier"] ||
-        element["@ws.broadcast.identifier"];
-      if (identifier) {
-        return data[name] ? data[name] : undefined;
+      const identifierInclude =
+        element["@websocket.identifier.include"] ||
+        element["@ws.identifier.include"] ||
+        element["@websocket.broadcast.identifier.include"] ||
+        element["@ws.broadcast.identifier.include"];
+      if (identifierInclude) {
+        identifier.include ??= [];
+        if (data[name] !== undefined && data[name] !== null) {
+          if (Array.isArray(data[name])) {
+            data[name].forEach((entry) => {
+              identifier.include.push(stringValue(entry));
+            });
+          } else {
+            identifier.include.push(stringValue(data[name]));
+          }
+        }
       }
     }
   }
+  let headerIdentifierExclude =
+    headers?.wsIdentifier?.exclude ||
+    headers?.wsIdentifierExclude ||
+    headers?.identifier?.exclude ||
+    headers?.identifierExclude;
+  if (headerIdentifierExclude) {
+    identifier.exclude ??= [];
+    if (Array.isArray(headerIdentifierExclude)) {
+      identifier.exclude = identifier.exclude.concat(headerIdentifierExclude);
+    } else {
+      identifier.exclude.push(headerIdentifierExclude);
+    }
+  }
+  let eventIdentifierExclude =
+    event["@websocket.identifier.exclude"] ||
+    event["@ws.identifier.exclude"] ||
+    event["@websocket.broadcast.identifier.exclude"] ||
+    event["@ws.broadcast.identifier.exclude"];
+  if (eventIdentifierExclude) {
+    identifier.exclude ??= [];
+    if (Array.isArray(eventIdentifierExclude)) {
+      identifier.exclude = identifier.exclude.concat(eventIdentifierExclude);
+    } else {
+      identifier.exclude.push(eventIdentifierExclude);
+    }
+  }
+  if (event.elements) {
+    for (const name in event.elements) {
+      const element = event.elements[name];
+      const identifierExclude =
+        element["@websocket.identifier.exclude"] ||
+        element["@ws.identifier.exclude"] ||
+        element["@websocket.broadcast.identifier.exclude"] ||
+        element["@ws.broadcast.identifier.exclude"];
+      if (identifierExclude) {
+        identifier.exclude ??= [];
+        if (data[name] !== undefined && data[name] !== null) {
+          if (Array.isArray(data[name])) {
+            data[name].forEach((entry) => {
+              identifier.exclude.push(stringValue(entry));
+            });
+          } else {
+            identifier.exclude.push(stringValue(data[name]));
+          }
+        }
+      }
+    }
+  }
+  if (identifier.include || identifier.exclude) {
+    return identifier;
+  }
 }
 
-function contextString(value) {
+function stringValue(value) {
   if (value instanceof Date) {
     return value.toISOString();
   } else if (value instanceof Object) {

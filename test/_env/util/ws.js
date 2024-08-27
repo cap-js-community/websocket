@@ -43,6 +43,14 @@ async function emitEvent(socket, event, data) {
   });
 }
 
+async function emitMessage(socket, message) {
+  return new Promise((resolve) => {
+    socket.send(message, (result) => {
+      resolve(result || null);
+    });
+  });
+}
+
 async function waitForEvent(socket, event, cb) {
   _initListeners(socket);
   return new Promise((resolve) => {
@@ -72,6 +80,19 @@ async function waitForNoEvent(socket, event, timeout = 100) {
   });
 }
 
+async function waitForMessage(socket, event, cb) {
+  _initListeners(socket);
+  return new Promise((resolve) => {
+    socket._listeners.push((message) => {
+      message = message.toString();
+      if (message.includes(event)) {
+        resolve(message);
+        cb && cb(message);
+      }
+    });
+  });
+}
+
 async function enterContext(socket, context) {
   return await emitEvent(socket, "wsContext", { context });
 }
@@ -95,8 +116,10 @@ module.exports = {
   connect,
   disconnect,
   emitEvent,
+  emitMessage,
   waitForEvent,
   waitForNoEvent,
+  waitForMessage,
   enterContext,
   exitContext,
 };

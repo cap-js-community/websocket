@@ -7,6 +7,7 @@ const onReconnecting = [];
 
 let createClientError = false;
 let connectError = false;
+let subscribeError = false;
 
 const client = {
   connect: jest.fn(() => {
@@ -37,6 +38,10 @@ const client = {
   }),
   off: jest.fn(),
   subscribe: jest.fn((channel, cb) => {
+    if (subscribeError) {
+      subscribeError = false;
+      throw new Error("subscribe error");
+    }
     onSubscribe.push(cb);
   }),
   sSubscribe: jest.fn(),
@@ -72,6 +77,9 @@ module.exports = {
         break;
       case "connect":
         connectError = true;
+        break;
+      case "subscribe":
+        subscribeError = true;
         break;
     }
   },

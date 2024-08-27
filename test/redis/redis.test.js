@@ -78,4 +78,14 @@ describe("Redis", () => {
     expect(main).toBeDefined();
     main.reconnect();
   });
+
+  test("Adapter", async () => {
+    expect(cds.ws.adapter).toBeDefined();
+  });
+
+  test("Adapter Error", async () => {
+    redisMock.throwError("subscribe");
+    cds.ws.adapter.on({}, "path");
+    expect(cds.ws.adapter).toBeDefined();
+  });
 });

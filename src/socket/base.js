@@ -34,16 +34,22 @@ class SocketServer {
 
   /**
    * Connect a service to websocket
-   * @param {string} service service path, e.g. "/chat"
+   * @param {string} service service definition
+   * @param {string} path service path, e.g. "/chat"
    * @param {function} connected Callback function to be called on every websocket connection passing socket facade (i.e. ws.on("connection", connected))
    */
-  service(service, connected) {
+  service(service, path, connected) {
     const facade = {
+      /**
+       * Service definition
+       * @returns {object}
+       */
+      service,
       /**
        * Service name/path
        * @returns {String}
        */
-      service,
+      path,
       /**
        * Server Socket
        * @returns {Object}
@@ -129,19 +135,24 @@ class SocketServer {
   }
 
   /**
-   * Broadcast to all websocket clients
-   * @param {string} service service path, e.g. "/chat"
-   * @param {string} event Event name or message content (if data is not provided)
+   * Broadcast event to all websocket clients for a service with options
+   * @param {string} service Service definition
+   * @param {string} path Service path, e.g. "/chat"
+   * @param {string} event Event name or event message JSON content (no additional parameters provided (incl. data))
    * @param {Object} data Data object
    * @param {string} tenant Tenant for isolation
-   * @param {string} user User to be excluded, undefined: no exclusion
+   * @param {object} user User to be included/excluded, undefined: no restriction
+   * @param {string} user.include User to be included, undefined: no restriction
+   * @param {string} user.exclude User to be excluded, undefined: no restriction
    * @param {[string]} contexts Array of contexts to restrict, undefined: no restriction
-   * @param {string} identifier Unique consumer-provided socket client identifier, undefined: no restriction
-   * @param {Object} socket Broadcast client to be excluded, undefined: no exclusion
+   * @param {object} identifier Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
+   * @param {[string]} identifier.include Unique consumer-provided socket client identifier to be included, undefined: no restriction
+   * @param {[string]} identifier.exclude Unique consumer-provided socket client identifier to be excluded, undefined: no restriction
+   * @param {Object} socket Broadcast client socket to be excluded, undefined: no exclusion
    * @param {boolean} remote Broadcast also remote (e.g. via redis), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast({ service, event, data, tenant, user, contexts, identifier, socket, remote }) {}
+  async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, remote }) {}
 
   /**
    * Handle HTTP request response
@@ -333,6 +344,14 @@ class SocketServer {
       }
     }
     return require(impl);
+  }
+
+  format(service, origin) {
+    const format = service.definition["@websocket.format"] || service.definition["@ws.format"] || "json";
+    if (format === origin) {
+      return new (SocketServer.require("identity", "format"))(service);
+    }
+    return new (SocketServer.require(format, "format"))(service);
   }
 }
 

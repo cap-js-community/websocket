@@ -26,7 +26,7 @@ describe("OData", () => {
 
   test("Event", async () => {
     const waitReceivedPromise = waitForEvent(socket, "received");
-    const waitReceivedTooPromise = waitForEvent(socket, "receivedToo");
+    const waitReceivedOtherPromise = waitForEvent(socket, "receivedToo");
     const response = await fetch(cds.server.url + "/odata/v4/odata/Header", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: auth.alice },
@@ -37,7 +37,7 @@ describe("OData", () => {
     const ID = result.ID;
     const waitResult = await waitReceivedPromise;
     expect(waitResult).toMatchObject({ ID });
-    const waitResultToo = await waitReceivedTooPromise;
-    expect(waitResultToo).toMatchObject({ ID });
+    const waitResultOther = await waitReceivedOtherPromise;
+    expect(waitResultOther).toMatchObject({ ID });
   });
 });

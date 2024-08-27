@@ -4,6 +4,10 @@ const cds = require("@sap/cds");
 
 const SocketServer = require("../../src/socket/base");
 
+cds.env.websocket = {
+  adapter: null,
+};
+
 describe("Base", () => {
   beforeAll(async () => {});
 
@@ -17,9 +21,10 @@ describe("Base", () => {
       socket = _socket;
     };
     socketServer.setup();
-    socketServer.service("test", connected);
+    socketServer.service({}, "test", connected);
     expect(socket).toEqual({
-      service: "test",
+      service: expect.any(Object),
+      path: "test",
       socket: null,
       context: expect.any(Object),
       on: expect.any(Function),

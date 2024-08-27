@@ -35,6 +35,7 @@ module.exports = (srv) => {
   srv.on("triggerCustomContextStaticEvent", async (req) => {
     const text = req.data.text + req.data.num;
     await srv.emit("customContextStaticEvent", { text });
+    await srv.emit("customContextStaticEvent2", { text });
     return text;
   });
 
@@ -49,14 +50,21 @@ module.exports = (srv) => {
   srv.on("triggerCustomContextUserEvent", async (req) => {
     const ID = req.data.ID;
     const text = req.data.text + req.data.num;
-    await srv.emit("customContextUserEvent", { ID, text, user: req.context.user.id });
+    await srv.emit("customContextUserIncludeEvent", { ID, text, user: req.context.user.id });
+    await srv.emit("customContextUserExcludeEvent", { ID, text, user: req.context.user.id });
     return text + "-" + req.context.user.id;
   });
 
   srv.on("triggerCustomContextUserDynamicEvent", async (req) => {
     const ID = req.data.ID;
     const text = req.data.text + req.data.num;
-    await srv.emit("customContextUserDynamicEvent", {
+    await srv.emit("customContextUserIncludeDynamicEvent", {
+      ID,
+      text,
+      user: req.context.user.id,
+      flag: req.context.user.id === "alice",
+    });
+    await srv.emit("customContextUserExcludeDynamicEvent", {
       ID,
       text,
       user: req.context.user.id,
@@ -74,8 +82,12 @@ module.exports = (srv) => {
       {
         wsContexts: [ID],
         contexts: [ID],
+        // wsIncludeCurrentUser: req.data.num === 1,
         wsExcludeCurrentUser: req.data.num === 1,
-        excludeCurrentUser: req.data.num === 1,
+        currentUser: {
+          // include: req.data.num === 1,
+          exclude: req.data.num === 1,
+        },
       },
     );
     return text + "-" + req.context.user.id;

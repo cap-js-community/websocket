@@ -270,15 +270,77 @@ describe("Main", () => {
     await enterContext(socketOther, ID2);
   });
 
-  test("Event Context User - Static", async () => {
+  test("Event Context User Include - Static", async () => {
     const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
     await enterContext(socket, ID);
     await enterContext(socketOther, ID);
     await enterContext(socketOtherUser, ID);
     await wait();
-    let eventNoResultPromise = waitForNoEvent(socket, "customContextUserEvent");
-    let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserEvent");
-    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserEvent");
+    let eventResultPromise = waitForEvent(socket, "customContextUserIncludeEvent");
+    let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserIncludeEvent");
+    let eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customContextUserIncludeEvent");
+    let result = await emitEvent(socket, "triggerCustomContextUserEvent", { ID, num: 1, text: "test" });
+    expect(result).toBe("test1-alice");
+    let eventResult = await eventResultPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("alice");
+    eventResult = await eventResultOtherPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("alice");
+    await eventNoResultOtherUserPromise;
+  });
+
+  test("Event Context User Include - Dynamic", async () => {
+    const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
+    await enterContext(socket, ID);
+    await enterContext(socketOther, ID);
+    await enterContext(socketOtherUser, ID);
+    await wait();
+    let eventResultPromise = waitForEvent(socket, "customContextUserIncludeDynamicEvent");
+    let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserIncludeDynamicEvent");
+    let eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customContextUserIncludeDynamicEvent");
+    let result = await emitEvent(socket, "triggerCustomContextUserDynamicEvent", { ID, num: 1, text: "test" });
+    expect(result).toBe("test1-alice");
+    let eventResult = await eventResultPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("alice");
+    eventResult = await eventResultOtherPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("alice");
+    await eventNoResultOtherUserPromise;
+
+    eventResultPromise = waitForEvent(socket, "customContextUserIncludeDynamicEvent");
+    eventResultOtherPromise = waitForEvent(socketOther, "customContextUserIncludeDynamicEvent");
+    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserIncludeDynamicEvent");
+    result = await emitEvent(socketOtherUser, "triggerCustomContextUserDynamicEvent", { ID, num: 1, text: "test" });
+    expect(result).toBe("test1-carol");
+    eventResult = await eventResultPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("carol");
+    eventResult = await eventResultOtherPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("carol");
+    eventResult = await eventResultOtherUserPromise;
+    expect(eventResult.ID).toBe(ID);
+    expect(eventResult.text).toBe("test1");
+    expect(eventResult.user).toBe("carol");
+  });
+
+  test("Event Context User Exclude - Static", async () => {
+    const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
+    await enterContext(socket, ID);
+    await enterContext(socketOther, ID);
+    await enterContext(socketOtherUser, ID);
+    await wait();
+    let eventNoResultPromise = waitForNoEvent(socket, "customContextUserExcludeEvent");
+    let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserExcludeEvent");
+    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserExcludeEvent");
     let result = await emitEvent(socket, "triggerCustomContextUserEvent", { ID, num: 1, text: "test" });
     expect(result).toBe("test1-alice");
     await eventNoResultPromise;
@@ -289,15 +351,15 @@ describe("Main", () => {
     expect(eventResult.user).toBe("alice");
   });
 
-  test("Event Context User - Dynamic", async () => {
+  test("Event Context User Exclude - Dynamic", async () => {
     const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
     await enterContext(socket, ID);
     await enterContext(socketOther, ID);
     await enterContext(socketOtherUser, ID);
     await wait();
-    let eventNoResultPromise = waitForNoEvent(socket, "customContextUserDynamicEvent");
-    let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserDynamicEvent");
-    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserDynamicEvent");
+    let eventNoResultPromise = waitForNoEvent(socket, "customContextUserExcludeDynamicEvent");
+    let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserExcludeDynamicEvent");
+    let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserExcludeDynamicEvent");
     let result = await emitEvent(socket, "triggerCustomContextUserDynamicEvent", { ID, num: 1, text: "test" });
     expect(result).toBe("test1-alice");
     await eventNoResultPromise;
@@ -307,9 +369,9 @@ describe("Main", () => {
     expect(eventResult.text).toBe("test1");
     expect(eventResult.user).toBe("alice");
 
-    let eventResultPromise = waitForEvent(socket, "customContextUserDynamicEvent");
-    let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserDynamicEvent");
-    eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserDynamicEvent");
+    let eventResultPromise = waitForEvent(socket, "customContextUserExcludeDynamicEvent");
+    let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserExcludeDynamicEvent");
+    eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserExcludeDynamicEvent");
     result = await emitEvent(socketOtherUser, "triggerCustomContextUserDynamicEvent", { ID, num: 1, text: "test" });
     expect(result).toBe("test1-carol");
     eventResult = await eventResultPromise;

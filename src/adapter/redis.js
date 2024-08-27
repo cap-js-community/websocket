@@ -18,16 +18,16 @@ class RedisAdapter {
     }
   }
 
-  async on(service) {
+  async on(service, path) {
     if (!this.client) {
       return;
     }
     try {
-      const channel = this.prefix + service;
+      const channel = this.prefix + path;
       await this.client.subscribe(channel, async (message, messageChannel) => {
         try {
           if (messageChannel === channel) {
-            await this.server.broadcast({ service, event: message });
+            await this.server.broadcast({ service, path, event: message });
           }
         } catch (err) {
           LOG?.error(err);
@@ -38,12 +38,12 @@ class RedisAdapter {
     }
   }
 
-  async emit(service, message) {
+  async emit(service, path, message) {
     if (!this.client) {
       return;
     }
     try {
-      const channel = this.prefix + service;
+      const channel = this.prefix + path;
       await this.client.publish(channel, message);
     } catch (err) {
       LOG?.error(err);

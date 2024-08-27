@@ -19,10 +19,40 @@ service ODataService {
     }
 
     @websocket
-    event identifierEvent {
+    @websocket.identifier.include: []
+    event identifierIncludeEvent {
         ID: UUID;
-        @websocket.identifier
+        @websocket.identifier.include
         identifier: String;
+        text: String;
+    }
+
+    @websocket
+    @websocket.identifier.include: []
+    event identifierIncludeContextEvent {
+        ID: UUID;
+        @websocket.identifier.include
+        identifier: String;
+        @websocket.context
+        text: String;
+    }
+
+    @websocket
+    @websocket.identifier.exclude: []
+    event identifierExcludeEvent {
+        ID: UUID;
+        @websocket.identifier.exclude
+        identifier: String;
+        text: String;
+    }
+
+    @websocket
+    @websocket.identifier.exclude: []
+    event identifierExcludeContextEvent {
+        ID: UUID;
+        @websocket.identifier.exclude
+        identifier: String;
+        @websocket.context
         text: String;
     }
 }

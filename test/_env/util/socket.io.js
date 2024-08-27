@@ -43,6 +43,13 @@ async function emitEvent(socket, event, data) {
   });
 }
 
+async function emitMessage(socket, event, message) {
+  return new Promise((resolve) => {
+    socket.emit(event, message);
+    resolve(null);
+  });
+}
+
 async function waitForEvent(socket, event) {
   return new Promise((resolve) => {
     socket.once(event, resolve);
@@ -73,6 +80,7 @@ module.exports = {
   connect,
   disconnect,
   emitEvent,
+  emitMessage,
   waitForEvent,
   waitForNoEvent,
   enterContext,
