@@ -517,7 +517,7 @@ A custom websocket format implementation can be provided via relative path in `@
 The custom format class needs to implement the following functions:
 
 - **parse(data)**: Parse the event data into internal data (JSON), i.e. `{ event, data }`
-- **compose(event, data)**: Compose the event and internal data (JSON) into a formatted string. For kind `socket.io`, it can also be a JSON object.  
+- **compose(event, data)**: Compose the event and internal data (JSON) into a formatted string. For kind `socket.io`, it can also be a JSON object.
 
 In addition, it can implement the following class functions (optional):
 
