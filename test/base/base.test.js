@@ -3,6 +3,8 @@
 const cds = require("@sap/cds");
 
 const SocketServer = require("../../src/socket/base");
+const BaseAdapter = require("../../src/adapter/base");
+const BaseFormat = require("../../src/format/base");
 
 cds.env.websocket = {
   adapter: null,
@@ -13,7 +15,7 @@ describe("Base", () => {
 
   afterAll(async () => {});
 
-  test("Instance", async () => {
+  test("Server Instance", async () => {
     const socketServer = new SocketServer({}, "/ws", {});
     expect(socketServer).toBeDefined();
     let socket;
@@ -53,6 +55,18 @@ describe("Base", () => {
     expect(socket.exit()).toEqual(expect.any(Promise));
     expect(socket.disconnect()).toBeUndefined();
     expect(socket.onDisconnect()).toBeUndefined();
+  });
+
+  test("Adapter Instance", async () => {
+    const baseAdapter = new BaseAdapter();
+    await expect(baseAdapter.on({}, "/chat")).resolves.toBeUndefined();
+    await expect(baseAdapter.emit({}, "/chat", "test")).resolves.toBeUndefined();
+  });
+
+  test("Format Instance", async () => {
+    const baseFormat = new BaseFormat();
+    expect(baseFormat.parse({})).toBeUndefined();
+    expect(baseFormat.compose("test", {})).toBeUndefined();
   });
 
   test("Mock Response", async () => {
