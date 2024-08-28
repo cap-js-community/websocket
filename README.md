@@ -378,7 +378,7 @@ over remote distribution via Redis.
 
 For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
 
-### Event Client Identifier
+### Event Client Identifiers
 
 Events are broadcast to all websocket clients, including clients that performed certain action. When events are send
 as part of websocket context, access to current socket is given, but if actions are performed outside websocket context,
