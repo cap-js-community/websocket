@@ -82,10 +82,10 @@ module.exports = (srv) => {
       {
         wsContexts: [ID],
         contexts: [ID],
-        // wsIncludeCurrentUser: req.data.num === 1,
+        wsIncludeCurrentUser: req.data.num === 0,
         wsExcludeCurrentUser: req.data.num === 1,
         currentUser: {
-          // include: req.data.num === 1,
+          include: req.data.num === 0,
           exclude: req.data.num === 1,
         },
       },

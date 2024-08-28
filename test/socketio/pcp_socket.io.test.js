@@ -2,7 +2,7 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitMessage, waitForEvent } = require("../_env/util/socket.io");
+const { connect, disconnect, emitEvent, emitMessage, waitForEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");
 
@@ -48,8 +48,8 @@ describe("PCP", () => {
   test("Event Notification", async () => {
     const waitNotification1Promise = waitForEvent(socket, "notification1");
     const waitNotification2Promise = waitForEvent(socket, "notification2");
-    const result = await emitMessage(socket, "sendNotification", pcpMessage);
-    expect(result).toBeNull();
+    const result = await emitEvent(socket, "sendNotification", pcpMessage);
+    expect(result).toBe(true);
     const waitResult1 = await waitNotification1Promise;
     expect(waitResult1).toEqual(pcpMessage1);
     const waitResult2 = await waitNotification2Promise;
