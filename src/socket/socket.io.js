@@ -163,6 +163,7 @@ class SocketIOServer extends SocketServer {
 
   async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket }) {
     path = path || this.defaultPath(service);
+    tenant = tenant || socket?.context.tenant;
     let to = socket?.broadcast || this.io.of(path);
     if (contexts?.length && identifier?.include?.length) {
       for (const context of contexts) {

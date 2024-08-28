@@ -130,7 +130,6 @@ class SocketWSServer extends SocketServer {
   }
 
   async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, local }) {
-    path = path || this.defaultPath(service);
     const eventMessage = event;
     const isEventMessage = !data;
     if (isEventMessage) {
@@ -142,6 +141,8 @@ class SocketWSServer extends SocketServer {
       contexts = message.contexts;
       identifier = message.identifier;
     }
+    path = path || this.defaultPath(service);
+    tenant = tenant || socket?.context.tenant;
     const servicePath = `${this.path}${path}`;
     const clients = [];
     this.wss.clients.forEach((client) => {

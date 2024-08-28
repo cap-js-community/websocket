@@ -33,7 +33,7 @@ class SocketServer {
   async setup() {}
 
   /**
-   * Connect a service to websocket
+   * Connect a service to websocket server
    * @param {String} service service definition
    * @param {String} path service path, e.g. "/path"
    * @param {Function} connected Callback function to be called on every websocket connection passing socket facade (i.e. ws.on("connection", connected))
@@ -78,37 +78,47 @@ class SocketServer {
        * Emit websocket event with data
        * @param {String} event Event
        * @param {Object} data Data
-       * @returns {Promise<void>}
+       * @returns {Promise<void>} Promise when emitting completed
        */
       emit: async (event, data) => {
         return Promise.resolve();
       },
       /**
-       * Broadcast websocket event (except to sender) by excluding an user (optional) or restricting to contexts (optional)
+       * Broadcast websocket event to all sockets except to sender with options
        * @param {String} event Event
        * @param {Object} data Data
-       * @param {String} [user] User to be excluding
-       * @param {String[]} [contexts] Contexts for restrictions
-       * @returns {Promise<void>}
+       * @param {Object} [user] Users to be included/excluded, undefined: no restriction
+       * @param {[String]} [user.include] Users to be included, undefined: no restriction
+       * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
+       * @param {[String]} [contexts] Array of contexts to restrict, undefined: no restriction
+       * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
+       * @param {[String]} [identifier.include] Unique consumer-provided socket client identifiers to be included, undefined: no restriction
+       * @param {[String]} [identifier.exclude] Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
+       * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcast: async (event, data, user, contexts) => {
+      broadcast: async (event, data, user, contexts, identifier) => {
         return Promise.resolve();
       },
       /**
-       * Broadcast websocket event (including to sender) by excluding an user (optional) or restricting to contexts (optional)
+       * Broadcast websocket event to all sockets with options
        * @param {String} event Event
        * @param {Object} data Data
-       * @param {String} [user] User to be excluding
-       * @param {String[]} [contexts] Contexts for restrictions
-       * @returns {Promise<void>}
+       * @param {Object} [user] Users to be included/excluded, undefined: no restriction
+       * @param {[String]} [user.include] Users to be included, undefined: no restriction
+       * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
+       * @param {[String]} [contexts] Array of contexts to restrict, undefined: no restriction
+       * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
+       * @param {[String]} [identifier.include] Unique consumer-provided socket client identifiers to be included, undefined: no restriction
+       * @param {[String]} [identifier.exclude] Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
+       * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcastAll: async (event, data, user, contexts) => {
+      broadcastAll: async (event, data, user, contexts, identifier) => {
         return Promise.resolve();
       },
       /**
        * Enter a context
        * @param {String} context Context
-       * @returns {Promise<void>}
+       * @returns {Promise<void>} Promise when entering context completed
        */
       enter: async (context) => {
         return Promise.resolve();
@@ -116,7 +126,7 @@ class SocketServer {
       /**
        * Exit a context
        * @param {String} context Context
-       * @returns {Promise<void>}
+       * @returns {Promise<void>} Promise when exiting context completed
        */
       exit: async (context) => {
         return Promise.resolve();
@@ -135,21 +145,21 @@ class SocketServer {
   }
 
   /**
-   * Broadcast event to all websocket clients for a service with options
+   * Broadcast event to all websocket clients for a service with options (independent of a socket connection)
    * @param {String} service Service definition
-   * @param {String} path Service path, e.g. "/path" (relative to websocket server path), undefined: default service path
+   * @param {String} [path] Service path, e.g. "/path" (relative to websocket server path), undefined: default service path
    * @param {String} event Event name or event message JSON content (no additional parameters provided (incl. 'data', except 'local'))
-   * @param {Object} data Data object
-   * @param {String} tenant Tenant for isolation
-   * @param {Object} user Users to be included/excluded, undefined: no restriction
-   * @param {[string]} user.include Users to be included, undefined: no restriction
-   * @param {[string]} user.exclude Users to be excluded, undefined: no restriction
-   * @param {[string]} contexts Array of contexts to restrict, undefined: no restriction
-   * @param {Object} identifier Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-   * @param {[string]} identifier.include Unique consumer-provided socket client identifiers to be included, undefined: no restriction
-   * @param {[string]} identifier.exclude Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
-   * @param {Object} socket Broadcast client socket to be excluded, undefined: no exclusion
-   * @param {boolean} local Broadcast only locally (i.e. not via adapter), default: falsy
+   * @param {Object} [data] Data object
+   * @param {String} [tenant] Tenant for isolation
+   * @param {Object} [user] Users to be included/excluded, undefined: no restriction
+   * @param {[String]} [user.include] Users to be included, undefined: no restriction
+   * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
+   * @param {[String]} [contexts] Array of contexts to restrict, undefined: no restriction
+   * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
+   * @param {[String]} [identifier.include] Unique consumer-provided socket client identifiers to be included, undefined: no restriction
+   * @param {[String]} [identifier.exclude] Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
+   * @param {Object} [socket] Broadcast client socket to be excluded, undefined: no exclusion
+   * @param {boolean} [local] Broadcast only locally (i.e. not via adapter), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
   async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, remote }) {}
