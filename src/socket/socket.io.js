@@ -81,7 +81,6 @@ class SocketIOServer extends SocketServer {
               contexts,
               identifier,
               socket,
-              remote: true,
             });
           },
           broadcastAll: async (event, data, user, contexts, identifier) => {
@@ -95,7 +94,6 @@ class SocketIOServer extends SocketServer {
               contexts,
               identifier,
               socket: null,
-              remote: true,
             });
           },
           enter: async (context) => {
@@ -164,45 +162,56 @@ class SocketIOServer extends SocketServer {
   }
 
   async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket }) {
+    path = path || this.defaultPath(service);
     let to = socket?.broadcast || this.io.of(path);
     if (contexts?.length && identifier?.include?.length) {
-      for (const context of contexts || []) {
-        for (const identifierInclude of identifier?.include || []) {
-          if (user?.include) {
-            to = to.to(room({ tenant, user: user.include, context, identifier: identifierInclude }));
+      for (const context of contexts) {
+        for (const identifierInclude of identifier.include) {
+          if (user?.include?.length) {
+            for (const userInclude of user.include) {
+              to = to.to(room({ tenant, user: userInclude, context, identifier: identifierInclude }));
+            }
           } else {
             to = to.to(room({ tenant, context, identifier: identifierInclude }));
           }
         }
       }
     } else if (contexts?.length) {
-      for (const context of contexts || []) {
-        if (user?.include) {
-          to = to.to(room({ tenant, user: user.include, context }));
+      for (const context of contexts) {
+        if (user?.include?.length) {
+          for (const userInclude of user.include) {
+            to = to.to(room({ tenant, user: userInclude, context }));
+          }
         } else {
           to = to.to(room({ tenant, context }));
         }
       }
     } else if (identifier?.include?.length) {
-      for (const identifierInclude of identifier?.include || []) {
-        if (user?.include) {
-          to = to.to(room({ tenant, user: user.include, identifier: identifierInclude }));
+      for (const identifierInclude of identifier.include) {
+        if (user?.include?.length) {
+          for (const userInclude of user.include) {
+            to = to.to(room({ tenant, user: userInclude, identifier: identifierInclude }));
+          }
         } else {
           to = to.to(room({ tenant, identifier: identifierInclude }));
         }
       }
     } else {
-      if (user?.include) {
-        to = to.to(room({ tenant, user: user.include }));
+      if (user?.include?.length) {
+        for (const userInclude of user.include) {
+          to = to.to(room({ tenant, user: userInclude }));
+        }
       } else {
         to = to.to(room({ tenant }));
       }
     }
-    if (user?.exclude) {
-      to = to.except(room({ tenant, user: user.exclude }));
+    if (user?.exclude?.length) {
+      for (const userExclude of user.exclude) {
+        to = to.except(room({ tenant, user: userExclude }));
+      }
     }
     if (identifier?.exclude?.length) {
-      for (const identifierExclude of identifier.exclude || []) {
+      for (const identifierExclude of identifier.exclude) {
         to = to.except(room({ tenant, identifier: identifierExclude }));
       }
     }

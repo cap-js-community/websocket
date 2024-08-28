@@ -14,13 +14,15 @@ describe("Base", () => {
   afterAll(async () => {});
 
   test("Instance", async () => {
-    const socketServer = new SocketServer();
+    const socketServer = new SocketServer({}, "/ws", {});
     expect(socketServer).toBeDefined();
     let socket;
     const connected = (_socket) => {
       socket = _socket;
     };
     socketServer.setup();
+    socketServer.broadcast({}, "path", "event");
+    expect(socketServer.defaultPath({ path: "/ws/chat" })).toEqual("/chat");
     socketServer.service({}, "test", connected);
     expect(socket).toEqual({
       service: expect.any(Object),

@@ -13,7 +13,7 @@ class SocketServer {
   /**
    * Constructor for websocket server
    * @param {Object} server HTTP server from express app
-   * @param {string} path Protocol path, e.g. '/ws'
+   * @param {String} path Protocol path, e.g. '/ws'
    * @param {Object} config Websocket server configuration
    */
   constructor(server, path, config) {
@@ -34,19 +34,19 @@ class SocketServer {
 
   /**
    * Connect a service to websocket
-   * @param {string} service service definition
-   * @param {string} path service path, e.g. "/chat"
-   * @param {function} connected Callback function to be called on every websocket connection passing socket facade (i.e. ws.on("connection", connected))
+   * @param {String} service service definition
+   * @param {String} path service path, e.g. "/path"
+   * @param {Function} connected Callback function to be called on every websocket connection passing socket facade (i.e. ws.on("connection", connected))
    */
   service(service, path, connected) {
     const facade = {
       /**
        * Service definition
-       * @returns {object}
+       * @returns {Object}
        */
       service,
       /**
-       * Service name/path
+       * Service path
        * @returns {String}
        */
       path,
@@ -71,7 +71,7 @@ class SocketServer {
       /**
        * Register websocket event
        * @param {String} event Event
-       * @param {function} callback Callback
+       * @param {Function} callback Callback
        */
       on: (event, callback) => {},
       /**
@@ -127,7 +127,7 @@ class SocketServer {
       disconnect() {},
       /**
        * Register callback function called on disconnect of server socket
-       * @param {function} callback Callback function
+       * @param {Function} callback Callback function
        */
       onDisconnect: (callback) => {},
     };
@@ -136,29 +136,29 @@ class SocketServer {
 
   /**
    * Broadcast event to all websocket clients for a service with options
-   * @param {string} service Service definition
-   * @param {string} path Service path, e.g. "/chat"
-   * @param {string} event Event name or event message JSON content (no additional parameters provided (incl. data))
+   * @param {String} service Service definition
+   * @param {String} path Service path, e.g. "/path" (relative to websocket server path), undefined: default service path
+   * @param {String} event Event name or event message JSON content (no additional parameters provided (incl. 'data', except 'local'))
    * @param {Object} data Data object
-   * @param {string} tenant Tenant for isolation
-   * @param {object} user User to be included/excluded, undefined: no restriction
-   * @param {string} user.include User to be included, undefined: no restriction
-   * @param {string} user.exclude User to be excluded, undefined: no restriction
+   * @param {String} tenant Tenant for isolation
+   * @param {Object} user Users to be included/excluded, undefined: no restriction
+   * @param {[string]} user.include Users to be included, undefined: no restriction
+   * @param {[string]} user.exclude Users to be excluded, undefined: no restriction
    * @param {[string]} contexts Array of contexts to restrict, undefined: no restriction
-   * @param {object} identifier Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-   * @param {[string]} identifier.include Unique consumer-provided socket client identifier to be included, undefined: no restriction
-   * @param {[string]} identifier.exclude Unique consumer-provided socket client identifier to be excluded, undefined: no restriction
+   * @param {Object} identifier Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
+   * @param {[string]} identifier.include Unique consumer-provided socket client identifiers to be included, undefined: no restriction
+   * @param {[string]} identifier.exclude Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
    * @param {Object} socket Broadcast client socket to be excluded, undefined: no exclusion
-   * @param {boolean} remote Broadcast also remote (e.g. via redis), default: falsy
+   * @param {boolean} local Broadcast only locally (i.e. not via adapter), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
   async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, remote }) {}
 
   /**
    * Handle HTTP request response
-   * @param {object} socket Server socket
+   * @param {Object} socket Server socket
    * @param {Number} statusCode Response status code
-   * @param {string} body Response body
+   * @param {String} body Response body
    */
   respond(socket, statusCode, body) {
     if (statusCode >= 400) {
@@ -168,15 +168,15 @@ class SocketServer {
 
   /**
    * Close socket and disconnect client. If no socket is passed the server is closed
-   * @param {object} socket Socket to be disconnected
+   * @param {Object} socket Socket to be disconnected
    * @param {Number} code Reason code for close
-   * @param {string} reason Reason text for close
+   * @param {String} reason Reason text for close
    */
   close(socket, code, reason) {}
 
   /**
    * Enforce that socket request is authenticated
-   * @param {object} socket Server socket
+   * @param {Object} socket Server socket
    */
   enforceAuth(socket) {
     if (socket.request.isAuthenticated && !socket.request.isAuthenticated()) {
@@ -233,6 +233,11 @@ class SocketServer {
     return middlewares.concat(this.afterMiddlewares());
   }
 
+  /**
+   * Remove the next wrapper from the request object
+   * @param {Object }socket Socket
+   * @param {Function} next Next function
+   */
   removeWrapNext(socket, next) {
     const req = socket.request;
     let error;
@@ -248,7 +253,7 @@ class SocketServer {
   /**
    * Mock the HTTP response object and make available at req.res
    * @param {Object} socket Server socket
-   * @param {function} next Call next
+   * @param {Function} next Call next
    */
   mockResponse(socket, next) {
     const req = socket.request;
@@ -307,7 +312,7 @@ class SocketServer {
   /**
    * Apply the authorization cookie to authorization header for local authorization testing in mocked auth scenario
    * @param {Object} socket Server socket
-   * @param {function} next Call next
+   * @param {Function} next Call next
    */
   applyAuthCookie(socket, next) {
     const req = socket.request;
@@ -329,8 +334,8 @@ class SocketServer {
 
   /**
    * Require implementation
-   * @param {string} impl Implementation name or path
-   * @param {string} context Implementation context
+   * @param {String} impl Implementation name or path
+   * @param {String} context Implementation context
    * @returns {*} Implementation module
    */
   static require(impl, context = "") {
@@ -346,12 +351,28 @@ class SocketServer {
     return require(impl);
   }
 
+  /**
+   * Return format instance for service
+   * @param {Object }service Service definition
+   * @param {String} origin Origin format, e.g. 'json'
+   * @returns {*}
+   */
   format(service, origin) {
     const format = service.definition["@websocket.format"] || service.definition["@ws.format"] || "json";
     if (format === origin) {
       return new (SocketServer.require("identity", "format"))(service);
     }
     return new (SocketServer.require(format, "format"))(service);
+  }
+
+  /**
+   * Default path for websocket service
+   */
+  defaultPath(service) {
+    if (service.path.startsWith(this.path)) {
+      return service.path.substring(this.path.length);
+    }
+    return service.path;
   }
 }
 

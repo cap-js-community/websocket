@@ -1,15 +1,18 @@
 "use strict";
 
 const cds = require("@sap/cds");
+
+const BaseFormat = require("./base");
+
 const DESERIALIZE_REGEX = /((?:[^:\\]|(?:\\.))+):((?:[^:\\\n]|(?:\\.))*)/;
 const MESSAGE = "MESSAGE";
 const SEPARATOR = "\n\n";
 
 const LOG = cds.log("/websocket/pcp");
 
-class PCPFormat {
+class PCPFormat extends BaseFormat {
   constructor(service) {
-    this.service = service;
+    super(service);
   }
 
   parse(data) {

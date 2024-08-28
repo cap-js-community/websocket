@@ -1,8 +1,10 @@
 "use strict";
 
-class IdentityFormat {
+const BaseFormat = require("./base");
+
+class IdentityFormat extends BaseFormat {
   constructor(service) {
-    this.service = service;
+    super(service);
   }
 
   parse(data) {

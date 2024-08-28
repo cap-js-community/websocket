@@ -1,11 +1,14 @@
 "use strict";
 
 const cds = require("@sap/cds");
+
+const BaseFormat = require("./base");
+
 const LOG = cds.log("/websocket/json");
 
-class JSONFormat {
+class JSONFormat extends BaseFormat {
   constructor(service) {
-    this.service = service;
+    super(service);
   }
 
   parse(data) {

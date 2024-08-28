@@ -1,10 +1,11 @@
 "use strict";
 
 const cds = require("@sap/cds");
-const LOG = cds.log("/websocket");
 
 const SocketServer = require("./socket/base");
 const redis = require("./redis");
+
+const LOG = cds.log("/websocket");
 
 const WebSocketAction = {
   Connect: "wsConnect",
@@ -156,7 +157,6 @@ function bindServiceEvents(socketServer, service, path) {
           contexts,
           identifier,
           socket: null,
-          remote: true,
         });
       } catch (err) {
         LOG?.error(err);
@@ -375,7 +375,7 @@ function deriveElements(event, data) {
 }
 
 function deriveUser(event, data, headers, req) {
-  let currenUser = { include: undefined, exclude: undefined };
+  let currentUser = { include: undefined, exclude: undefined };
   if (
     headers?.wsCurrentUser?.include !== undefined ||
     headers?.currentUser?.include !== undefined ||
@@ -388,7 +388,8 @@ function deriveUser(event, data, headers, req) {
       headers?.wsIncludeCurrentUser ||
       headers?.includeCurrentUser
     ) {
-      currenUser.include = req.context.user?.id;
+      currentUser.include ??= [];
+      currentUser.include.push(req.context.user?.id);
     }
   } else {
     let user =
@@ -397,7 +398,8 @@ function deriveUser(event, data, headers, req) {
       event["@websocket.broadcast.user"] ||
       event["@ws.broadcast.user"];
     if (user === "includeCurrent") {
-      currenUser.include = req.context.user?.id;
+      currentUser.include ??= [];
+      currentUser.include.push(req.context.user?.id);
     }
     let currentUserInclude =
       event["@websocket.currentUser.include"] ||
@@ -405,7 +407,8 @@ function deriveUser(event, data, headers, req) {
       event["@websocket.broadcast.currentUser.include"] ||
       event["@ws.broadcast.currentUser.include"];
     if (currentUserInclude) {
-      currenUser.include = req.context.user?.id;
+      currentUser.include ??= [];
+      currentUser.include.push(req.context.user?.id);
     }
     if (event.elements) {
       for (const name in event.elements) {
@@ -417,7 +420,8 @@ function deriveUser(event, data, headers, req) {
           element["@ws.broadcast.user"];
         if (user === "includeCurrent") {
           if (data[name]) {
-            currenUser.include = req.context.user?.id;
+            currentUser.include ??= [];
+            currentUser.include.push(req.context.user?.id);
             break;
           }
         }
@@ -428,7 +432,8 @@ function deriveUser(event, data, headers, req) {
           element["@ws.broadcast.currentUser.include"];
         if (currentUserInclude) {
           if (data[name]) {
-            currenUser.include = req.context.user?.id;
+            currentUser.include ??= [];
+            currentUser.include.push(req.context.user?.id);
             break;
           }
         }
@@ -447,7 +452,8 @@ function deriveUser(event, data, headers, req) {
       headers?.wsExcludeCurrentUser ||
       headers?.excludeCurrentUser
     ) {
-      currenUser.exclude = req.context.user?.id;
+      currentUser.exclude ??= [];
+      currentUser.exclude.push(req.context.user?.id);
     }
   } else {
     let user =
@@ -456,7 +462,8 @@ function deriveUser(event, data, headers, req) {
       event["@websocket.broadcast.user"] ||
       event["@ws.broadcast.user"];
     if (user === "excludeCurrent") {
-      currenUser.exclude = req.context.user?.id;
+      currentUser.exclude ??= [];
+      currentUser.exclude.push(req.context.user?.id);
     }
     let currentUserExclude =
       event["@websocket.currentUser.exclude"] ||
@@ -464,7 +471,8 @@ function deriveUser(event, data, headers, req) {
       event["@websocket.broadcast.currentUser.exclude"] ||
       event["@ws.broadcast.currentUser.exclude"];
     if (currentUserExclude) {
-      currenUser.exclude = req.context.user?.id;
+      currentUser.exclude ??= [];
+      currentUser.exclude.push(req.context.user?.id);
     }
     if (event.elements) {
       for (const name in event.elements) {
@@ -476,7 +484,8 @@ function deriveUser(event, data, headers, req) {
           element["@ws.broadcast.user"];
         if (user === "excludeCurrent") {
           if (data[name]) {
-            currenUser.exclude = req.context.user?.id;
+            currentUser.exclude ??= [];
+            currentUser.exclude.push(req.context.user?.id);
             break;
           }
         }
@@ -487,15 +496,16 @@ function deriveUser(event, data, headers, req) {
           element["@ws.broadcast.currentUser.exclude"];
         if (currentUserExclude) {
           if (data[name]) {
-            currenUser.exclude = req.context.user?.id;
+            currentUser.exclude ??= [];
+            currentUser.exclude.push(req.context.user?.id);
             break;
           }
         }
       }
     }
   }
-  if (currenUser.include || currenUser.exclude) {
-    return currenUser;
+  if (currentUser.include || currentUser.exclude) {
+    return currentUser;
   }
 }
 

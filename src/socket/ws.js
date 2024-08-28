@@ -92,7 +92,6 @@ class SocketWSServer extends SocketServer {
                 contexts,
                 identifier,
                 socket: ws,
-                remote: true,
               });
             },
             broadcastAll: async (event, data, user, contexts, identifier) => {
@@ -106,7 +105,6 @@ class SocketWSServer extends SocketServer {
                 contexts,
                 identifier,
                 socket: null,
-                remote: true,
               });
             },
             enter: async (context) => {
@@ -131,7 +129,8 @@ class SocketWSServer extends SocketServer {
     };
   }
 
-  async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, remote }) {
+  async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, local }) {
+    path = path || this.defaultPath(service);
     const eventMessage = event;
     const isEventMessage = !data;
     if (isEventMessage) {
@@ -151,8 +150,8 @@ class SocketWSServer extends SocketServer {
         client.readyState === WebSocket.OPEN &&
         client.request?.url === servicePath &&
         client.context.tenant === tenant &&
-        (!user?.include || client.context.user?.id === user.include) &&
-        (!user?.exclude || client.context.user?.id !== user.exclude) &&
+        (!user?.include?.length || user.include.includes(client.context.user?.id)) &&
+        (!user?.exclude?.length || !user.exclude.includes(client.context.user?.id)) &&
         (!contexts?.length || contexts.find((context) => client.contexts.has(context))) &&
         (!identifier?.include?.length || identifier.include.includes(client.request?.queryOptions?.id)) &&
         (!identifier?.exclude?.length || !identifier.exclude.includes(client.request?.queryOptions?.id))
@@ -167,7 +166,7 @@ class SocketWSServer extends SocketServer {
         await client.send(clientMessage);
       }
     }
-    if (remote) {
+    if (!local) {
       const adapterMessage = isEventMessage
         ? eventMessage
         : JSON.stringify({ event, data, tenant, user, contexts, identifier });

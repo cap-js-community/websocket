@@ -1,15 +1,15 @@
 "use strict";
 
-const redis = require("../redis");
 const cds = require("@sap/cds");
+
+const BaseAdapter = require("./base");
+const redis = require("../redis");
 
 const LOG = cds.log("/websocket/redis");
 
-class RedisAdapter {
+class RedisAdapter extends BaseAdapter {
   constructor(server, config) {
-    this.server = server;
-    this.config = config;
-    this.prefix = config?.options?.key ?? "websocket";
+    super(server, config);
   }
 
   async setup() {
@@ -27,7 +27,7 @@ class RedisAdapter {
       await this.client.subscribe(channel, async (message, messageChannel) => {
         try {
           if (messageChannel === channel) {
-            await this.server.broadcast({ service, path, event: message });
+            await this.server.broadcast({ service, path, event: message, local: true });
           }
         } catch (err) {
           LOG?.error(err);
