@@ -129,7 +129,8 @@ The CDS websocket server supports the following two websocket implementations:
 
 - [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.websocket.kind: "ws"` **(default)**
 - [Socket.IO](https://socket.io): `cds.websocket.kind: "socket.io"`
-- Custom Server: A custom websocket server implementation can be provided via `cds.websocket.impl`
+- **Custom Server**: A custom websocket server implementation can be provided via a path relative to the project root
+  with the configuration `cds.websocket.impl` (e.g. `cds.websocket.impl: './server/xyz.js'`).
 
 The server implementation abstracts from the concrete websocket implementation. The websocket client still needs to be implemented websocket implementation specific.
 
@@ -521,14 +522,15 @@ To configure the PCP message format the following annotations are available:
 
 #### Custom Format
 
-A custom websocket format implementation can be provided via a relative path in `@websocket.format` resp. `@ws.format` annotation.
+A custom websocket format implementation can be provided via a path relative to the project root
+in `@websocket.format` resp. `@ws.format` annotation (e.g. `@ws.format: './format/xyz.js'`).
 
 The custom format class needs to implement the following functions:
 
 - **parse(data)**: Parse the event data into internal data (JSON), i.e. `{ event, data }`
 - **compose(event, data)**: Compose the event and internal data (JSON) into a formatted string. For kind `socket.io`, it can also be a JSON object.
 
-In addition, it can implement the following class functions (optional):
+In addition, it can implement the following functions (optional):
 
 - **constructor(service)**: Setup instance with service definition on creation
 
@@ -818,14 +820,15 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
 
 ###### Custom Adapter
 
-A custom websocket adapter implementation can be provided via relative path set configuration of `cds.websocket.adapter.impl`.
+A custom websocket adapter implementation can be provided via a path relative to the project root
+with the configuration `cds.websocket.adapter.impl` (e.g. `cds.websocket.adapter.impl: './adapter/xyz.js'`).
 
 The custom adapter class needs to implement the following functions:
 
 - **on(service, path)**: Register an adapter subscription
 - **emit(service, path, message)**: Emit an adapter event message
 
-In addition, it can implement the following class functions (optional):
+In addition, it can implement the following functions (optional):
 
 - **constructor(server, config)**: Setup instance on creation
 - **setup()**: Perform some async setup activities (optional)
@@ -866,8 +869,10 @@ https://socket.io/docs/v4/index-streams-adapter/
 
 ###### Custom Adapter
 
-A custom websocket adapter implementation can be provided via relative path set configuration of `cds.websocket.adapter.impl`.
-The custom adapter need to fulfill the Socket.IO adapter interface.
+A custom websocket adapter implementation can be provided via a path relative to the project root
+with the configuration `cds.websocket.adapter.impl` (e.g. `cds.websocket.adapter.impl: './adapter/xyz.js'`).
+
+The custom adapter need to fulfill the Socket.IO adapter interface (https://socket.io/docs/v4/adapter/).
 
 ### Deployment
 
