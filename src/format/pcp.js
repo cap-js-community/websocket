@@ -24,7 +24,7 @@ class PCPFormat extends BaseFormat {
     if (splitPos !== -1) {
       const result = {};
       const pcpFields = extractPcpFields(data.substring(0, splitPos));
-      const operation = this.service.operations().find((operation) => {
+      const operation = Object.values(this.service.operations || {}).find((operation) => {
         return (
           operation["@websocket.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE) ||
           operation["@ws.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE) ||
@@ -54,10 +54,11 @@ class PCPFormat extends BaseFormat {
 
   compose(event, data) {
     const eventDefinition = this.service.events()[event];
-    const messageElement = eventDefinition?.elements?.find((element) => {
+    const eventElements = Object.values(eventDefinition?.elements || {});
+    const messageElement = eventElements.find((element) => {
       return element["@websocket.pcp.message"] || element["@ws.pcp.message"];
     });
-    const actionElement = eventDefinition?.elements?.find((element) => {
+    const actionElement = eventElements.find((element) => {
       return element["@websocket.pcp.action"] || element["@ws.pcp.action"];
     });
     const message =
