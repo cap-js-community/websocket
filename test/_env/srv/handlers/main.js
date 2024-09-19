@@ -106,13 +106,37 @@ module.exports = (srv) => {
       "customContextHeaderEvent",
       { ID, text },
       {
-        wsContexts: [ID],
         contexts: [ID, new Date(), { a: 1 }],
-        wsCurrentUserInclude: req.data.num === 0,
-        wsCurrentUserExclude: req.data.num === 1,
+        wsContexts: [ID],
+        user: {
+          include: [],
+          exclude: [],
+        },
+        wsUser: {
+          include: [],
+          exclude: [],
+        },
+        userInclude: [],
+        wsUserInclude: [],
+        userExclude: [],
+        wsUserExclude: [],
         currentUser: {
           include: req.data.num === 0,
           exclude: req.data.num === 1,
+        },
+        wsCurrentUser: {
+          include: req.data.num === 0,
+          exclude: req.data.num === 1,
+        },
+        currentUserInclude: req.data.num === 0,
+        wsCurrentUserExclude: req.data.num === 1,
+        identifier: {
+          include: [],
+          exclude: [],
+        },
+        wsIdentifier: {
+          include: [],
+          exclude: [],
         },
       },
     );

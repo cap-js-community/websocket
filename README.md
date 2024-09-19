@@ -339,9 +339,11 @@ the following annotations to include or exclude defined users are available:
 Valid annotation values are:
 
 - **Event level**:
+  - Type: `String[] | String`
   - Provide static unique user ids to include or exclude websocket users from event broadcasting
   - Value can be a single user id or an array of user ids
 - **Event element level**:
+  - Type: `Boolean`
   - Value from event data for the annotated element is used as user id to include or exclude websocket users from event broadcasting
   - Value can be a single user id or an array of user ids
   - First annotated element with an defined event data value is taken
@@ -452,9 +454,11 @@ to influence event broadcasting based websocket client identifier to exclude cer
 Valid annotation values are:
 
 - **Event level**:
+  - Type: `String[] | String`
   - Provide static unique identifiers to include or exclude clients from event broadcasting
   - Value can be a single identifier string or an array of identifier strings
 - **Event element level**:
+  - Type: `Boolean`
   - Value from event data for the annotated element is used as unique identifiers to include or exclude websocket clients from event broadcasting
   - Value can be a single identifier string or an array of identifier strings
   - First annotated element with an defined event data value is taken
