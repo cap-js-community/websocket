@@ -306,7 +306,6 @@ Valid annotation values are:
 Furthermore, also additional equivalent annotations alternatives are available:
 
 - Include current user:
-
   - `@websocket.currentUser.include`
   - `@ws.currentUser.include`
   - `@websocket.broadcast.currentUser.include`
@@ -355,6 +354,20 @@ determined based on the event, to which subset of clients the event shall be emi
 event are leveraged for setting up the context, the annotation `@websocket.context` or `@ws.context` is available on
 event element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`). For static contexts
 the annotation can also be used on event level, providing a static event context string.
+
+**Entity Level:**
+
+```cds
+@websocket.context: 'ABC'
+event received {
+  ID: UUID;
+  text: String;
+}
+```
+
+This sets up the event context based on a static provided value.
+
+**Entity Element Level:**
 
 ```cds
 event received {
