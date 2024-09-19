@@ -21,4 +21,13 @@ service PCPService {
         field1: String;
         field2: String;
     }
+
+    @ws.pcp.event
+    @ws.pcp.message: ''
+    event notification3 {
+        @ws.pcp.action
+        action: String;
+        field1: String;
+        field2: String;
+    }
 }

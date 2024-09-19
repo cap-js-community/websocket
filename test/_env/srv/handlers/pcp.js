@@ -11,6 +11,12 @@ module.exports = (srv) => {
       field1: req.data.field1 || "value1",
       field2: req.data.field2 || "value2",
     });
+    await srv.emit("notification3", {
+      message: "no body!",
+      action: "MESSAGE",
+      field1: req.data.field1 || "value1",
+      field2: req.data.field2 || "value2",
+    });
     return true;
   });
 };

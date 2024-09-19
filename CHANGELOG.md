@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 1.2.1 - 2024-10-xx
 
+### Added
+
+- Include or exclude defined list of users
+
 ### Fixed
 
-- tbd
+- Allow empty PCP message in event definition
+- Ignore not modeled pcp fields in payload serialization
+- Correct annotation `wsCurrentUserInclude`/`currentUserInclude`
+- Correct annotation `wsCurrentUserExclude`/`currentUserExclude`
+- Fix documentations on some annotations
 
 ## Version 1.2.0 - 2024-09-04
 

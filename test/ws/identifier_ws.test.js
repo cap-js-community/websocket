@@ -8,14 +8,13 @@ const { wait } = require("../_env/util/common");
 
 cds.test(__dirname + "/../_env");
 
-describe("OData", () => {
+describe("Identifier", () => {
   let socket;
   let socketOther;
 
   beforeAll(async () => {
     socket = await connect("/ws/odata?id=1234");
     socketOther = await connect("/ws/odata?id=5678");
-    await cds.connect.to("TodoService");
   });
 
   afterAll(async () => {

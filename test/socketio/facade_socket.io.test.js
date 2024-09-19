@@ -25,7 +25,7 @@ describe("Facade", () => {
     await disconnect(socketOther);
   });
 
-  test("Facade", async () => {
+  test("API", async () => {
     const facade = socket.serverSocket.facade;
     expect(facade).toBeDefined();
     expect(facade.service).toEqual(expect.any(Object));

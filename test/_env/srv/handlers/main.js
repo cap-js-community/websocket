@@ -73,6 +73,32 @@ module.exports = (srv) => {
     return text + "-" + req.context.user.id;
   });
 
+  srv.on("triggerCustomDefinedUserEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customDefinedUserIncludeEvent", { ID, text, user: req.context.user.id });
+    await srv.emit("customDefinedUserExcludeEvent", { ID, text, user: req.context.user.id });
+    return text + "-" + req.context.user.id;
+  });
+
+  srv.on("triggerCustomDefinedUserDynamicEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customDefinedUserIncludeDynamicEvent", {
+      ID,
+      text,
+      user: req.context.user.id,
+      flag: ["alice", req.context.user.id],
+    });
+    await srv.emit("customDefinedUserExcludeDynamicEvent", {
+      ID,
+      text,
+      user: req.context.user.id,
+      flag: [req.context.user.id],
+    });
+    return text + "-" + req.context.user.id;
+  });
+
   srv.on("triggerCustomContextHeaderEvent", async (req) => {
     const ID = req.data.ID;
     const text = req.data.text + req.data.num;
@@ -81,9 +107,9 @@ module.exports = (srv) => {
       { ID, text },
       {
         wsContexts: [ID],
-        contexts: [ID],
-        wsIncludeCurrentUser: req.data.num === 0,
-        wsExcludeCurrentUser: req.data.num === 1,
+        contexts: [ID, new Date(), { a: 1 }],
+        wsCurrentUserInclude: req.data.num === 0,
+        wsCurrentUserExclude: req.data.num === 1,
         currentUser: {
           include: req.data.num === 0,
           exclude: req.data.num === 1,

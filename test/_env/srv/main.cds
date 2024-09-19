@@ -24,6 +24,8 @@ service MainService {
     function triggerCustomContextMassEvent(ID1: UUID, ID2: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextUserEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextUserDynamicEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomDefinedUserEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomDefinedUserDynamicEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextHeaderEvent(ID: UUID, num: Integer, text: String) returns String;
 
     function eventException() returns String;
@@ -96,6 +98,44 @@ service MainService {
         flag: Boolean;
     }
 
+    @websocket.user.include: ['alice']
+    event customDefinedUserIncludeEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+    }
+
+    event customDefinedUserIncludeDynamicEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        @websocket.user.include
+        flag: String;
+    }
+
+    @websocket.user.exclude: 'alice'
+    event customDefinedUserExcludeEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+    }
+
+    event customDefinedUserExcludeDynamicEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        @websocket.user.exclude
+        flag: array of String;
+    }
+
     event customContextHeaderEvent {
         num: Integer;
         text: String;
@@ -107,7 +147,7 @@ service MainService {
     }
 
     action wsConnect();
-    action wsDisconnect();
+    action wsDisconnect(reason: String);
     action wsContext(context: String, exit: Boolean);
 }
 

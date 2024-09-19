@@ -6,7 +6,7 @@ const { connect, disconnect, waitForEvent, waitForNoEvent } = require("../_env/u
 
 cds.test(__dirname + "/../_env");
 
-describe("Chat", () => {
+describe("Facade", () => {
   let socket;
   let socketOther;
 
@@ -20,7 +20,7 @@ describe("Chat", () => {
     await disconnect(socketOther);
   });
 
-  test("Facade", async () => {
+  test("API", async () => {
     const facade = socket.serverSocket.facade;
     expect(facade).toBeDefined();
     expect(facade.service).toEqual(expect.any(Object));

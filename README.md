@@ -223,6 +223,24 @@ via authorization header bearer token by AppRouter to backend instance. CDS midd
 set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and
 authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
 
+### Invocation Context
+
+In context of a WebSocket enabled CDS services, WebSockets events can be directly emitted to the service in the event handler:
+
+```js
+srv.on("action", async (req) => {
+  await srv.emit("message", req.data);
+});
+```
+
+In case, the context of invocation is not a WebSocket service, e.g. call is coming from OData or Rest request,
+still the WebService events can be published by connecting to the WebSocket enabled service as follows:
+
+```js
+const wsService = await cds.connect.to("WSService");
+await wsService.emit("message", req.data);
+```
+
 ### Transactional Safety
 
 In most situations only websocket events shall be broadcast, in case the primary transaction succeeded.
@@ -264,7 +282,9 @@ await chatService.emit("received", req.data);
 In that case, the websocket event is broadcast to websocket clients exactly once, when the primary transaction succeeds.
 In case of execution errors, the event broadcast is retried automatically, while processing the persistent outbox.
 
-### Event User
+### Event Users
+
+#### Current User
 
 Events are broadcast to all websocket clients, including clients established in context of current event context user.
 To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is available on
@@ -297,6 +317,34 @@ Furthermore, also additional equivalent annotations alternatives are available:
   - `@ws.currentUser.exclude`
   - `@websocket.broadcast.currentUser.exclude`
   - `@ws.broadcast.currentUser.exclude`
+
+#### Defined Users
+
+Events are broadcast to all websocket clients. To influence event broadcasting based on defined users,
+the following annotations to include or exclude defined users are available:
+
+- Include user(s):
+
+  - `@websocket.user.include`
+  - `@ws.user.include`
+  - `@websocket.broadcast.user.include`
+  - `@ws.broadcast.user.include`
+
+- Exclude user(s):
+  - `@websocket.user.exclude`
+  - `@ws.user.exclude`
+  - `@websocket.broadcast.user.exclude`
+  - `@ws.broadcast.user.exclude`
+
+Valid annotation values are:
+
+- **Event level**:
+  - Provide static unique user ids to include or exclude websocket users from event broadcasting
+  - Value can be a single user id or an array of user ids
+- **Event element level**:
+  - Value from event data for the annotated element is used as user id to include or exclude websocket users from event broadcasting
+  - Value can be a single user id or an array of user ids
+  - First annotated element with an defined event data value is taken
 
 ### Event Contexts
 
@@ -427,27 +475,37 @@ The unique identifier can be provided for a websocket client as follows:
 The websocket implementation allows to provide event emit headers to dynamically control websocket processing.
 The following headers are available:
 
-- Include current user from event broadcasting (see section Event User):
+- Include current user to event broadcasting (see section Event Users -> Current User):
   - `wsCurrentUser.include: boolean`
   - `currentUser.include: boolean`
-  - `wsIncludeCurrentUser: boolean`
-  - `includeCurrentUser: boolean`
-- Exclude current user from event broadcasting (see section Event User)
+  - `wsCurrentUserInclude: boolean`
+  - `currentUserInclude: boolean`
+- Exclude current user from event broadcasting (see section Event Users -> Current User)
   - `wsCurrentUser.exclude: boolean`
   - `currentUser.exclude: boolean`
-  - `wsExcludeCurrentUser: boolean`
-  - `excludeCurrentUser: boolean`
-- Provide an array of context strings to identify a subset of clients (see section Event Contexts)
+  - `wsCurrentUserExclude: boolean`
+  - `currentUserExclude: boolean`
+- Include one or many user ids to event broadcasting (see section Event Users -> Defined Users):
+  - `wsUser.include: String[] | String`
+  - `user.include: String[] | String`
+  - `wsUserInclude: String[] | String`
+  - `userInclude: String[] | String`
+- Exclude one or many user ids from event broadcasting (see section Event Users -> Defined Users)
+  - `wsUser.exclude: String[] | String`
+  - `user.exclude: String[] | String`
+  - `wsUUserExclude: String[] | String`
+  - `userExclude: String[] | String`
+- Provide one or multiple context strings to identify a subset of clients (see section Event Contexts)
   - `wsContexts: String[] | String`
   - `contexts: String[] | String`
   - `wsContext: String[] | String`
   - `context: String[] | String`
-- Include websocket clients via its identifier (see section Event Client Identifier)
+- Include websocket clients via its identifiers (see section Event Client Identifier)
   - `wsIdentifier.include: String[] | String`
   - `identifier.include: String[] | String`
   - `wsIdentifierInclude: String[] | String`
   - `identifierInclude: String[] | String`
-- Exclude websocket clients via its identifier (see section Event Client Identifier)
+- Exclude websocket clients via its identifiers (see section Event Client Identifier)
   - `wsIdentifier.exclude: String[] | String`
   - `identifier.exclude: String[] | String`
   - `wsIdentifierExclude: String[] | String`
@@ -461,6 +519,10 @@ await srv.emit("customEvent", { ... }, {
   currentUser: {
     exclude: req.data.type === "1"
   },
+  user: {
+    include: "...",
+    exclude: ["..."],
+  },
   identifier: {
     include: ["..."],
     exclude: "...",
@@ -468,8 +530,8 @@ await srv.emit("customEvent", { ... }, {
 });
 ```
 
-The respective event annotations (described in sections above) are respected in addition to event emit header specification,
-so that primitive typed values have priority when specified as part of headers and array-like data is unified.
+The respective event annotations (described in sections above) are respected in addition to event emit header specification.
+Values of all headers and annotations of same semantic type are is unified for single and array values.
 
 ### WebSocket Format
 
@@ -509,16 +571,16 @@ With this configuration WebSocket events consume or produce PCP formatted messag
 To configure the PCP message format the following annotations are available:
 
 - **Operation level**:
-  - `@ws.pcp.action`: Correlate `pcp-action` in PCP message to identify the CDS operation via annotation. If not defined, the operation name is correlated.
+  - `@websocket.pcp.action, @ws.pcp.action: String`: Correlate `pcp-action` in PCP message to identify the CDS operation via annotation. If not defined, the operation name is correlated.
 - **Operation parameter level**:
-  - `@ws.pcp.message`: Correlate the PCP message body to the operation parameter representing the message.
+  - `@websocket.pcp.message, @ws.pcp.message: Boolean`: Correlate the PCP message body to the operation parameter representing the message.
 - **Event level**:
-  - `@ws.pcp.event`: Expose the CDS event as `pcp-event` field in the PCP message.
-  - `@ws.pcp.message`: Expose a static message text as PCP message body.
-  - `@ws.pcp.action`: Exposes a static action as `pcp-action` field in the PCP message. Default `MESSAGE`.
+  - `@websocket.pcp.event, @ws.pcp.event: Boolean`: Expose the CDS event as `pcp-event` field in the PCP message.
+  - `@websocket.pcp.message, @ws.pcp.message: String`: Expose a static message text as PCP message body.
+  - `@websocket.pcp.action, @ws.pcp.action: String`: Exposes a static action as `pcp-action` field in the PCP message. Default `MESSAGE`.
 - **Event element level**:
-  - `@ws.pcp.message`: Expose the string value of the annotated event element as PCP message body.
-  - `@ws.pcp.action`: Expose the string value of the annotated event element as `pcp-action` field in the PCP message. Default `MESSAGE`.
+  - `@websocket.pcp.message, @ws.pcp.message: Boolean`: Expose the string value of the annotated event element as PCP message body.
+  - `@websocket.pcp.action, @ws.pcp.action: Boolean`: Expose the string value of the annotated event element as `pcp-action` field in the PCP message. Default `MESSAGE`.
 
 #### Custom Format
 

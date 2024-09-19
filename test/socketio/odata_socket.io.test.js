@@ -17,7 +17,6 @@ describe("OData", () => {
 
   beforeAll(async () => {
     socket = await connect("odata");
-    await cds.connect.to("TodoService");
   });
 
   afterAll(async () => {

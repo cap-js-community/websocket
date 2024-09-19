@@ -62,29 +62,29 @@ class PCPFormat extends BaseFormat {
       return element["@websocket.pcp.action"] || element["@ws.pcp.action"];
     });
     const message =
-      eventDefinition?.["@websocket.pcp.message"] ||
-      eventDefinition?.["@ws.pcp.message"] ||
-      data[messageElement?.name] ||
+      eventDefinition?.["@websocket.pcp.message"] ??
+      eventDefinition?.["@ws.pcp.message"] ??
+      data[messageElement?.name] ??
       event;
     if (data[messageElement?.name]) {
       delete data[messageElement?.name];
     }
     const pcpAction =
-      eventDefinition?.["@websocket.pcp.action"] ||
-      eventDefinition?.["@ws.pcp.action"] ||
-      data[actionElement?.name] ||
+      eventDefinition?.["@websocket.pcp.action"] ??
+      eventDefinition?.["@ws.pcp.action"] ??
+      data[actionElement?.name] ??
       MESSAGE;
     if (data[actionElement?.name]) {
       delete data[actionElement?.name];
     }
     const pcpEvent =
       eventDefinition?.["@websocket.pcp.event"] || eventDefinition?.["@ws.pcp.event"] ? event : undefined;
-    const pcpFields = serializePcpFields(data, typeof message, pcpAction, pcpEvent);
+    const pcpFields = serializePcpFields(data, typeof message, pcpAction, pcpEvent, eventDefinition?.elements);
     return pcpFields + message;
   }
 }
 
-const serializePcpFields = (pcpFields, messageType, pcpAction, pcpEvent) => {
+const serializePcpFields = (pcpFields, messageType, pcpAction, pcpEvent, elements) => {
   let pcpBodyType = "";
   if (messageType === "string") {
     pcpBodyType = "text";
@@ -94,8 +94,9 @@ const serializePcpFields = (pcpFields, messageType, pcpAction, pcpEvent) => {
   let serialized = "";
   if (pcpFields && typeof pcpFields === "object") {
     for (const fieldName in pcpFields) {
-      if (pcpFields[fieldName] && fieldName.indexOf("pcp-") !== 0) {
-        serialized += escape(fieldName) + ":" + escape(String(pcpFields[fieldName])) + "\n";
+      const fieldValue = stringValue(pcpFields[fieldName]);
+      if (fieldValue && fieldName.indexOf("pcp-") !== 0 && elements?.[fieldName]) {
+        serialized += escape(fieldName) + ":" + escape(fieldValue) + "\n";
       }
     }
   }
@@ -139,10 +140,16 @@ const unescape = (escaped) => {
 };
 
 const localName = (name, service) => {
-  if (name.startsWith(`${service.name}.`)) {
-    return name.substring(service.name.length + 1);
-  }
-  return name;
+  return name.startsWith(`${service.name}.`) ? name.substring(service.name.length + 1) : name;
 };
+
+function stringValue(value) {
+  if (value instanceof Date) {
+    return value.toISOString();
+  } else if (value instanceof Object) {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
 
 module.exports = PCPFormat;

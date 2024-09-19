@@ -20,14 +20,13 @@ cds.env.websocket = {
   impl: null,
 };
 
-describe("OData", () => {
+describe("Identifier", () => {
   let socket;
   let socketOther;
 
   beforeAll(async () => {
     socket = await connect("odata", { id: 1234 });
     socketOther = await connect("odata", { id: 5678 });
-    await cds.connect.to("TodoService");
   });
 
   afterAll(async () => {

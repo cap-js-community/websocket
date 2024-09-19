@@ -375,290 +375,192 @@ function deriveElements(event, data) {
 }
 
 function deriveUser(event, data, headers, req) {
-  let currentUser = { include: undefined, exclude: undefined };
-  if (
-    headers?.wsCurrentUser?.include !== undefined ||
-    headers?.currentUser?.include !== undefined ||
-    headers?.wsIncludeCurrentUser ||
-    headers?.includeCurrentUser !== undefined
-  ) {
-    if (
-      headers?.wsCurrentUser?.include ||
-      headers?.currentUser?.include ||
-      headers?.wsIncludeCurrentUser ||
-      headers?.includeCurrentUser
-    ) {
-      currentUser.include ??= [];
-      currentUser.include.push(req.context.user?.id);
-    }
-  } else {
-    let user =
-      event["@websocket.user"] ||
-      event["@ws.user"] ||
-      event["@websocket.broadcast.user"] ||
-      event["@ws.broadcast.user"];
-    if (user === "includeCurrent") {
-      currentUser.include ??= [];
-      currentUser.include.push(req.context.user?.id);
-    }
-    let currentUserInclude =
-      event["@websocket.currentUser.include"] ||
-      event["@ws.currentUser.include"] ||
-      event["@websocket.broadcast.currentUser.include"] ||
-      event["@ws.broadcast.currentUser.include"];
-    if (currentUserInclude) {
-      currentUser.include ??= [];
-      currentUser.include.push(req.context.user?.id);
-    }
-    if (event.elements) {
-      for (const name in event.elements) {
-        const element = event.elements[name];
-        user =
-          element["@websocket.user"] ||
-          element["@ws.user"] ||
-          element["@websocket.broadcast.user"] ||
-          element["@ws.broadcast.user"];
-        if (user === "includeCurrent") {
-          if (data[name]) {
-            currentUser.include ??= [];
-            currentUser.include.push(req.context.user?.id);
-            break;
-          }
-        }
-        currentUserInclude =
-          element["@websocket.currentUser.include"] ||
-          element["@ws.currentUser.include"] ||
-          element["@websocket.broadcast.currentUser.include"] ||
-          element["@ws.broadcast.currentUser.include"];
-        if (currentUserInclude) {
-          if (data[name]) {
-            currentUser.include ??= [];
-            currentUser.include.push(req.context.user?.id);
-            break;
-          }
-        }
-      }
-    }
+  const currentUser = deriveCurrentUser(event, data, headers, req);
+  const providedUser = deriveDefinedUser(event, data, headers, req);
+  return combineEntries(currentUser, providedUser);
+}
+
+function deriveCurrentUser(event, data, headers, req) {
+  const include = combineValues(
+    deriveValues(event, data, headers, {
+      headerNames: ["wsCurrentUser.include", "wsCurrentUserInclude", "currentUser.include", "currentUserInclude"],
+      annotationNames: ["@websocket.user", "@ws.user", "@websocket.broadcast.user", "@ws.broadcast.user"],
+      annotationCompareValue: "includeCurrent",
+      resultValue: req.context.user?.id,
+    }),
+    deriveValues(event, data, headers, {
+      annotationNames: [
+        "@websocket.currentUser.include",
+        "@ws.currentUser.include",
+        "@websocket.broadcast.currentUser.include",
+        "@ws.broadcast.currentUser.include",
+      ],
+      annotationCompareValue: true,
+      resultValue: req.context.user?.id,
+    }),
+  );
+  const exclude = combineValues(
+    deriveValues(event, data, headers, {
+      headerNames: ["wsCurrentUser.exclude", "wsCurrentUserExclude", "currentUser.exclude", "currentUserExclude"],
+      annotationNames: ["@websocket.user", "@ws.user", "@websocket.broadcast.user", "@ws.broadcast.user"],
+      annotationCompareValue: "excludeCurrent",
+      resultValue: req.context.user?.id,
+    }),
+    deriveValues(event, data, headers, {
+      annotationNames: [
+        "@websocket.currentUser.exclude",
+        "@ws.currentUser.exclude",
+        "@websocket.broadcast.currentUser.exclude",
+        "@ws.broadcast.currentUser.exclude",
+      ],
+      annotationCompareValue: true,
+      resultValue: req.context.user?.id,
+    }),
+  );
+  if (include || exclude) {
+    return { include, exclude };
   }
-  if (
-    headers?.wsCurrentUser?.exclude !== undefined ||
-    headers?.currentUser?.exclude !== undefined ||
-    headers?.wsExcludeCurrentUser ||
-    headers?.excludeCurrentUser !== undefined
-  ) {
-    if (
-      headers?.wsCurrentUser?.exclude ||
-      headers?.currentUser?.exclude ||
-      headers?.wsExcludeCurrentUser ||
-      headers?.excludeCurrentUser
-    ) {
-      currentUser.exclude ??= [];
-      currentUser.exclude.push(req.context.user?.id);
-    }
-  } else {
-    let user =
-      event["@websocket.user"] ||
-      event["@ws.user"] ||
-      event["@websocket.broadcast.user"] ||
-      event["@ws.broadcast.user"];
-    if (user === "excludeCurrent") {
-      currentUser.exclude ??= [];
-      currentUser.exclude.push(req.context.user?.id);
-    }
-    let currentUserExclude =
-      event["@websocket.currentUser.exclude"] ||
-      event["@ws.currentUser.exclude"] ||
-      event["@websocket.broadcast.currentUser.exclude"] ||
-      event["@ws.broadcast.currentUser.exclude"];
-    if (currentUserExclude) {
-      currentUser.exclude ??= [];
-      currentUser.exclude.push(req.context.user?.id);
-    }
-    if (event.elements) {
-      for (const name in event.elements) {
-        const element = event.elements[name];
-        user =
-          element["@websocket.user"] ||
-          element["@ws.user"] ||
-          element["@websocket.broadcast.user"] ||
-          element["@ws.broadcast.user"];
-        if (user === "excludeCurrent") {
-          if (data[name]) {
-            currentUser.exclude ??= [];
-            currentUser.exclude.push(req.context.user?.id);
-            break;
-          }
-        }
-        currentUserExclude =
-          element["@websocket.currentUser.exclude"] ||
-          element["@ws.currentUser.exclude"] ||
-          element["@websocket.broadcast.currentUser.exclude"] ||
-          element["@ws.broadcast.currentUser.exclude"];
-        if (currentUserExclude) {
-          if (data[name]) {
-            currentUser.exclude ??= [];
-            currentUser.exclude.push(req.context.user?.id);
-            break;
-          }
-        }
-      }
-    }
-  }
-  if (currentUser.include || currentUser.exclude) {
-    return currentUser;
+}
+
+function deriveDefinedUser(event, data, headers, req) {
+  const include = deriveValues(event, data, headers, {
+    headerNames: ["wsUser.include", "wsUserInclude", "user.include", "userInclude"],
+    annotationNames: [
+      "@websocket.user.include",
+      "@ws.user.include",
+      "@websocket.broadcast.user.include",
+      "@ws.broadcast.user.include",
+    ],
+  });
+  const exclude = deriveValues(event, data, headers, {
+    headerNames: ["wsUser.exclude", "wsUserExclude", "user.exclude", "userExclude"],
+    annotationNames: [
+      "@websocket.user.exclude",
+      "@ws.user.exclude",
+      "@websocket.broadcast.user.exclude",
+      "@ws.broadcast.user.exclude",
+    ],
+  });
+  if (include || exclude) {
+    return { include, exclude };
   }
 }
 
 function deriveContexts(event, data, headers) {
-  let contexts = undefined;
-  const headerContexts = headers?.wsContexts || headers?.wsContext || headers?.contexts || headers?.context;
-  if (headerContexts) {
-    contexts ??= [];
-    if (Array.isArray(headerContexts)) {
-      contexts = contexts.concat(headerContexts);
-    } else {
-      contexts.push(headerContexts);
-    }
-  }
-  let eventContexts =
-    event["@websocket.context"] ||
-    event["@ws.context"] ||
-    event["@websocket.broadcast.context"] ||
-    event["@ws.broadcast.context"];
-  if (eventContexts) {
-    contexts ??= [];
-    if (Array.isArray(eventContexts)) {
-      contexts = contexts.concat(eventContexts);
-    } else {
-      contexts.push(eventContexts);
-    }
-  }
-  if (event.elements) {
-    for (const name in event.elements) {
-      const element = event.elements[name];
-      const context =
-        element["@websocket.context"] ||
-        element["@ws.context"] ||
-        element["@websocket.broadcast.context"] ||
-        element["@ws.broadcast.context"];
-      if (context) {
-        contexts ??= [];
-        if (data[name] !== undefined && data[name] !== null) {
-          if (Array.isArray(data[name])) {
-            data[name].forEach((entry) => {
-              contexts.push(stringValue(entry));
-            });
-          } else {
-            contexts.push(stringValue(data[name]));
-          }
-        }
-      }
-    }
-  }
-  return contexts;
+  return deriveValues(event, data, headers, {
+    headerNames: ["wsContexts", "wsContext", "contexts", "context"],
+    annotationNames: ["@websocket.context", "@ws.context", "@websocket.broadcast.context", "@ws.broadcast.context"],
+  });
 }
 
 function deriveIdentifier(event, data, headers) {
-  let identifier = { include: undefined, exclude: undefined };
-  let headerIdentifierInclude =
-    headers?.wsIdentifier?.include ||
-    headers?.wsIdentifierInclude ||
-    headers?.identifier?.include ||
-    headers?.identifierInclude;
-  if (headerIdentifierInclude) {
-    identifier.include ??= [];
-    if (Array.isArray(headerIdentifierInclude)) {
-      identifier.include = identifier.include.concat(headerIdentifierInclude);
-    } else {
-      identifier.include.push(headerIdentifierInclude);
-    }
+  const include = deriveValues(event, data, headers, {
+    headerNames: ["wsIdentifier.include", "wsIdentifierInclude", "identifier.include", "identifierInclude"],
+    annotationNames: [
+      "@websocket.identifier.include",
+      "@ws.identifier.include",
+      "@websocket.broadcast.identifier.include",
+      "@ws.broadcast.identifier.include",
+    ],
+  });
+  const exclude = deriveValues(event, data, headers, {
+    headerNames: ["wsIdentifier.exclude", "wsIdentifierExclude", "identifier.exclude", "identifierExclude"],
+    annotationNames: [
+      "@websocket.identifier.exclude",
+      "@ws.identifier.exclude",
+      "@websocket.broadcast.identifier.exclude",
+      "@ws.broadcast.identifier.exclude",
+    ],
+  });
+  if (include || exclude) {
+    return { include, exclude };
   }
-  let eventIdentifierInclude =
-    event["@websocket.identifier.include"] ||
-    event["@ws.identifier.include"] ||
-    event["@websocket.broadcast.identifier.include"] ||
-    event["@ws.broadcast.identifier.include"];
-  if (eventIdentifierInclude) {
-    identifier.include ??= [];
-    if (Array.isArray(eventIdentifierInclude)) {
-      identifier.include = identifier.include.concat(eventIdentifierInclude);
-    } else {
-      identifier.include.push(eventIdentifierInclude);
-    }
-  }
-  if (event.elements) {
-    for (const name in event.elements) {
-      const element = event.elements[name];
-      const identifierInclude =
-        element["@websocket.identifier.include"] ||
-        element["@ws.identifier.include"] ||
-        element["@websocket.broadcast.identifier.include"] ||
-        element["@ws.broadcast.identifier.include"];
-      if (identifierInclude) {
-        identifier.include ??= [];
-        if (data[name] !== undefined && data[name] !== null) {
-          if (Array.isArray(data[name])) {
-            data[name].forEach((entry) => {
-              identifier.include.push(stringValue(entry));
-            });
-          } else {
-            identifier.include.push(stringValue(data[name]));
+}
+
+function deriveValues(
+  event,
+  data,
+  headers,
+  { headerNames, annotationNames, headerCompareValue, annotationCompareValue, resultValue },
+) {
+  let result = undefined;
+  if (data) {
+    for (const annotationName of annotationNames || []) {
+      const annotationValue = event[annotationName];
+      if (annotationCompareValue === undefined ? annotationValue : annotationValue === annotationCompareValue) {
+        result = mergeValue(result, resultValue ?? annotationValue);
+      }
+      if (event.elements) {
+        for (const name in event.elements) {
+          const element = event.elements[name];
+          const annotationValue = element[annotationName];
+          if (annotationCompareValue === undefined ? annotationValue : annotationValue === annotationCompareValue) {
+            if (resultValue === undefined) {
+              result = mergeValue(result, data[name]);
+            } else if (data[name]) {
+              result = mergeValue(result, resultValue);
+            }
           }
         }
       }
     }
   }
-  let headerIdentifierExclude =
-    headers?.wsIdentifier?.exclude ||
-    headers?.wsIdentifierExclude ||
-    headers?.identifier?.exclude ||
-    headers?.identifierExclude;
-  if (headerIdentifierExclude) {
-    identifier.exclude ??= [];
-    if (Array.isArray(headerIdentifierExclude)) {
-      identifier.exclude = identifier.exclude.concat(headerIdentifierExclude);
-    } else {
-      identifier.exclude.push(headerIdentifierExclude);
-    }
-  }
-  let eventIdentifierExclude =
-    event["@websocket.identifier.exclude"] ||
-    event["@ws.identifier.exclude"] ||
-    event["@websocket.broadcast.identifier.exclude"] ||
-    event["@ws.broadcast.identifier.exclude"];
-  if (eventIdentifierExclude) {
-    identifier.exclude ??= [];
-    if (Array.isArray(eventIdentifierExclude)) {
-      identifier.exclude = identifier.exclude.concat(eventIdentifierExclude);
-    } else {
-      identifier.exclude.push(eventIdentifierExclude);
-    }
-  }
-  if (event.elements) {
-    for (const name in event.elements) {
-      const element = event.elements[name];
-      const identifierExclude =
-        element["@websocket.identifier.exclude"] ||
-        element["@ws.identifier.exclude"] ||
-        element["@websocket.broadcast.identifier.exclude"] ||
-        element["@ws.broadcast.identifier.exclude"];
-      if (identifierExclude) {
-        identifier.exclude ??= [];
-        if (data[name] !== undefined && data[name] !== null) {
-          if (Array.isArray(data[name])) {
-            data[name].forEach((entry) => {
-              identifier.exclude.push(stringValue(entry));
-            });
-          } else {
-            identifier.exclude.push(stringValue(data[name]));
-          }
-        }
+  if (headers) {
+    for (const headerName of headerNames || []) {
+      const headerValue = accessPath(headers, headerName);
+      if (headerCompareValue === undefined ? headerValue : headerValue === headerCompareValue) {
+        result = mergeValue(result, resultValue ?? headerValue);
       }
     }
   }
-  if (identifier.include || identifier.exclude) {
-    return identifier;
+  return removeArrayDuplicates(result);
+}
+
+function combineEntries(entryA, entryB) {
+  let include = combineValues(entryA?.include, entryB?.include);
+  let exclude = combineValues(entryA?.exclude, entryB?.exclude);
+  if (include || exclude) {
+    return { include, exclude };
   }
+}
+
+function combineValues(valuesA, valuesB) {
+  if (valuesA || valuesB) {
+    return removeArrayDuplicates([...(valuesA || []), ...(valuesB || [])]);
+  }
+}
+
+function accessPath(object, path) {
+  const properties = path.split(".");
+  for (let i = 0; i < properties.length; i++) {
+    if (!object) {
+      return null;
+    }
+    object = object[properties[i]];
+  }
+  return object;
+}
+
+function mergeValue(result, value) {
+  if (value === undefined || value === null) {
+    return result;
+  }
+  result ??= [];
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      result.push(stringValue(entry));
+    }
+  } else {
+    result.push(stringValue(value));
+  }
+  return result;
+}
+
+function removeArrayDuplicates(array) {
+  if (!Array.isArray(array)) {
+    return array;
+  }
+  return [...new Set(array)];
 }
 
 function stringValue(value) {
