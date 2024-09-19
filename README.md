@@ -343,7 +343,7 @@ event received {
 }
 ```
 
-Event is published only to websocket clients established in context to the current event context user, if the event data `flag` is falsy.
+Event is published only to websocket clients established in context to the current event context user, if the event data of `flag` is falsy.
 
 #### Defined Users
 
@@ -387,7 +387,7 @@ event received {
 }
 ```
 
-Event is published to all users expect the user `ABC`.
+Event is published to all users except the user `ABC`.
 
 **Entity Element Level:**
 
@@ -400,7 +400,7 @@ event received {
 }
 ```
 
-Event is published to all users listed in the event data `users`.
+Event is only published to all users listed in the event data of `users`.
 
 ### Event Contexts
 
@@ -420,7 +420,7 @@ event received {
 }
 ```
 
-Event is broadcast to all clients in context `ABC`.
+Event is only published to all clients in context `ABC`.
 
 **Entity Element Level:**
 
@@ -432,7 +432,7 @@ event received {
 }
 ```
 
-Event is broadcast to all clients in context of the event data `ID`.
+Event is only published to all clients in context of the event data of `ID`.
 
 The annotation can be used on multiple event elements setting up different event contexts in parallel,
 if event shall be broadcast/emitted into multiple contexts at the same time.
@@ -543,7 +543,7 @@ event received {
 }
 ```
 
-Event is broadcast to all clients with identifier `ABC`.
+Event is only published to all clients with identifier `ABC`.
 
 **Entity Element Level:**
 
@@ -555,7 +555,7 @@ event received {
 }
 ```
 
-Event is broadcast to all clients with identifiers listed in the event data `ids`.
+Event is only published to all clients with identifiers listed in the event data of `ids`.
 
 #### Client Setup
 
@@ -575,22 +575,22 @@ The unique identifier can be provided for a websocket client as follows:
 The websocket implementation allows to provide event emit headers to dynamically control websocket processing.
 The following headers are available:
 
-- Include current user to event broadcasting (see section Event Users -> Current User):
+- Include current user to event publication (see section Event Users -> Current User):
   - `wsCurrentUser.include: boolean`
   - `currentUser.include: boolean`
   - `wsCurrentUserInclude: boolean`
   - `currentUserInclude: boolean`
-- Exclude current user from event broadcasting (see section Event Users -> Current User)
+- Exclude current user from event publication (see section Event Users -> Current User)
   - `wsCurrentUser.exclude: boolean`
   - `currentUser.exclude: boolean`
   - `wsCurrentUserExclude: boolean`
   - `currentUserExclude: boolean`
-- Include one or many user ids to event broadcasting (see section Event Users -> Defined Users):
+- Include one or many user ids to event publication (see section Event Users -> Defined Users):
   - `wsUser.include: String[] | String`
   - `user.include: String[] | String`
   - `wsUserInclude: String[] | String`
   - `userInclude: String[] | String`
-- Exclude one or many user ids from event broadcasting (see section Event Users -> Defined Users)
+- Exclude one or many user ids from event publication (see section Event Users -> Defined Users)
   - `wsUser.exclude: String[] | String`
   - `user.exclude: String[] | String`
   - `wsUUserExclude: String[] | String`
@@ -821,7 +821,7 @@ character `:` is replaced by a scoped event name using character `.`.
 **Example:**
 WebSocket Event: `Object:created` is mapped to CDS Service Event: `Object.created`
 
-Per default, events are broadcast to every connected socket, expect the socket, that was called with the CRUD event.
+Per default, events are broadcast to every connected socket, except the socket, that was called with the CRUD event.
 To also include the triggering socket within the broadcast, this can be controlled via annotations
 `@websocket.broadcast.all` or `@ws.broadcast.all` on entity level.
 
