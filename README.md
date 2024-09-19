@@ -306,6 +306,7 @@ Valid annotation values are:
 Furthermore, also additional equivalent annotations alternatives are available:
 
 - Include current user:
+
   - `@websocket.currentUser.include`
   - `@ws.currentUser.include`
   - `@websocket.broadcast.currentUser.include`
