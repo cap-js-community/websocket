@@ -318,6 +318,33 @@ Furthermore, also additional equivalent annotations alternatives are available:
   - `@websocket.broadcast.currentUser.exclude`
   - `@ws.broadcast.currentUser.exclude`
 
+**Examples:**
+
+**Entity Level:**
+
+```cds
+@websocket.user: 'includeCurrent'
+event received {
+  name: String;
+  text: String;
+}
+```
+
+Event is published only to websocket clients established in context to the current event context user.
+
+**Entity Element Level:**
+
+```cds
+event received {
+  name: String;
+  text: String;
+  @websocket.currentUser.exclude
+  flag: Boolean
+}
+```
+
+Event is published only to websocket clients established in context to the current event context user, if the event data `flag` is falsy.
+
 #### Defined Users
 
 Events are broadcast to all websocket clients. To influence event broadcasting based on defined users,
@@ -348,6 +375,33 @@ Valid annotation values are:
   - Value can be a single user id or an array of user ids
   - First annotated element with an defined event data value is taken
 
+**Examples:**
+
+**Entity Level:**
+
+```cds
+@websocket.user.exclude: 'ABC'
+event received {
+  name: String;
+  text: String;
+}
+```
+
+Event is published to all users expect the user `ABC`.
+
+**Entity Element Level:**
+
+```cds
+event received {
+  name: String;
+  text: String;
+  @websocket.user.include
+  users: many String;
+}
+```
+
+Event is published to all users listed in the event data `users`.
+
 ### Event Contexts
 
 It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed to
@@ -366,7 +420,7 @@ event received {
 }
 ```
 
-This sets up the event context based on a static provided value.
+Event is broadcast to all clients in context `ABC`.
 
 **Entity Element Level:**
 
@@ -378,7 +432,7 @@ event received {
 }
 ```
 
-This sets up the event context based on the unique ID of the event data.
+Event is broadcast to all clients in context of the event data `ID`.
 
 The annotation can be used on multiple event elements setting up different event contexts in parallel,
 if event shall be broadcast/emitted into multiple contexts at the same time.
@@ -476,6 +530,34 @@ Valid annotation values are:
   - Value from event data for the annotated element is used as unique identifiers to include or exclude websocket clients from event broadcasting
   - Value can be a single identifier string or an array of identifier strings
   - First annotated element with an defined event data value is taken
+
+**Examples:**
+
+**Entity Level:**
+
+```cds
+@websocket.identifier.include: 'ABC'
+event received {
+  ID: UUID;
+  text: String;
+}
+```
+
+Event is broadcast to all clients with identifier `ABC`.
+
+**Entity Element Level:**
+
+```cds
+event received {
+  ID: UUID;
+  @websocket.identifier.include
+  ids: many String;
+}
+```
+
+Event is broadcast to all clients with identifiers listed in the event data `ids`.
+
+#### Client Setup
 
 The unique identifier can be provided for a websocket client as follows:
 
