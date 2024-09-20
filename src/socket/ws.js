@@ -37,13 +37,10 @@ class SocketWSServer extends SocketServer {
     const servicePath = `${this.path}${path}`;
     const format = this.format(service);
     this.services[servicePath] = (ws, request) => {
-      ws.request = request;
-      ws.events = new Map();
-      ws.contexts = new Set();
-      DEBUG?.("Connected");
+      this.onInit(ws, request);
+      DEBUG?.("Initialized");
       ws.on("close", () => {
-        ws.events.clear();
-        ws.contexts.clear();
+        this.onDisconnect(ws);
         DEBUG?.("Disconnected");
       });
       ws.on("error", (err) => {
@@ -52,7 +49,7 @@ class SocketWSServer extends SocketServer {
       ws.on("message", async (message) => {
         const payload = format.parse(message);
         try {
-          for (const callback of ws.events.get(payload?.event) || []) {
+          for (const callback of this.getFromMap(ws.events, payload?.event, new Set())) {
             await callback(payload.data);
           }
         } catch (err) {
@@ -71,12 +68,7 @@ class SocketWSServer extends SocketServer {
               return ws.context;
             },
             on: (event, callback) => {
-              let callbacks = ws.events.get(event);
-              if (!callbacks) {
-                callbacks = [];
-                ws.events.set(event, callbacks);
-              }
-              callbacks.push(callback);
+              this.addToSetOfMap(ws.events, event, callback);
             },
             emit: async (event, data) => {
               await ws.send(format.compose(event, data));
@@ -109,9 +101,13 @@ class SocketWSServer extends SocketServer {
             },
             enter: async (context) => {
               ws.contexts.add(context);
+              const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
+              this.addToSetOfMap(clients.contexts, context, ws);
             },
             exit: async (context) => {
               ws.contexts.delete(context);
+              const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
+              this.deleteFromSetOfMap(clients.contexts, context, ws);
             },
             disconnect() {
               ws.close();
@@ -121,7 +117,9 @@ class SocketWSServer extends SocketServer {
             },
           };
           ws.context.ws = { service: ws.facade, socket: ws };
+          this.onConnect(ws, request);
           connected && connected(ws.facade);
+          DEBUG?.("Connected");
         } catch (err) {
           LOG?.error(err);
         }
@@ -144,27 +142,40 @@ class SocketWSServer extends SocketServer {
     path = path || this.defaultPath(service);
     tenant = tenant || socket?.context.tenant;
     const servicePath = `${this.path}${path}`;
-    const clients = [];
-    this.wss.clients.forEach((client) => {
-      if (
-        client !== socket &&
-        client.readyState === WebSocket.OPEN &&
-        client.request?.url === servicePath &&
-        client.context.tenant === tenant &&
-        (!user?.include?.length || user.include.includes(client.context.user?.id)) &&
-        (!user?.exclude?.length || !user.exclude.includes(client.context.user?.id)) &&
-        (!contexts?.length || contexts.find((context) => client.contexts.has(context))) &&
-        (!identifier?.include?.length || identifier.include.includes(client.request?.queryOptions?.id)) &&
-        (!identifier?.exclude?.length || !identifier.exclude.includes(client.request?.queryOptions?.id))
-      ) {
-        clients.push(client);
-      }
-    });
-    if (clients.length > 0) {
+    const serviceClients = this.fetchClients(tenant, servicePath);
+    const clients = new Set(serviceClients.all);
+    if (contexts?.length) {
+      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, contexts));
+    }
+    if (user?.include?.length) {
+      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));
+    }
+    if (identifier?.include?.length) {
+      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier?.include));
+    }
+    if (user?.exclude?.length) {
+      this.keepEntriesFromSet(
+        clients,
+        this.collectFromSet(clients, (client) => {
+          return !user?.exclude.includes(client.context.user?.id);
+        }),
+      );
+    }
+    if (identifier?.exclude?.length) {
+      this.keepEntriesFromSet(
+        clients,
+        this.collectFromSet(clients, (client) => {
+          return !identifier?.exclude.includes(client.request?.queryOptions?.id);
+        }),
+      );
+    }
+    if (clients.size > 0) {
       const format = this.format(service);
       const clientMessage = format.compose(event, data);
       for (const client of clients) {
-        await client.send(clientMessage);
+        if (client !== socket && client.readyState === WebSocket.OPEN) {
+          await client.send(clientMessage);
+        }
       }
     }
     if (!local) {
@@ -181,6 +192,51 @@ class SocketWSServer extends SocketServer {
     } else {
       this.wss.close();
     }
+  }
+
+  onInit(ws, request) {
+    ws.request = request;
+    ws.events = new Map(); // Map<event, Set<callback>>
+    ws.contexts = new Set(); // Set<context>
+  }
+
+  onConnect(ws) {
+    const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
+    clients.all.add(ws);
+    if (ws.context.user?.id) {
+      this.addToSetOfMap(clients.users, ws.context.user?.id, ws);
+    }
+    if (ws.request?.queryOptions?.id) {
+      this.addToSetOfMap(clients.identifiers, ws.request?.queryOptions?.id, ws);
+    }
+  }
+
+  onDisconnect(ws) {
+    ws.events.clear();
+    ws.contexts.clear();
+    const clients = this.fetchClients(ws.context?.tenant, ws.request?.url);
+    clients.all.delete(ws);
+    if (ws.context?.user?.id) {
+      this.deleteFromSetOfMap(clients.users, ws.context?.user?.id, ws);
+    }
+    for (const [key] of clients.contexts) {
+      this.deleteFromSetOfMap(clients.contexts, key, ws);
+    }
+    if (ws.request?.queryOptions?.id) {
+      this.deleteFromSetOfMap(clients.identifiers, ws.request?.queryOptions?.id, ws);
+    }
+  }
+
+  fetchClients(tenant, service) {
+    this.wss.cdsClients ??= new Map(); // Map<tenant, Map<service,...>>
+    const initTenantClients = new Map(); // Map<service, {all,users,contexts,identifiers}>
+    const serviceClients = this.getFromMap(this.wss.cdsClients, tenant, initTenantClients);
+    return this.getFromMap(serviceClients, service, {
+      all: new Set(), // Set<client>
+      users: new Map(), // Map<user, Set<client>>
+      contexts: new Map(), // Map<context, Set<client>>
+      identifiers: new Map(), // Map<identifier, Set<client>>
+    });
   }
 
   async applyAdapter() {

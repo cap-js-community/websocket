@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Include or exclude defined list of users
+- Optimization of client determination for kind `ws`
 - Allow empty PCP message in event definition
 - Improve documentation
 

@@ -19,15 +19,11 @@ const {
 describe("Context", () => {
   let socket;
   let socketOther;
-  let socketOtherTenant;
   let socketOtherUser;
 
   beforeAll(async () => {
     socket = await connect("/ws/main");
     socketOther = await connect("/ws/main");
-    socketOtherTenant = await connect("/ws/main", {
-      authorization: auth.bob,
-    });
     socketOtherUser = await connect("/ws/main", {
       authorization: auth.carol,
     });
@@ -36,7 +32,6 @@ describe("Context", () => {
   afterAll(async () => {
     await disconnect(socket);
     await disconnect(socketOther);
-    await disconnect(socketOtherTenant);
     await disconnect(socketOtherUser);
   });
 

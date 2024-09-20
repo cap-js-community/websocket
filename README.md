@@ -286,21 +286,21 @@ In case of execution errors, the event broadcast is retried automatically, while
 
 #### Current User
 
-Events are broadcast to all websocket clients, including clients established in context of current event context user.
+Events are broadcast to all websocket clients, including clients established in context of current context user.
 To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is available on
 event level and event element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
 
 Valid annotation values are:
 
 - **Event level**:
-  - `'includeCurrent'`: Current event context user is statically included everytime during broadcasting to websocket clients.
+  - `'includeCurrent'`: Current context user is statically included everytime during broadcasting to websocket clients.
     Only websocket clients established in context to that user are respected during event broadcast.
-  - `'excludeCurrent'`: Current event context user is statically excluded everytime during broadcasting to websocket clients.
+  - `'excludeCurrent'`: Current context user is statically excluded everytime during broadcasting to websocket clients.
     All websocket clients established in context to that user are not respected during event broadcast.
 - **Event element level**:
-  - `'includeCurrent'`: Current event context user is dynamically included during broadcasting to websocket clients,
+  - `'includeCurrent'`: Current context user is dynamically included during broadcasting to websocket clients,
     based on the value of the annotated event element. If truthy, only websocket clients established in context to that user are respected during event broadcast.
-  - `'excludeCurrent'`: Current event context user is dynamically excluded during broadcasting to websocket clients,
+  - `'excludeCurrent'`: Current context user is dynamically excluded during broadcasting to websocket clients,
     based on the value of the annotated event element. If truthy, all websocket clients established in context to that user are not respected during event broadcast.
 
 Furthermore, also additional equivalent annotations alternatives are available:
@@ -330,7 +330,7 @@ event received {
 }
 ```
 
-Event is published only to websocket clients established in context to the current event context user.
+Event is published only to websocket clients established in context to the current context user.
 
 **Entity Element Level:**
 
@@ -343,7 +343,7 @@ event received {
 }
 ```
 
-Event is published only to websocket clients established in context to the current event context user, if the event data of `flag` is falsy.
+Event is published only to websocket clients established in context to the current context user, if the event data of `flag` is falsy.
 
 #### Defined Users
 

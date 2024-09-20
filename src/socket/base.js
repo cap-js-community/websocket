@@ -363,8 +363,8 @@ class SocketServer {
 
   /**
    * Return format instance for service
-   * @param {Object }service Service definition
-   * @param {String} origin Origin format, e.g. 'json'
+   * @param {Object} service Service definition
+   * @param {String} [origin] Origin format, e.g. 'json'
    * @returns {*}
    */
   format(service, origin) {
@@ -377,12 +377,107 @@ class SocketServer {
 
   /**
    * Default path for websocket service
+   * @param {String} service Service path
    */
   defaultPath(service) {
     if (service.path.startsWith(this.path)) {
       return service.path.substring(this.path.length);
     }
     return service.path;
+  }
+
+  /**
+   * Gets key value from Map and initializes key with init value if not found
+   * @param {Map} map Map
+   * @param {String} key Key to get
+   * @param {*)} init Initial value
+   * @returns {*} Value
+   */
+  getFromMap(map, key, init) {
+    let entry = map.get(key);
+    if (entry === undefined) {
+      entry = init;
+      map.set(key, entry);
+    }
+    return entry;
+  }
+
+  /**
+   * Add value to a Set for key of Map
+   * @param {Map<String,Set>} map Map
+   * @param {String} key Key to get
+   * @param {*)} value Add value
+   */
+  addToSetOfMap(map, key, value) {
+    return this.getFromMap(map, key, new Set()).add(value);
+  }
+
+  /**
+   * Delete value from a Set for key of Map
+   * @param {Map<String,Set>} map Map
+   * @param {String} key Key to get
+   * @param {*)} value Delete value
+   */
+  deleteFromSetOfMap(map, key, value) {
+    let set = map.get(key);
+    if (set !== undefined) {
+      set.delete(value);
+      if (set.size === 0) {
+        map.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Collect values from Map based on keys
+   * @param {Map<String, Array<Set>>} map Map
+   * @param {Array} keys Keys to include values from
+   */
+  collectFromMap(map, keys) {
+    const result = new Set();
+    if (!map || !keys?.length) {
+      return result;
+    }
+    for (const key of keys) {
+      const set = map.get(key);
+      if (set !== undefined) {
+        for (const entry of set) {
+          result.add(entry);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Collect values from Set based on check
+   * @param {Set} set Set
+   * @param {function} check Check to be performed for entry
+   */
+  collectFromSet(set, check) {
+    const result = new Set();
+    if (!set) {
+      return result;
+    }
+    for (const entry of set) {
+      if (check(entry)) {
+        result.add(entry);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Keep entries from set
+   * @param set Set to be filtered
+   * @param keepSet Entries from set to keep, others are removed
+   */
+  keepEntriesFromSet(set, keepSet) {
+    for (const entry of set) {
+      if (!keepSet.has(entry)) {
+        set.delete(entry);
+      }
+    }
   }
 }
 
