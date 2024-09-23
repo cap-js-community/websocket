@@ -43,46 +43,50 @@ function serveWebSocketServer(options) {
         }
       }
       // Websockets events
-      const eventServices = {};
-      for (const name in cds.model.definitions) {
-        const definition = cds.model.definitions[name];
-        if (definition.kind === "event" && (definition["@websocket"] || definition["@ws"])) {
-          const service = cds.services[definition._service?.name];
-          if (service && !isServedViaWebsocket(service)) {
-            eventServices[service.name] ??= eventServices[service.name] || {
-              name: service.name,
-              definition: service.definition,
-              endpoints: service.endpoints.map((endpoint) => {
-                const protocol =
-                  cds.env.protocols[endpoint.kind] ||
-                  (endpoint.kind === "odata" ? cds.env.protocols["odata-v4"] : null);
-                return {
-                  kind: "websocket",
-                  path: cds.env.protocols.websocket.path + normalizeServicePath(service.path, protocol.path),
-                };
-              }),
-              operations: () => {
-                return [];
-              },
-              entities: () => {
-                return [];
-              },
-              events: [],
-              on: service.on.bind(service),
-              tx: service.tx.bind(service),
-            };
-            eventServices[service.name].events.push(definition);
+      if (cds.env.protocols.websocket || cds.env.protocols.ws) {
+        const eventServices = {};
+        for (const name in cds.model.definitions) {
+          const definition = cds.model.definitions[name];
+          if (definition.kind === "event" && (definition["@websocket"] || definition["@ws"])) {
+            const service = cds.services[definition._service?.name];
+            if (service && !isServedViaWebsocket(service)) {
+              eventServices[service.name] ??= eventServices[service.name] || {
+                name: service.name,
+                definition: service.definition,
+                endpoints: service.endpoints.map((endpoint) => {
+                  const protocol =
+                    cds.env.protocols[endpoint.kind] ||
+                    (endpoint.kind === "odata" ? cds.env.protocols["odata-v4"] : null);
+                  return {
+                    kind: "websocket",
+                    path:
+                      (cds.env.protocols.websocket?.path || cds.env.protocols.ws?.path) +
+                      normalizeServicePath(service.path, protocol.path),
+                  };
+                }),
+                operations: () => {
+                  return [];
+                },
+                entities: () => {
+                  return [];
+                },
+                events: [],
+                on: service.on.bind(service),
+                tx: service.tx.bind(service),
+              };
+              eventServices[service.name].events.push(definition);
+            }
           }
         }
-      }
-      for (const name in eventServices) {
-        const eventService = eventServices[name];
-        const events = eventService.events;
-        if (events.length > 0) {
-          eventService.events = () => {
-            return events;
-          };
-          serveWebSocketService(socketServer, eventService, options);
+        for (const name in eventServices) {
+          const eventService = eventServices[name];
+          const events = eventService.events;
+          if (events.length > 0) {
+            eventService.events = () => {
+              return events;
+            };
+            serveWebSocketService(socketServer, eventService, options);
+          }
         }
       }
       LOG?.info("using websocket", { kind: cds.env.websocket.kind, adapter: socketServer.adapterActive });
@@ -145,8 +149,9 @@ function bindServiceEvents(socketServer, service, path) {
       try {
         const localEventName = serviceLocalName(service, event.name);
         const user = deriveUser(event, req.data, req.headers, req);
-        const contexts = deriveContexts(event, req.data, req.headers);
+        const context = deriveContext(event, req.data, req.headers);
         const identifier = deriveIdentifier(event, req.data, req.headers);
+        path = normalizeEventPath(event["@websocket.path"] || event["@ws.path"] || path);
         await socketServer.broadcast({
           service,
           path,
@@ -154,7 +159,7 @@ function bindServiceEvents(socketServer, service, path) {
           data: req.data,
           tenant: req.tenant,
           user,
-          contexts,
+          context,
           identifier,
           socket: null,
         });
@@ -321,21 +326,21 @@ async function callCRUD(socket, service, entity, event, data) {
 
 async function broadcastEvent(socket, service, event, entity, data) {
   let user;
-  let contexts;
+  let context;
   let identifier;
   const events = service.events();
   const eventDefinition = events[event] || events[event.replaceAll(/:/g, ".")];
   if (eventDefinition) {
     user = deriveUser(eventDefinition, data, {}, socket);
-    contexts = deriveContexts(eventDefinition, data, {});
+    context = deriveContext(eventDefinition, data, {});
     identifier = deriveIdentifier(eventDefinition, data, {});
   }
   const contentData = broadcastData(entity, data, eventDefinition);
   if (contentData) {
     if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
-      await socket.broadcastAll(event, contentData, user, contexts, identifier);
+      await socket.broadcastAll(event, contentData, user, context, identifier);
     } else {
-      await socket.broadcast(event, contentData, user, contexts, identifier);
+      await socket.broadcast(event, contentData, user, context, identifier);
     }
   }
 }
@@ -383,12 +388,22 @@ function deriveUser(event, data, headers, req) {
 function deriveCurrentUser(event, data, headers, req) {
   const include = combineValues(
     deriveValues(event, data, headers, {
-      headerNames: ["wsCurrentUser.include", "wsCurrentUserInclude", "currentUser.include", "currentUserInclude"],
+      headerNames: ["wsCurrentUser", "currentUser"],
+      annotationNames: [
+        "@websocket.currentUser",
+        "@ws.currentUser",
+        "@websocket.broadcast.currentUser",
+        "@ws.broadcast.currentUser",
+      ],
+      resultValue: req.context.user?.id,
+    }),
+    deriveValues(event, data, headers, {
       annotationNames: ["@websocket.user", "@ws.user", "@websocket.broadcast.user", "@ws.broadcast.user"],
       annotationCompareValue: "includeCurrent",
       resultValue: req.context.user?.id,
     }),
     deriveValues(event, data, headers, {
+      headerNames: ["wsCurrentUser.include", "wsCurrentUserInclude", "currentUser.include", "currentUserInclude"],
       annotationNames: [
         "@websocket.currentUser.include",
         "@ws.currentUser.include",
@@ -401,12 +416,12 @@ function deriveCurrentUser(event, data, headers, req) {
   );
   const exclude = combineValues(
     deriveValues(event, data, headers, {
-      headerNames: ["wsCurrentUser.exclude", "wsCurrentUserExclude", "currentUser.exclude", "currentUserExclude"],
       annotationNames: ["@websocket.user", "@ws.user", "@websocket.broadcast.user", "@ws.broadcast.user"],
       annotationCompareValue: "excludeCurrent",
       resultValue: req.context.user?.id,
     }),
     deriveValues(event, data, headers, {
+      headerNames: ["wsCurrentUser.exclude", "wsCurrentUserExclude", "currentUser.exclude", "currentUserExclude"],
       annotationNames: [
         "@websocket.currentUser.exclude",
         "@ws.currentUser.exclude",
@@ -423,15 +438,22 @@ function deriveCurrentUser(event, data, headers, req) {
 }
 
 function deriveDefinedUser(event, data, headers, req) {
-  const include = deriveValues(event, data, headers, {
-    headerNames: ["wsUser.include", "wsUserInclude", "user.include", "userInclude"],
-    annotationNames: [
-      "@websocket.user.include",
-      "@ws.user.include",
-      "@websocket.broadcast.user.include",
-      "@ws.broadcast.user.include",
-    ],
-  });
+  const include = combineValues(
+    deriveValues(event, data, headers, {
+      headerNames: ["wsUsers", "wsUser", "users", "user"],
+      annotationNames: ["@websocket.user", "@ws.user", "@websocket.broadcast.user", "@ws.broadcast.user"],
+      annotationExcludeValues: ["includeCurrent", "excludeCurrent"],
+    }),
+    deriveValues(event, data, headers, {
+      headerNames: ["wsUser.include", "wsUserInclude", "user.include", "userInclude"],
+      annotationNames: [
+        "@websocket.user.include",
+        "@ws.user.include",
+        "@websocket.broadcast.user.include",
+        "@ws.broadcast.user.include",
+      ],
+    }),
+  );
   const exclude = deriveValues(event, data, headers, {
     headerNames: ["wsUser.exclude", "wsUserExclude", "user.exclude", "userExclude"],
     annotationNames: [
@@ -446,23 +468,57 @@ function deriveDefinedUser(event, data, headers, req) {
   }
 }
 
-function deriveContexts(event, data, headers) {
-  return deriveValues(event, data, headers, {
-    headerNames: ["wsContexts", "wsContext", "contexts", "context"],
-    annotationNames: ["@websocket.context", "@ws.context", "@websocket.broadcast.context", "@ws.broadcast.context"],
+function deriveContext(event, data, headers) {
+  const include = combineValues(
+    deriveValues(event, data, headers, {
+      headerNames: ["wsContexts", "wsContext", "contexts", "context"],
+      annotationNames: ["@websocket.context", "@ws.context", "@websocket.broadcast.context", "@ws.broadcast.context"],
+    }),
+    deriveValues(event, data, headers, {
+      headerNames: ["wsContext.include", "wsContextInclude", "context.include", "contextInclude"],
+      annotationNames: [
+        "@websocket.context.include",
+        "@ws.context.include",
+        "@websocket.broadcast.context.include",
+        "@ws.broadcast.context.include",
+      ],
+    }),
+  );
+  const exclude = deriveValues(event, data, headers, {
+    headerNames: ["wsContext.exclude", "wsContextExclude", "context.exclude", "contextExclude"],
+    annotationNames: [
+      "@websocket.context.exclude",
+      "@ws.context.exclude",
+      "@websocket.broadcast.context.exclude",
+      "@ws.broadcast.context.exclude",
+    ],
   });
+  if (include || exclude) {
+    return { include, exclude };
+  }
 }
 
 function deriveIdentifier(event, data, headers) {
-  const include = deriveValues(event, data, headers, {
-    headerNames: ["wsIdentifier.include", "wsIdentifierInclude", "identifier.include", "identifierInclude"],
-    annotationNames: [
-      "@websocket.identifier.include",
-      "@ws.identifier.include",
-      "@websocket.broadcast.identifier.include",
-      "@ws.broadcast.identifier.include",
-    ],
-  });
+  const include = combineValues(
+    deriveValues(event, data, headers, {
+      headerNames: ["wsIdentifiers", "wsIdentifier", "identifiers", "identifier"],
+      annotationNames: [
+        "@websocket.identifier",
+        "@ws.identifier",
+        "@websocket.broadcast.identifier",
+        "@ws.broadcast.identifier",
+      ],
+    }),
+    deriveValues(event, data, headers, {
+      headerNames: ["wsIdentifier.include", "wsIdentifierInclude", "identifier.include", "identifierInclude"],
+      annotationNames: [
+        "@websocket.identifier.include",
+        "@ws.identifier.include",
+        "@websocket.broadcast.identifier.include",
+        "@ws.broadcast.identifier.include",
+      ],
+    }),
+  );
   const exclude = deriveValues(event, data, headers, {
     headerNames: ["wsIdentifier.exclude", "wsIdentifierExclude", "identifier.exclude", "identifierExclude"],
     annotationNames: [
@@ -481,12 +537,15 @@ function deriveValues(
   event,
   data,
   headers,
-  { headerNames, annotationNames, headerCompareValue, annotationCompareValue, resultValue },
+  { headerNames, annotationNames, headerCompareValue, annotationCompareValue, resultValue, annotationExcludeValues },
 ) {
   let result = undefined;
   if (data) {
     for (const annotationName of annotationNames || []) {
       const annotationValue = event[annotationName];
+      if (annotationExcludeValues?.includes(annotationValue)) {
+        continue;
+      }
       if (annotationCompareValue === undefined ? annotationValue : annotationValue === annotationCompareValue) {
         result = mergeValue(result, resultValue ?? annotationValue);
       }
@@ -494,6 +553,9 @@ function deriveValues(
         for (const name in event.elements) {
           const element = event.elements[name];
           const annotationValue = element[annotationName];
+          if (annotationExcludeValues?.includes(annotationValue)) {
+            continue;
+          }
           if (annotationCompareValue === undefined ? annotationValue : annotationValue === annotationCompareValue) {
             if (resultValue === undefined) {
               result = mergeValue(result, data[name]);
@@ -508,6 +570,9 @@ function deriveValues(
   if (headers) {
     for (const headerName of headerNames || []) {
       const headerValue = accessPath(headers, headerName);
+      if (headerValue?.constructor === Object) {
+        continue;
+      }
       if (headerCompareValue === undefined ? headerValue : headerValue === headerCompareValue) {
         result = mergeValue(result, resultValue ?? headerValue);
       }
@@ -524,10 +589,15 @@ function combineEntries(entryA, entryB) {
   }
 }
 
-function combineValues(valuesA, valuesB) {
-  if (valuesA || valuesB) {
-    return removeArrayDuplicates([...(valuesA || []), ...(valuesB || [])]);
+function combineValues(...values) {
+  let result = undefined;
+  for (const entry of values) {
+    if (entry !== undefined) {
+      result ??= [];
+      result = result.concat(entry);
+    }
   }
+  return removeArrayDuplicates(result);
 }
 
 function accessPath(object, path) {
@@ -550,7 +620,7 @@ function mergeValue(result, value) {
     for (const entry of value) {
       result.push(stringValue(entry));
     }
-  } else {
+  } else if (!(value instanceof Object)) {
     result.push(stringValue(value));
   }
   return result;
@@ -587,6 +657,13 @@ function getDeepEntityColumns(entity) {
     }
   }
   return columns;
+}
+
+function normalizeEventPath(path) {
+  if (!path) {
+    return path;
+  }
+  return path.startsWith("/") ? path : `/${path}`;
 }
 
 function serviceLocalName(service, name) {

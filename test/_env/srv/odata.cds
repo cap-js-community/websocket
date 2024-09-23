@@ -19,18 +19,22 @@ service ODataService {
     }
 
     @websocket
+    @websocket.identifier: []
     @websocket.identifier.include: []
     event identifierIncludeEvent {
         ID: UUID;
+        @websocket.identifier
         @websocket.identifier.include
         identifier: String;
         text: String;
     }
 
     @websocket
+    @websocket.identifier: []
     @websocket.identifier.include: []
     event identifierIncludeContextEvent {
         ID: UUID;
+        @websocket.identifier
         @websocket.identifier.include
         identifier: String;
         @websocket.context

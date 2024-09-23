@@ -3,27 +3,32 @@
 const cds = require("@sap/cds");
 
 const auth = require("../_env/util/auth");
-const { connect, disconnect, waitForEvent } = require("../_env/util/ws");
+const { connect, disconnect, waitForEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");
 
-describe("Todo", () => {
+cds.env.websocket = {
+  kind: "socket.io",
+  impl: null,
+};
+
+describe("Fns", () => {
   let socket;
-  let socketOData;
+  let socketFns;
 
   beforeAll(async () => {
-    socket = await connect("/ws/todo-ws");
-    socketOData = await connect("/ws/todo");
+    socket = await connect("todo-ws");
+    socketFns = await connect("fns-websocket");
   });
 
   afterAll(async () => {
     await disconnect(socket);
-    await disconnect(socketOData);
+    await disconnect(socketFns);
   });
 
   test("Todo message", async () => {
     const waitRefreshPromise = waitForEvent(socket, "refresh");
-    const waitRefreshODataPromise = waitForEvent(socketOData, "refresh");
+    const waitNotifyPromise = waitForEvent(socketFns, "notify");
     let response = await fetch(cds.server.url + "/odata/v4/todo/Todo", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: auth.alice },
@@ -45,7 +50,10 @@ describe("Todo", () => {
     expect(result.IsActiveEntity).toBe(true);
     const waitResult = await waitRefreshPromise;
     expect(waitResult).toMatchObject({ ID });
-    const waitODataResult = await waitRefreshODataPromise;
-    expect(waitODataResult).toMatchObject({ ID });
+    const waitFnsResult = await waitNotifyPromise;
+    expect(waitFnsResult).toEqual(`pcp-action:MESSAGE
+pcp-body-type:text
+
+notify`);
   });
 });

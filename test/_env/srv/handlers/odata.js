@@ -34,9 +34,7 @@ module.exports = (srv) => {
       wsIdentifier: {
         include: [req.data.text],
       },
-      identifier: {
-        include: req.data.text,
-      },
+      identifier: req.data.text,
     });
     await srv.emit("identifierIncludeContextEvent", req.data, {
       wsIdentifier: {

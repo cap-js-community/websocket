@@ -90,13 +90,15 @@ class SocketServer {
        * @param {Object} [user] Users to be included/excluded, undefined: no restriction
        * @param {[String]} [user.include] Users to be included, undefined: no restriction
        * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
-       * @param {[String]} [contexts] Array of contexts to restrict, undefined: no restriction
+       * @param {Object} [context] Contexts to be included/excluded, undefined: no restriction
+       * @param {[String]} [context.include] Contexts to be included, undefined: no restriction
+       * @param {[String]} [context.exclude] Contexts to be excluded, undefined: no restriction
        * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-       * @param {[String]} [identifier.include] Unique consumer-provided socket client identifiers to be included, undefined: no restriction
-       * @param {[String]} [identifier.exclude] Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
+       * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
+       * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
        * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcast: async (event, data, user, contexts, identifier) => {
+      broadcast: async (event, data, user, context, identifier) => {
         return Promise.resolve();
       },
       /**
@@ -106,13 +108,15 @@ class SocketServer {
        * @param {Object} [user] Users to be included/excluded, undefined: no restriction
        * @param {[String]} [user.include] Users to be included, undefined: no restriction
        * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
-       * @param {[String]} [contexts] Array of contexts to restrict, undefined: no restriction
+       * @param {Object} [context] Contexts to be included/excluded, undefined: no restriction
+       * @param {[String]} [context.include] Contexts to be included, undefined: no restriction
+       * @param {[String]} [context.exclude] Contexts to be excluded, undefined: no restriction
        * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-       * @param {[String]} [identifier.include] Unique consumer-provided socket client identifiers to be included, undefined: no restriction
-       * @param {[String]} [identifier.exclude] Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
+       * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
+       * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
        * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcastAll: async (event, data, user, contexts, identifier) => {
+      broadcastAll: async (event, data, user, context, identifier) => {
         return Promise.resolve();
       },
       /**
@@ -154,15 +158,17 @@ class SocketServer {
    * @param {Object} [user] Users to be included/excluded, undefined: no restriction
    * @param {[String]} [user.include] Users to be included, undefined: no restriction
    * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
-   * @param {[String]} [contexts] Array of contexts to restrict, undefined: no restriction
+   * @param {Object} [context] Contexts to be included/excluded, undefined: no restriction
+   * @param {[String]} [context.include] Contexts to be included, undefined: no restriction
+   * @param {[String]} [context.exclude] Contexts to be excluded, undefined: no restriction
    * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-   * @param {[String]} [identifier.include] Unique consumer-provided socket client identifiers to be included, undefined: no restriction
-   * @param {[String]} [identifier.exclude] Unique consumer-provided socket client identifiers to be excluded, undefined: no restriction
+   * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
+   * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
    * @param {Object} [socket] Broadcast client socket to be excluded, undefined: no exclusion
    * @param {boolean} [local] Broadcast only locally (i.e. not via adapter), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, remote }) {}
+  async broadcast({ service, path, event, data, tenant, user, context, identifier, socket, local }) {}
 
   /**
    * Handle HTTP request response
@@ -364,11 +370,21 @@ class SocketServer {
   /**
    * Return format instance for service
    * @param {Object} service Service definition
+   * @param {String} [event] Event name
    * @param {String} [origin] Origin format, e.g. 'json'
    * @returns {*}
    */
-  format(service, origin) {
-    const format = service.definition["@websocket.format"] || service.definition["@ws.format"] || "json";
+  format(service, event, origin) {
+    let format = undefined;
+    if (event) {
+      const eventDefinition = service.definition.events?.[event];
+      if (eventDefinition) {
+        format = eventDefinition["@websocket.format"] || eventDefinition["@ws.format"];
+      }
+    }
+    if (!format) {
+      format = service.definition["@websocket.format"] || service.definition["@ws.format"] || "json";
+    }
     if (format === origin) {
       return new (SocketServer.require("identity", "format"))(service);
     }

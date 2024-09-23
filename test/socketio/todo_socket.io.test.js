@@ -14,17 +14,21 @@ cds.env.websocket = {
 
 describe("Todo", () => {
   let socket;
+  let socketOData;
 
   beforeAll(async () => {
-    socket = await connect("todo");
+    socket = await connect("todo-ws");
+    socketOData = await connect("todo");
   });
 
   afterAll(async () => {
     await disconnect(socket);
+    await disconnect(socketOData);
   });
 
   test("Todo message", async () => {
     const waitRefreshPromise = waitForEvent(socket, "refresh");
+    const waitRefreshODataPromise = waitForEvent(socketOData, "refresh");
     let response = await fetch(cds.server.url + "/odata/v4/todo/Todo", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: auth.alice },
@@ -46,5 +50,7 @@ describe("Todo", () => {
     expect(result.IsActiveEntity).toBe(true);
     const waitResult = await waitRefreshPromise;
     expect(waitResult).toMatchObject({ ID });
+    const waitODataResult = await waitRefreshODataPromise;
+    expect(waitODataResult).toMatchObject({ ID });
   });
 });

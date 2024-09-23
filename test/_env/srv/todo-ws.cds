@@ -2,7 +2,7 @@ using test from '../db';
 
 @protocol: 'ws'
 @requires: 'WS_Todo'
-@path: 'todo'
+@path: 'todo-ws'
 service TodoWSService {
 
     event refresh {

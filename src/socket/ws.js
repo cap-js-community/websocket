@@ -73,7 +73,7 @@ class SocketWSServer extends SocketServer {
             emit: async (event, data) => {
               await ws.send(format.compose(event, data));
             },
-            broadcast: async (event, data, user, contexts, identifier) => {
+            broadcast: async (event, data, user, context, identifier) => {
               await this.broadcast({
                 service,
                 path,
@@ -81,12 +81,12 @@ class SocketWSServer extends SocketServer {
                 data,
                 tenant: ws.context.tenant,
                 user,
-                contexts,
+                context,
                 identifier,
                 socket: ws,
               });
             },
-            broadcastAll: async (event, data, user, contexts, identifier) => {
+            broadcastAll: async (event, data, user, context, identifier) => {
               await this.broadcast({
                 service,
                 path,
@@ -94,7 +94,7 @@ class SocketWSServer extends SocketServer {
                 data,
                 tenant: ws.context.tenant,
                 user,
-                contexts,
+                context,
                 identifier,
                 socket: null,
               });
@@ -127,7 +127,7 @@ class SocketWSServer extends SocketServer {
     };
   }
 
-  async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket, local }) {
+  async broadcast({ service, path, event, data, tenant, user, context, identifier, socket, local }) {
     const eventMessage = event;
     const isEventMessage = !data;
     if (isEventMessage) {
@@ -136,7 +136,7 @@ class SocketWSServer extends SocketServer {
       data = message.data;
       tenant = message.tenant;
       user = message.user;
-      contexts = message.contexts;
+      context = message.context;
       identifier = message.identifier;
     }
     path = path || this.defaultPath(service);
@@ -144,11 +144,11 @@ class SocketWSServer extends SocketServer {
     const servicePath = `${this.path}${path}`;
     const serviceClients = this.fetchClients(tenant, servicePath);
     const clients = new Set(serviceClients.all);
-    if (contexts?.length) {
-      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, contexts));
-    }
     if (user?.include?.length) {
       this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));
+    }
+    if (context?.include?.length) {
+      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context?.include));
     }
     if (identifier?.include?.length) {
       this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier?.include));
@@ -161,6 +161,14 @@ class SocketWSServer extends SocketServer {
         }),
       );
     }
+    if (context?.exclude?.length) {
+      this.keepEntriesFromSet(
+        clients,
+        this.collectFromSet(clients, (client) => {
+          return !context?.exclude.find((context) => client.contexts.has(context));
+        }),
+      );
+    }
     if (identifier?.exclude?.length) {
       this.keepEntriesFromSet(
         clients,
@@ -170,7 +178,7 @@ class SocketWSServer extends SocketServer {
       );
     }
     if (clients.size > 0) {
-      const format = this.format(service);
+      const format = this.format(service, event);
       const clientMessage = format.compose(event, data);
       for (const client of clients) {
         if (client !== socket && client.readyState === WebSocket.OPEN) {
@@ -181,7 +189,7 @@ class SocketWSServer extends SocketServer {
     if (!local) {
       const adapterMessage = isEventMessage
         ? eventMessage
-        : JSON.stringify({ event, data, tenant, user, contexts, identifier });
+        : JSON.stringify({ event, data, tenant, user, context, identifier });
       await this.adapter?.emit(service, path, adapterMessage);
     }
   }

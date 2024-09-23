@@ -1,16 +1,34 @@
 using test from '../db';
 
 @requires: 'WS_Todo'
+@path    : 'todo'
 @sap.message.scope.supported
-@path: 'todo'
 service TodoService {
 
     @odata.draft.enabled
-    entity Todo as projection on test.Todo;
-    entity Todo.texts as projection on test.Todo.texts;
+    entity Todo         as projection on test.Todo;
 
-    entity Status as projection on test.Status excluding {
-        localized
-    }
-    entity Status.texts as projection on test.Status.texts
+    entity Todo.texts   as projection on test.Todo.texts;
+
+    entity Status       as
+        projection on test.Status
+        excluding {
+            localized
+        };
+
+    entity Status.texts as projection on test.Status.texts;
+
+    @ws
+    event refresh {
+        ID : String
+    };
+
+    @ws
+    @ws.pcp.event
+    @ws.pcp.message: ''
+    @ws.path       : 'fns-websocket'
+    @ws.format     : 'pcp'
+    event notify {
+        text : String
+    };
 }

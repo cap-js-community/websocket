@@ -28,14 +28,17 @@ module.exports = (srv) => {
   srv.on("triggerCustomContextEvent", async (req) => {
     const ID = req.data.ID;
     const text = req.data.text + req.data.num;
-    await srv.emit("customContextEvent", { ID, text });
+    await srv.emit("customContextIncludeEvent", { ID, text });
+    await srv.emit("customContextExcludeEvent", { ID, text });
     return text;
   });
 
   srv.on("triggerCustomContextStaticEvent", async (req) => {
     const text = req.data.text + req.data.num;
-    await srv.emit("customContextStaticEvent", { text });
-    await srv.emit("customContextStaticEvent2", { text });
+    await srv.emit("customContextIncludeStaticEvent", { text });
+    await srv.emit("customContextIncludeStaticEvent2", { text });
+    await srv.emit("customContextExcludeStaticEvent", { text });
+    await srv.emit("customContextExcludeStaticEvent2", { text });
     return text;
   });
 
@@ -43,7 +46,8 @@ module.exports = (srv) => {
     const ID1 = req.data.ID1;
     const ID2 = req.data.ID2;
     const text = req.data.text + req.data.num;
-    await srv.emit("customContextMassEvent", { IDs: [ID1, ID2], text });
+    await srv.emit("customContextIncludeMassEvent", { IDs: [ID1, ID2], text });
+    await srv.emit("customContextExcludeMassEvent", { IDs: [ID1, ID2], text });
     return text;
   });
 
@@ -106,7 +110,12 @@ module.exports = (srv) => {
       "customContextHeaderEvent",
       { ID, text },
       {
-        contexts: [ID, new Date(), { a: 1 }],
+        context: [ID, new Date(), { a: 1 }],
+        contexts: {
+          include: [ID, new Date(), { a: 1 }],
+          exclude: ["xxx"],
+        },
+        wsContext: [ID],
         wsContexts: [ID],
         user: {
           include: [],
@@ -130,6 +139,7 @@ module.exports = (srv) => {
         },
         currentUserInclude: req.data.num === 0,
         wsCurrentUserExclude: req.data.num === 1,
+        identifiers: [],
         identifier: {
           include: [],
           exclude: [],

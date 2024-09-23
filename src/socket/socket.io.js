@@ -30,7 +30,7 @@ class SocketIOServer extends SocketServer {
 
   service(service, path, connected) {
     const io = this.applyMiddlewares(this.io.of(path));
-    const format = this.format(service, "json");
+    const format = this.format(service, undefined, "json");
     io.on("connection", async (socket) => {
       try {
         this.enforceAuth(socket);
@@ -70,7 +70,7 @@ class SocketIOServer extends SocketServer {
           emit: async (event, data) => {
             await socket.emit(event, format.compose(event, data));
           },
-          broadcast: async (event, data, user, contexts, identifier) => {
+          broadcast: async (event, data, user, context, identifier) => {
             await this.broadcast({
               service,
               path,
@@ -78,12 +78,12 @@ class SocketIOServer extends SocketServer {
               data,
               tenant: socket.context.tenant,
               user,
-              contexts,
+              context,
               identifier,
               socket,
             });
           },
-          broadcastAll: async (event, data, user, contexts, identifier) => {
+          broadcastAll: async (event, data, user, context, identifier) => {
             await this.broadcast({
               service,
               path,
@@ -91,7 +91,7 @@ class SocketIOServer extends SocketServer {
               data,
               tenant: socket.context.tenant,
               user,
-              contexts,
+              context,
               identifier,
               socket: null,
             });
@@ -161,30 +161,30 @@ class SocketIOServer extends SocketServer {
     });
   }
 
-  async broadcast({ service, path, event, data, tenant, user, contexts, identifier, socket }) {
+  async broadcast({ service, path, event, data, tenant, user, context, identifier, socket }) {
     path = path || this.defaultPath(service);
     tenant = tenant || socket?.context.tenant;
     let to = socket?.broadcast || this.io.of(path);
-    if (contexts?.length && identifier?.include?.length) {
-      for (const context of contexts) {
+    if (context?.include?.length && identifier?.include?.length) {
+      for (const contextInclude of context.include) {
         for (const identifierInclude of identifier.include) {
           if (user?.include?.length) {
             for (const userInclude of user.include) {
-              to = to.to(room({ tenant, user: userInclude, context, identifier: identifierInclude }));
+              to = to.to(room({ tenant, user: userInclude, context: contextInclude, identifier: identifierInclude }));
             }
           } else {
-            to = to.to(room({ tenant, context, identifier: identifierInclude }));
+            to = to.to(room({ tenant, context: contextInclude, identifier: identifierInclude }));
           }
         }
       }
-    } else if (contexts?.length) {
-      for (const context of contexts) {
+    } else if (context?.include?.length) {
+      for (const contextInclude of context.include) {
         if (user?.include?.length) {
           for (const userInclude of user.include) {
-            to = to.to(room({ tenant, user: userInclude, context }));
+            to = to.to(room({ tenant, user: userInclude, context: contextInclude }));
           }
         } else {
-          to = to.to(room({ tenant, context }));
+          to = to.to(room({ tenant, context: contextInclude }));
         }
       }
     } else if (identifier?.include?.length) {
@@ -211,12 +211,17 @@ class SocketIOServer extends SocketServer {
         to = to.except(room({ tenant, user: userExclude }));
       }
     }
+    if (context?.exclude?.length) {
+      for (const contextExclude of context.exclude) {
+        to = to.except(room({ tenant, context: contextExclude }));
+      }
+    }
     if (identifier?.exclude?.length) {
       for (const identifierExclude of identifier.exclude) {
         to = to.except(room({ tenant, identifier: identifierExclude }));
       }
     }
-    const format = this.format(service, "json");
+    const format = this.format(service, event, "json");
     to.emit(event, format.compose(event, data));
   }
 

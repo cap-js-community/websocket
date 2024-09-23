@@ -30,7 +30,7 @@ service MainService {
 
     function eventException() returns String;
 
-    event customContextEvent {
+    event customContextIncludeEvent {
         @websocket.context
         ID: UUID;
         num: Integer;
@@ -38,21 +38,49 @@ service MainService {
     }
 
     @websocket.context: ['context']
-    event customContextStaticEvent {
+    event customContextIncludeStaticEvent {
         ID: UUID;
         num: Integer;
         text: String;
     }
 
     @websocket.context: 'context'
-    event customContextStaticEvent2 {
+    event customContextIncludeStaticEvent2 {
         ID: UUID;
         num: Integer;
         text: String;
     }
 
-    event customContextMassEvent {
+    event customContextIncludeMassEvent {
         @websocket.context
+        IDs: array of UUID;
+        num: Integer;
+        text: String;
+    }
+
+    event customContextExcludeEvent {
+        @websocket.context.exclude
+        ID: UUID;
+        num: Integer;
+        text: String;
+    }
+
+    @websocket.context.exclude: ['context']
+    event customContextExcludeStaticEvent {
+        ID: UUID;
+        num: Integer;
+        text: String;
+    }
+
+    @websocket.context.exclude: 'context'
+    event customContextExcludeStaticEvent2 {
+        ID: UUID;
+        num: Integer;
+        text: String;
+    }
+
+    event customContextExcludeMassEvent {
+        @websocket.context.exclude
         IDs: array of UUID;
         num: Integer;
         text: String;
@@ -60,6 +88,7 @@ service MainService {
 
     @websocket.user: 'includeCurrent'
     @websocket.currentUser.include
+    @websocket.currentUser
     event customContextUserIncludeEvent {
         @websocket.context
         ID: UUID;
@@ -98,6 +127,7 @@ service MainService {
         flag: Boolean;
     }
 
+    @websocket.user: ['xxx']
     @websocket.user.include: ['alice']
     event customDefinedUserIncludeEvent {
         @websocket.context
@@ -113,6 +143,7 @@ service MainService {
         num: Integer;
         text: String;
         user: String;
+        @websocket.user
         @websocket.user.include
         flag: String;
     }

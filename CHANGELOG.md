@@ -10,9 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Include or exclude defined list of users
+- Support exclusion of event contexts
+- Overrule path of websocket event via `@websocket.path` or `@ws.path` for non-websocket services
+- Overrule format of websocket event via `@websocket.format` or `@ws.format` for non-websocket services
 - Optimization of client determination for kind `ws`
 - Allow empty PCP message in event definition
-- Improve documentation
+- Improve documentation and examples
 
 ### Fixed
 

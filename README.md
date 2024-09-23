@@ -113,26 +113,31 @@ The CDS Websocket module supports the following use-cases:
 - Broadcast CDS events across local server websockets and multi-instance server websockets (via Redis)
 - Broadcast CDS events across multiple CAP server applications and application instances (via Redis)
 - Tenant-ware emit/broadcast CDS events from server websockets to websocket clients (browser and non-browser)
-- Emit/Broadcast CDS events to a subset of websocket clients leveraging event contexts
+- Emit/Broadcast CDS events to a subset of websocket clients leveraging users, event contexts or client identifiers
 
 ### WebSocket Server
 
-The CDS websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific at
-`cds.wss` for WebSocket Standard or `cds.io` for Socket.IO. Additional listeners can be registered bypassing CDS definitions and runtime.
+The CDS websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific
+at
+`cds.wss` for WebSocket Standard or `cds.io` for Socket.IO. Additional listeners can be registered bypassing CDS
+definitions and runtime.
 WebSocket server options can be provided via `cds.websocket.options`.
 
-Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.websocket.path` resp. `cds.env.protocols.ws.path`;
+Default protocol path is `/ws` and can be overwritten via `cds.env.protocols.websocket.path` resp.
+`cds.env.protocols.ws.path`;
 
 ### WebSocket Implementation
 
 The CDS websocket server supports the following two websocket implementations:
 
-- [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.websocket.kind: "ws"` **(default)**
+- [WebSocket Standard](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (via
+  Node.js [ws](https://www.npmjs.com/package/ws) package): `cds.websocket.kind: "ws"` **(default)**
 - [Socket.IO](https://socket.io): `cds.websocket.kind: "socket.io"`
 - **Custom Server**: A custom websocket server implementation can be provided via a path relative to the project root
   with the configuration `cds.websocket.impl` (e.g. `cds.websocket.impl: './server/xyz.js'`).
 
-The server implementation abstracts from the concrete websocket implementation. The websocket client still needs to be implemented websocket implementation specific.
+The server implementation abstracts from the concrete websocket implementation. The websocket client still needs to be
+implemented websocket implementation specific.
 
 #### WebSocket Service
 
@@ -173,11 +178,29 @@ In addition, also non-websocket services can contain events that are exposed as 
   }
 ```
 
-Although the service is exposed as an OData protocol at `/odata/v4/chat`, the service events annotated with `@websocket` or
+Although the service is exposed as an OData protocol at `/odata/v4/chat`, the service events annotated with `@websocket`
+or
 `@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
 are not exposed, as the service itself is not marked as websocket protocol.
 
-> Non-websocket service events are only active when at least one websocket enabled service is available (i.e. websocket protocol adapter is active).
+The service path can be overruled on event level via `@websocket.path` or `@ws.path` annotation as follows:
+
+```cds
+@ws.path: 'fns-websocket'
+@ws.format: 'pcp'
+event notify {
+    text : String
+};
+```
+
+The specified event path must match the service path of another websocket enabled CDS service, otherwise the event is
+not processed. In addition the websocket format can be specified on event level via `@websocket.format` or `@ws.format`
+annotation for websocket events of non-websocket services.
+
+**Hint:**
+
+> Non-websocket service events are only active when at least one websocket enabled service is available (i.e. websocket
+> protocol adapter is active).
 
 ### Server Socket
 
@@ -198,8 +221,10 @@ It abstracts from the concrete websocket implementation by exposing the followin
 - `context: Object`: CDS context object for the websocket server socket
 - `on(event: String, callback: Function)`: Register websocket event
 - `async emit(event: String, data: Object)`: Emit websocket event with data
-- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, contexts: String[]?, identifier: {include: String[], exclude: String[]}?)`: Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers
-- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, contexts: String[]?, identifier: {include: String[], exclude: String[]}?)`: Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers
+- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, contexts: String[]?, identifier: {include: String[], exclude: String[]}?)`:
+  Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers
+- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, contexts: String[]?, identifier: {include: String[], exclude: String[]}?)`:
+  Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers
 - `async enter(context: String)`: Enter a context
 - `async exit(context: String)`: Exit a context
 - `async disconnect()`: Disconnect server socket
@@ -207,8 +232,8 @@ It abstracts from the concrete websocket implementation by exposing the followin
 
 ### Middlewares
 
-For each server websocket connection the standard CDS middlewares are applied. That means, that especially the correct CDS
-context is set up and the configured authorization strategy is applied.
+For each server websocket connection the standard CDS middlewares are applied. That means, that especially the correct
+CDS context is set up and the configured authorization strategy is applied.
 
 ### Tenant Isolation
 
@@ -220,12 +245,13 @@ over remote distribution via Redis.
 
 Authentication only works via AppRouter (e.g. using a UAA configuration), as the auth token is forwarded
 via authorization header bearer token by AppRouter to backend instance. CDS middlewares process the auth token and
-set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations and
-authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
+set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations
+and authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
 
 ### Invocation Context
 
-In context of a WebSocket enabled CDS services, WebSockets events can be directly emitted to the service in the event handler:
+In context of a WebSocket enabled CDS services, WebSockets events can be directly emitted to the service in the event
+handler:
 
 ```js
 srv.on("action", async (req) => {
@@ -265,10 +291,11 @@ That's where the CDS persistent outbox comes into play.
 
 #### CDS Persistent Outbox
 
-Websocket events can also be sent via the CDS persistent outbox. That means, the CDS events triggering the websocket broadcast
+Websocket events can also be sent via the CDS persistent outbox. That means, the CDS events triggering the websocket
+broadcast
 are added to the CDS persistent outbox when the primary transaction succeeded. The events are processed asynchronously
-and transactional safe in a separate transaction. It is ensured, that the event is processed in any case, as outbox keeps the
-outbox entry open, until the event processing succeeded.
+and transactional safe in a separate transaction. It is ensured, that the event is processed in any case, as outbox
+keeps the outbox entry open, until the event processing succeeded.
 
 The transactional safety can be achieved using `cds.outboxed` with kind `persistent-outbox` as follows:
 
@@ -282,41 +309,69 @@ await chatService.emit("received", req.data);
 In that case, the websocket event is broadcast to websocket clients exactly once, when the primary transaction succeeds.
 In case of execution errors, the event broadcast is retried automatically, while processing the persistent outbox.
 
+### Client Determination
+
+The client determination during WebSocket event broadcasting/emitting, is based on the following filtering options of
+the event:
+
+- **Tenant**: Only websocket clients connected to the same event tenant are notified.
+- **Service**: Only websocket clients connected to the same event service are notified.
+- **User**: Only websocket clients connected to the current or defined event users are notified.
+- **Context**: Only websocket clients in the part of the defined event contexts are notified.
+- **Client Identifier**: Only websocket clients with the defined event client identifier are notified.
+
+Tenant and service are determined automatically based on the CDS context and are applied per default to ensure tenant
+and service isolation.
+User, context and client identifier are optional and are determined based on the event data or event emit headers. They
+can be combined arbitrarily to filter the websocket clients to be notified.
+
+The client filtering options are depicted in the following diagram:
+
+![Client Determination Overview](./docs/assets/client_determination.png)
+
+The diagram shows the mandatory filtering layer `tenant` and `service` and the optional filtering layers `user`,
+`context` and `client identifier`.
+The `+` and `-` symbols on the optional filter layers indicating the possibility to include (`+`) or exclude (`-`)
+filtering conditions as described in the upcoming sections.
+
 ### Event Users
 
 #### Current User
 
 Events are broadcast to all websocket clients, including clients established in context of current context user.
-To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is available on
+To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is
+available on
 event level and event element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
 
 Valid annotation values are:
 
 - **Event level**:
-  - `'includeCurrent'`: Current context user is statically included everytime during broadcasting to websocket clients.
+  - `'includeCurrent'`: Current context user is statically included during broadcasting to websocket clients.
     Only websocket clients established in context to that user are respected during event broadcast.
-  - `'excludeCurrent'`: Current context user is statically excluded everytime during broadcasting to websocket clients.
+  - `'excludeCurrent'`: Current context user is statically excluded during broadcasting to websocket clients.
     All websocket clients established in context to that user are not respected during event broadcast.
 - **Event element level**:
   - `'includeCurrent'`: Current context user is dynamically included during broadcasting to websocket clients,
-    based on the value of the annotated event element. If truthy, only websocket clients established in context to that user are respected during event broadcast.
+    based on the value of the annotated event element. If truthy, only websocket clients established in context to
+    that user are respected during event broadcast.
   - `'excludeCurrent'`: Current context user is dynamically excluded during broadcasting to websocket clients,
-    based on the value of the annotated event element. If truthy, all websocket clients established in context to that user are not respected during event broadcast.
+    based on the value of the annotated event element. If truthy, all websocket clients established in context to that
+    user are not respected during event broadcast.
 
 Furthermore, also additional equivalent annotations alternatives are available:
 
 - Include current user:
 
-  - `@websocket.currentUser.include`
-  - `@ws.currentUser.include`
-  - `@websocket.broadcast.currentUser.include`
-  - `@ws.broadcast.currentUser.include`
+  - `@websocket.currentUser.include: Boolean` (shorthand: `@websocket.currentUser: Boolean`)
+  - `@ws.currentUser.include: Boolean` (shorthand: `@ws.currentUser: Boolean`)
+  - `@websocket.broadcast.currentUser.include: Boolean` (shorthand: `@websocket.broadcast.currentUser: Boolean`)
+  - `@ws.broadcast.currentUser.include: Boolean` (shorthand: `@ws.broadcast.currentUser: Boolean`)
 
 - Exclude current user:
-  - `@websocket.currentUser.exclude`
-  - `@ws.currentUser.exclude`
-  - `@websocket.broadcast.currentUser.exclude`
-  - `@ws.broadcast.currentUser.exclude`
+  - `@websocket.currentUser.exclude: Boolean`
+  - `@ws.currentUser.exclude: Boolean`
+  - `@websocket.broadcast.currentUser.exclude: Boolean`
+  - `@ws.broadcast.currentUser.exclude: Boolean`
 
 **Examples:**
 
@@ -332,7 +387,7 @@ event received {
 
 Event is published only to websocket clients established in context to the current context user.
 
-**Entity Element Level:**
+**Event Element Level:**
 
 ```cds
 event received {
@@ -343,7 +398,8 @@ event received {
 }
 ```
 
-Event is published only to websocket clients established in context to the current context user, if the event data of `flag` is falsy.
+Event is published only to websocket clients established in context to the current context user, if the event data of
+`flag` is falsy.
 
 #### Defined Users
 
@@ -352,10 +408,10 @@ the following annotations to include or exclude defined users are available:
 
 - Include user(s):
 
-  - `@websocket.user.include`
-  - `@ws.user.include`
-  - `@websocket.broadcast.user.include`
-  - `@ws.broadcast.user.include`
+  - `@websocket.user.include` (shorthand: `@websocket.user`)
+  - `@ws.user.include` (shorthand: `@ws.user`)
+  - `@websocket.broadcast.user.include` (shorthand: `@websocket.broadcast.user`)
+  - `@ws.broadcast.user.include` (shorthand: `@ws.broadcast.user`)
 
 - Exclude user(s):
   - `@websocket.user.exclude`
@@ -367,13 +423,12 @@ Valid annotation values are:
 
 - **Event level**:
   - Type: `String[] | String`
-  - Provide static unique user ids to include or exclude websocket users from event broadcasting
-  - Value can be a single user id or an array of user ids
+  - Provide static unique users to include to or exclude from event broadcasting
+  - Value can be a single user or an array of users
 - **Event element level**:
   - Type: `Boolean`
-  - Value from event data for the annotated element is used as user id to include or exclude websocket users from event broadcasting
-  - Value can be a single user id or an array of user ids
-  - First annotated element with an defined event data value is taken
+  - Value from event data for the annotated element is used as users to include to or exclude from event broadcasting
+  - Value can be a single user or an array of users
 
 **Examples:**
 
@@ -389,7 +444,7 @@ event received {
 
 Event is published to all users except the user `ABC`.
 
-**Entity Element Level:**
+**Event Element Level:**
 
 ```cds
 event received {
@@ -404,11 +459,43 @@ Event is only published to all users listed in the event data of `users`.
 
 ### Event Contexts
 
-It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed to
+It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed
+to
 determined based on the event, to which subset of clients the event shall be emitted. To specify which data parts of the
 event are leveraged for setting up the context, the annotation `@websocket.context` or `@ws.context` is available on
-event element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`). For static contexts
+event element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`). For static
+contexts
 the annotation can also be used on event level, providing a static event context string.
+
+To influence event broadcasting based on event contexts, the following annotations to include or exclude contexts are
+available:
+
+- Include context(s):
+
+  - `@websocket.context.include` (shorthand: `@websocket.context`)
+  - `@ws.context.include` (shorthand: `@ws.context`)
+  - `@websocket.broadcast.context.include` (shorthand: `@websocket.broadcast.context`)
+  - `@ws.broadcast.context.include` (shorthand: `@ws.broadcast.context`)
+
+- Exclude context(s):
+  - `@websocket.context.exclude: String[] | String`
+  - `@ws.context.exclude: String[] | String`
+  - `@websocket.broadcast.context.exclude: String[] | String`
+  - `@ws.broadcast.context.exclude: String[] | String`
+
+Valid annotation values are:
+
+- **Event level**:
+  - Type: `String[] | String`
+  - Provide static contexts to include to or exclude from event broadcasting
+  - Value can be a single context or an array of contexts
+- **Event element level**:
+  - Type: `Boolean`
+  - Value from event data for the annotated element is used as context to include to or exclude from event
+    broadcasting
+  - Value can be a single context or an array of contexts
+
+**Examples:**
 
 **Entity Level:**
 
@@ -422,7 +509,7 @@ event received {
 
 Event is only published to all clients in context `ABC`.
 
-**Entity Element Level:**
+**Event Element Level:**
 
 ```cds
 event received {
@@ -468,7 +555,8 @@ Event contexts support all CDS/JS types. The serialization is performed as follo
 To manage event contexts the following options exist:
 
 - **Server side**: Call websocket service facade
-  - CDS context object `req` exposes the websocket facade via `req.context.ws.service` providing the following context functions
+  - CDS context object `req` exposes the websocket facade via `req.context.ws.service` providing the following context
+    functions
     - **Enter Context**: `enter(context: String)` - Enter the current server socket into the passed context
     - **Exit Context**: `exit(context: String)` - Exit the current server socket from the passed context
 - **Client side**: Emit `wsContext` event from client socket
@@ -495,7 +583,8 @@ Multiple contexts can be entered for the same server socket at the same time. Fu
 `wsContext` is invoked, if existing on the websocket enabled CDS service. Event context isolation is also ensured
 over remote distribution via Redis.
 
-For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
+For Socket.IO (`kind: socket.io`) contexts are implemented
+leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
 
 ### Event Client Identifiers
 
@@ -504,20 +593,39 @@ as part of websocket context, access to current socket is given, but if actions 
 there are no means to identify the client that performed the action.
 
 That's where the event client identifier come into play. Client identifier are unique consumer-provided strings, that
-are provided during the websocket connection to identify the websocket client as well as in other request cases (e.g. OData call).
+are provided during the websocket connection to identify the websocket client as well as in other request cases (e.g.
+OData call).
 When an OData call with a client identifier is performed, it can be used to restrict the websocket event broadcasting.
 
 In some cases, the websocket clients shall be restricted on an instance basis. There are use-cases, that only certain
-clients are informed about an event and also in other cases the client shall not be informed about the event, that was triggered by the same client (maybe via a different channel, e.g. OData).
-Therefore, websocket clients can be identified optionally by a unique identifier provided as URL parameter option `?id=<globally unique value>`.
+clients are informed about an event and also in other cases the client shall not be informed about the event, that was
+triggered by the same client (maybe via a different channel, e.g. OData).
+Therefore, websocket clients can be identified optionally by a unique identifier provided as URL parameter option
+`?id=<globally unique value>`.
 
-The annotation `@websocket.identifier.include` or `@ws.identifier.include` is available on event level and event element level
-to influence event broadcasting based websocket client identifier to include certain clients based on their identifier (not listed clients are no longer respected when set)
+The annotation `@websocket.identifier.include` or `@ws.identifier.include` is available on event level and event element
+level to influence event broadcasting based websocket client identifier to include certain clients based on their
+identifier (not listed clients are no longer respected when set)
 (alternatives include `@websocket.broadcast.identifier.include` or `@ws.broadcast.identifier.include`):
 
-The annotation `@websocket.identifier.exclude` or `@ws.identifier.exclude` is available on event level and event element level
-to influence event broadcasting based websocket client identifier to exclude certain clients based on their identifier
-(alternatives include `@websocket.broadcast.identifier.exclude` or `@ws.broadcast.identifier.exclude`):
+The annotation `@websocket.identifier.exclude` or `@ws.identifier.exclude` is available on event level and event element
+level to influence event broadcasting based websocket client identifier to exclude certain clients based on their
+identifier (alternatives include `@websocket.broadcast.identifier.exclude` or `@ws.broadcast.identifier.exclude`):
+
+The full list of annotations is:
+
+- Include client identifier(s):
+
+  - `@websocket.identifier.include` (shorthand: `@websocket.identifier`)
+  - `@ws.identifier.include` (shorthand: `@ws.identifier`)
+  - `@websocket.broadcast.identifier.include` (shorthand: `@websocket.broadcast.identifier`)
+  - `@ws.broadcast.identifier.include` (shorthand: `@ws.broadcast.identifier`)
+
+- Exclude client identifiers(s):
+  - `@websocket.identifier.exclude: String[] | String`
+  - `@ws.identifier.exclude: String[] | String`
+  - `@websocket.broadcast.identifier.exclude: String[] | String`
+  - `@ws.broadcast.identifier.exclude: String[] | String`
 
 Valid annotation values are:
 
@@ -527,9 +635,9 @@ Valid annotation values are:
   - Value can be a single identifier string or an array of identifier strings
 - **Event element level**:
   - Type: `Boolean`
-  - Value from event data for the annotated element is used as unique identifiers to include or exclude websocket clients from event broadcasting
+  - Value from event data for the annotated element is used as unique identifiers to include or exclude websocket
+    clients from event broadcasting
   - Value can be a single identifier string or an array of identifier strings
-  - First annotated element with an defined event data value is taken
 
 **Examples:**
 
@@ -545,7 +653,7 @@ event received {
 
 Event is only published to all clients with identifier `ABC`.
 
-**Entity Element Level:**
+**Event Element Level:**
 
 ```cds
 event received {
@@ -576,39 +684,58 @@ The websocket implementation allows to provide event emit headers to dynamically
 The following headers are available:
 
 - Include current user to event publication (see section Event Users -> Current User):
-  - `wsCurrentUser.include: boolean`
-  - `currentUser.include: boolean`
-  - `wsCurrentUserInclude: boolean`
-  - `currentUserInclude: boolean`
+  - `wsCurrentUser: Boolean` (shorthand)
+  - `wsCurrentUser.include: Boolean`
+  - `wsCurrentUserInclude: Boolean`
+  - `currentUser: Boolean` (shorthand)
+  - `currentUser.include: Boolean`
+  - `currentUserInclude: Boolean`
 - Exclude current user from event publication (see section Event Users -> Current User)
-  - `wsCurrentUser.exclude: boolean`
-  - `currentUser.exclude: boolean`
-  - `wsCurrentUserExclude: boolean`
-  - `currentUserExclude: boolean`
-- Include one or many user ids to event publication (see section Event Users -> Defined Users):
+  - `wsCurrentUser.exclude: Boolean`
+  - `wsCurrentUserExclude: Boolean`
+  - `currentUser.exclude: Boolean`
+  - `currentUserExclude: Boolean`
+- Include one or many users to event publication (see section Event Users -> Defined Users):
+  - `wsUsers: String[] | String` (shorthand)
+  - `wsUser: String[] | String` (shorthand)
   - `wsUser.include: String[] | String`
-  - `user.include: String[] | String`
   - `wsUserInclude: String[] | String`
+  - `users: String[] | String` (shorthand)
+  - `user: String[] | String` (shorthand)
+  - `user.include: String[] | String`
   - `userInclude: String[] | String`
-- Exclude one or many user ids from event publication (see section Event Users -> Defined Users)
+- Exclude one or many users from event publication (see section Event Users -> Defined Users)
   - `wsUser.exclude: String[] | String`
+  - `wsUserExclude: String[] | String`
   - `user.exclude: String[] | String`
-  - `wsUUserExclude: String[] | String`
   - `userExclude: String[] | String`
-- Provide one or multiple context strings to identify a subset of clients (see section Event Contexts)
-  - `wsContexts: String[] | String`
-  - `contexts: String[] | String`
-  - `wsContext: String[] | String`
-  - `context: String[] | String`
-- Include websocket clients via its identifiers (see section Event Client Identifier)
+- Include one or many contexts to event publication (see section Event Contexts)
+  - `wsContext: String[] | String` (shorthand)
+  - `wsContexts: String[] | String` (shorthand)
+  - `wsContext.include: String[] | String`
+  - `wsContextInclude: String[] | String`
+  - `context: String[] | String` (shorthand)
+  - `contexts: String[] | String` (shorthand)
+  - `context.include: String[] | String`
+  - `contextInclude: String[] | String`
+- Exclude one or many contexts from event publication (see section Event Contexts)
+  - `wsContext.exclude: String[] | String`
+  - `wsContextExclude: String[] | String`
+  - `context.exclude: String[] | String`
+  - `contextExclude: String[] | String`
+- Include one or many clients identifiers to event publication (see section Event Client Identifier)
+  - `wsIdentifier: String[] | String` (shorthand)
+  - `wsIdentifiers: String[] | String` (shorthand)
   - `wsIdentifier.include: String[] | String`
-  - `identifier.include: String[] | String`
   - `wsIdentifierInclude: String[] | String`
+  - `identifier: String[] | String` (shorthand)
+  - `identifiers: String[] | String` (shorthand)
+  - `identifier.include: String[] | String`
   - `identifierInclude: String[] | String`
-- Exclude websocket clients via its identifiers (see section Event Client Identifier)
+- Exclude one or many client identifiers from event publication (see section Event Client Identifier)
   - `wsIdentifier.exclude: String[] | String`
-  - `identifier.exclude: String[] | String`
   - `wsIdentifierExclude: String[] | String`
+  - `identifier.exclude: String[] | String`
   - `identifierExclude: String[] | String`
 
 Emitting events with headers can be performed as follows:
@@ -630,8 +757,12 @@ await srv.emit("customEvent", { ... }, {
 });
 ```
 
-The respective event annotations (described in sections above) are respected in addition to event emit header specification.
-Values of all headers and annotations of same semantic type are is unified for single and array values.
+### Value Aggregation
+
+The respective event annotations (described in sections above) are respected in addition to event emit header
+specification. All event annotation values (static or dynamic) and header values are aggregated during event
+emit according to their kind. Values of all headers and annotations of same semantic type are unified for
+single and array values.
 
 ### WebSocket Format
 
@@ -657,7 +788,8 @@ field2:value2
 this is the body!
 ```
 
-To configure the PCP format, the service needs to be annotated in addition with `@websocket.format: 'pcp'` or `@ws.format: 'pcp'`:
+To configure the PCP format, the service needs to be annotated in addition with `@websocket.format: 'pcp'` or
+`@ws.format: 'pcp'`:
 
 ```cds
 @ws
@@ -671,16 +803,21 @@ With this configuration WebSocket events consume or produce PCP formatted messag
 To configure the PCP message format the following annotations are available:
 
 - **Operation level**:
-  - `@websocket.pcp.action, @ws.pcp.action: String`: Correlate `pcp-action` in PCP message to identify the CDS operation via annotation. If not defined, the operation name is correlated.
+  - `@websocket.pcp.action, @ws.pcp.action: String`: Correlate `pcp-action` in PCP message to identify the CDS
+    operation via annotation. If not defined, the operation name is correlated.
 - **Operation parameter level**:
-  - `@websocket.pcp.message, @ws.pcp.message: Boolean`: Correlate the PCP message body to the operation parameter representing the message.
+  - `@websocket.pcp.message, @ws.pcp.message: Boolean`: Correlate the PCP message body to the operation parameter
+    representing the message.
 - **Event level**:
   - `@websocket.pcp.event, @ws.pcp.event: Boolean`: Expose the CDS event as `pcp-event` field in the PCP message.
   - `@websocket.pcp.message, @ws.pcp.message: String`: Expose a static message text as PCP message body.
-  - `@websocket.pcp.action, @ws.pcp.action: String`: Exposes a static action as `pcp-action` field in the PCP message. Default `MESSAGE`.
+  - `@websocket.pcp.action, @ws.pcp.action: String`: Exposes a static action as `pcp-action` field in the PCP message.
+    Default `MESSAGE`.
 - **Event element level**:
-  - `@websocket.pcp.message, @ws.pcp.message: Boolean`: Expose the string value of the annotated event element as PCP message body.
-  - `@websocket.pcp.action, @ws.pcp.action: Boolean`: Expose the string value of the annotated event element as `pcp-action` field in the PCP message. Default `MESSAGE`.
+  - `@websocket.pcp.message, @ws.pcp.message: Boolean`: Expose the string value of the annotated event element as PCP
+    message body.
+  - `@websocket.pcp.action, @ws.pcp.action: Boolean`: Expose the string value of the annotated event element as
+    `pcp-action` field in the PCP message. Default `MESSAGE`.
 
 #### Custom Format
 
@@ -690,7 +827,8 @@ in `@websocket.format` resp. `@ws.format` annotation (e.g. `@ws.format: './forma
 The custom format class needs to implement the following functions:
 
 - **parse(data)**: Parse the event data into internal data (JSON), i.e. `{ event, data }`
-- **compose(event, data)**: Compose the event and internal data (JSON) into a formatted string. For kind `socket.io`, it can also be a JSON object.
+- **compose(event, data)**: Compose the event and internal data (JSON) into a formatted string. For kind `socket.io`, it
+  can also be a JSON object.
 
 In addition, it can implement the following functions (optional):
 
@@ -698,7 +836,8 @@ In addition, it can implement the following functions (optional):
 
 ### Connect & Disconnect
 
-Every time a server socket is connected via websocket client, the CDS service is notified by calling the corresponding service operation:
+Every time a server socket is connected via websocket client, the CDS service is notified by calling the corresponding
+service operation:
 
 - `Connect`: Invoke service operation `wsConnect`, if available
 - `Disconnect`: Invoke service operation `wsDisconnect`, if available
@@ -724,7 +863,8 @@ Locally, the following default environment files need to exist:
   }
   ```
 
-Approuter is configured to support websockets in `xs-app.json` according to [@sap/approuter - websockets property](https://www.npmjs.com/package/@sap/approuter#websockets-property):
+Approuter is configured to support websockets in `xs-app.json` according
+to [@sap/approuter - websockets property](https://www.npmjs.com/package/@sap/approuter#websockets-property):
 
 ```json
 {
@@ -766,7 +906,8 @@ The websocket adapter tries to call the following special operations on the CDS 
 
 #### Bound
 
-Each service entity is exposed as CRUD interface via as special events as proposed [here](https://socket.io/get-started/basic-crud-application/).
+Each service entity is exposed as CRUD interface via as special events as
+proposed [here](https://socket.io/get-started/basic-crud-application/).
 The event is prefixed with the entity name and has the CRUD operation as suffix, e.g. `Books:create`.
 In addition, also bound functions and actions are included into these schema, e.g. `Books:sell`.
 The signature (parameters and return type) is passed through without additional modification.
@@ -1049,7 +1190,8 @@ An example Cloud Foundry deployment can be found in `test/_env`:
     - Approuter performs authentication flow with XSUAA and forwards to backend
     - Backend serves endpoints (websocket, odata) and UI apps (runs on an in-memory SQLite3 database)
 
-In deployed infrastructure, websocket protocol is exposed via Web Socket Secure (WSS) at `wss://` over an encrypted TLS connection.
+In deployed infrastructure, websocket protocol is exposed via Web Socket Secure (WSS) at `wss://` over an encrypted TLS
+connection.
 For WebSocket standard the following setup in browser environment is recommended to cover deployed and local use-case:
 
 ```js
@@ -1059,12 +1201,19 @@ const socket = new WebSocket(protocol + window.location.host + "/ws/chat");
 
 ## Support, Feedback, Contributing
 
-This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js-community/websocket/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
+This project is open to feature requests/suggestions, bug reports etc.
+via [GitHub issues](https://github.com/cap-js-community/websocket/issues). Contribution and feedback are encouraged and
+always welcome. For more information about how to contribute, the project structure, as well as additional contribution
+information, see our [Contribution Guidelines](CONTRIBUTING.md).
 
 ## Code of Conduct
 
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone. By participating in this project, you agree to abide by its [Code of Conduct](CODE_OF_CONDUCT.md) at all times.
+We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for
+everyone. By participating in this project, you agree to abide by its [Code of Conduct](CODE_OF_CONDUCT.md) at all
+times.
 
 ## Licensing
 
-Copyright 2023 SAP SE or an SAP affiliate company and websocket contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available [via the REUSE tool](https://api.reuse.software/info/github.com/cap-js-community/websocket).
+Copyright 2023 SAP SE or an SAP affiliate company and websocket contributors. Please see our [LICENSE](LICENSE) for
+copyright and license information. Detailed information including third-party components and their licensing/copyright
+information is available [via the REUSE tool](https://api.reuse.software/info/github.com/cap-js-community/websocket).
