@@ -221,9 +221,9 @@ It abstracts from the concrete websocket implementation by exposing the followin
 - `context: Object`: CDS context object for the websocket server socket
 - `on(event: String, callback: Function)`: Register websocket event
 - `async emit(event: String, data: Object)`: Emit websocket event with data
-- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, contexts: String[]?, identifier: {include: String[], exclude: String[]}?)`:
+- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?)`:
   Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers
-- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, contexts: String[]?, identifier: {include: String[], exclude: String[]}?)`:
+- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?)`:
   Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers
 - `async enter(context: String)`: Enter a context
 - `async exit(context: String)`: Exit a context
@@ -266,6 +266,8 @@ still the WebService events can be published by connecting to the WebSocket enab
 const wsService = await cds.connect.to("WSService");
 await wsService.emit("message", req.data);
 ```
+
+`cds.conntect.to` can be used to connect to any WebSocket enabled service, to emit events to the WebSocket service.
 
 ### Transactional Safety
 
@@ -460,8 +462,7 @@ Event is only published to all users listed in the event data of `users`.
 ### Event Contexts
 
 It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed
-to
-determined based on the event, to which subset of clients the event shall be emitted. To specify which data parts of the
+to determine to which subset of clients the event shall be emitted, based on the event. To specify which data parts of the
 event are leveraged for setting up the context, the annotation `@websocket.context` or `@ws.context` is available on
 event element level (alternatives include `@websocket.broadcast.context` or `@ws.broadcast.context`). For static
 contexts
