@@ -386,9 +386,9 @@ class SocketServer {
       format = service.definition["@websocket.format"] || service.definition["@ws.format"] || "json";
     }
     if (format === origin) {
-      return new (SocketServer.require("identity", "format"))(service);
+      return new (SocketServer.require("identity", "format"))(service, origin);
     }
-    return new (SocketServer.require(format, "format"))(service);
+    return new (SocketServer.require(format, "format"))(service, origin);
   }
 
   /**

@@ -7,8 +7,8 @@ const BaseFormat = require("./base");
 const LOG = cds.log("/websocket/json");
 
 class JSONFormat extends BaseFormat {
-  constructor(service) {
-    super(service);
+  constructor(service, origin) {
+    super(service, origin);
   }
 
   parse(data) {

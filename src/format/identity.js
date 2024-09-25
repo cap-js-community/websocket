@@ -3,8 +3,8 @@
 const BaseFormat = require("./base");
 
 class IdentityFormat extends BaseFormat {
-  constructor(service) {
-    super(service);
+  constructor(service, origin) {
+    super(service, origin);
   }
 
   parse(data) {

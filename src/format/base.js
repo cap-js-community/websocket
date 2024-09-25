@@ -5,8 +5,9 @@
  * Base class for a websocket format
  */
 class BaseFormat {
-  constructor(service) {
+  constructor(service, origin) {
     this.service = service;
+    this.origin = origin;
   }
 
   /**
@@ -20,7 +21,7 @@ class BaseFormat {
    * Compose the event and internal data (JSON) into a formatted string
    * @param {String} event Event name
    * @param {Object} data Event internal data
-   * @returns {String} Formatted string. For kind `socket.io`, it can also be a JSON object.
+   * @returns {String|Object} Formatted string or a JSON object (for kind `socket.io` only)
    */
   compose(event, data) {}
 }

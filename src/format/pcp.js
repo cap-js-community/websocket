@@ -11,8 +11,8 @@ const SEPARATOR = "\n\n";
 const LOG = cds.log("/websocket/pcp");
 
 class PCPFormat extends BaseFormat {
-  constructor(service) {
-    super(service);
+  constructor(service, origin) {
+    super(service, origin);
   }
 
   parse(data) {
