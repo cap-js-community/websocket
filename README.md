@@ -221,10 +221,10 @@ It abstracts from the concrete websocket implementation by exposing the followin
 - `context: Object`: CDS context object for the websocket server socket
 - `on(event: String, callback: Function)`: Register websocket event
 - `async emit(event: String, data: Object)`: Emit websocket event with data
-- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?)`:
-  Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers
-- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?)`:
-  Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers
+- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?, headers: Object?)`:
+  Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers and optionally providing headers
+- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?, headers: Object?)`:
+  Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers and optionally providing headers
 - `async enter(context: String)`: Enter a context
 - `async exit(context: String)`: Exit a context
 - `async disconnect()`: Disconnect server socket

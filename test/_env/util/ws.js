@@ -5,11 +5,13 @@ const WebSocket = require("ws");
 
 const auth = require("./auth");
 
-async function connect(service, options = {}) {
+async function connect(service, options = {}, headers = {}, protoocls) {
   const port = cds.app.server.address().port;
-  const socket = new WebSocket(`ws://localhost:${port}` + service, {
+  protoocls ??= [];
+  const socket = new WebSocket(`ws://localhost:${port}` + service, protoocls, {
     headers: {
       authorization: options?.authorization || auth.alice,
+      ...headers
     },
   });
   cds.wss.once("connection", async (serverSocket) => {

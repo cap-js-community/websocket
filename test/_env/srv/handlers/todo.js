@@ -12,7 +12,7 @@ module.exports = class TodoService extends cds.ApplicationService {
         const ID = context.params?.[0]?.ID;
         if (ID && context.target === Todo && ["CREATE", "UPDATE", "DELETE"].includes(context.event)) {
           await this.emit("refresh", { ID });
-          await this.emit("notify", { text: ID });
+          await this.emit("notify", { text: "4711" });
           const service = await cds.connect.to("TodoWSService");
           await service.emit("refresh", { ID });
         }

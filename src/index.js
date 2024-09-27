@@ -65,26 +65,25 @@ function serveWebSocketServer(options) {
                   };
                 }),
                 operations: () => {
-                  return [];
+                  return interableObject();
                 },
                 entities: () => {
-                  return [];
+                  return interableObject();
                 },
-                events: [],
+                _events: interableObject(),
+                events: function() {
+                  return this._events;
+                },
                 on: service.on.bind(service),
                 tx: service.tx.bind(service),
               };
-              eventServices[service.name].events.push(definition);
+              eventServices[service.name]._events[serviceLocalName(service, definition.name)] = definition;
             }
           }
         }
         for (const name in eventServices) {
           const eventService = eventServices[name];
-          const events = eventService.events;
-          if (events.length > 0) {
-            eventService.events = () => {
-              return events;
-            };
+          if (Object.keys(eventService.events()).length > 0) {
             serveWebSocketService(socketServer, eventService, options);
           }
         }
@@ -151,6 +150,7 @@ function bindServiceEvents(socketServer, service, path) {
         const user = deriveUser(event, req.data, req.headers, req);
         const context = deriveContext(event, req.data, req.headers);
         const identifier = deriveIdentifier(event, req.data, req.headers);
+        const headers = req.headers?.websocket || req.headers?.ws;
         path = normalizeEventPath(event["@websocket.path"] || event["@ws.path"] || path);
         await socketServer.broadcast({
           service,
@@ -161,6 +161,7 @@ function bindServiceEvents(socketServer, service, path) {
           user,
           context,
           identifier,
+          headers,
           socket: null,
         });
       } catch (err) {
@@ -171,7 +172,7 @@ function bindServiceEvents(socketServer, service, path) {
 }
 
 function bindServiceDefaults(socket, service) {
-  if (service.operations(WebSocketAction.Disconnect).length) {
+  if (service.operations[WebSocketAction.Disconnect]) {
     socket.onDisconnect(async (reason) => {
       await processEvent(socket, service, WebSocketAction.Disconnect, { reason });
     });
@@ -182,7 +183,7 @@ function bindServiceDefaults(socket, service) {
     } else {
       await socket.exit(data?.context);
     }
-    if (service.operations(WebSocketAction.Context).length) {
+    if (service.operations[WebSocketAction.Context]) {
       await processEvent(socket, service, WebSocketAction.Context, data, callback);
     } else {
       callback && (await callback());
@@ -242,7 +243,7 @@ function bindServiceEntities(socket, service) {
 }
 
 async function emitConnect(socket, service) {
-  if (service.operations(WebSocketAction.Connect).length) {
+  if (service.operations[WebSocketAction.Connect]) {
     await processEvent(socket, service, WebSocketAction.Connect);
   }
 }
@@ -672,6 +673,17 @@ function serviceLocalName(service, name) {
     return name.substring(servicePrefix.length);
   }
   return name;
+}
+
+function interableObject(object) {
+  return {
+    ...object,
+    [Symbol.iterator]: function* () {
+      for (const event in this) {
+        yield this[event];
+      }
+    },
+  };
 }
 
 function isServedViaWebsocket(service) {

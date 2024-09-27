@@ -86,7 +86,7 @@ class SocketServer {
       /**
        * Broadcast websocket event to all sockets except to sender with options
        * @param {String} event Event
-       * @param {Object} data Data
+       * @param {Object} data Event data
        * @param {Object} [user] Users to be included/excluded, undefined: no restriction
        * @param {[String]} [user.include] Users to be included, undefined: no restriction
        * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
@@ -96,15 +96,16 @@ class SocketServer {
        * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
        * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
        * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
+       * @param {Object} [headers] Event headers
        * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcast: async (event, data, user, context, identifier) => {
+      broadcast: async (event, data, user, context, identifier, headers) => {
         return Promise.resolve();
       },
       /**
        * Broadcast websocket event to all sockets with options
        * @param {String} event Event
-       * @param {Object} data Data
+       * @param {Object} data Event data
        * @param {Object} [user] Users to be included/excluded, undefined: no restriction
        * @param {[String]} [user.include] Users to be included, undefined: no restriction
        * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
@@ -114,9 +115,10 @@ class SocketServer {
        * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
        * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
        * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
+       * @param {Object} [headers] Event headers
        * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcastAll: async (event, data, user, context, identifier) => {
+      broadcastAll: async (event, data, user, context, identifier, headers) => {
         return Promise.resolve();
       },
       /**
@@ -153,7 +155,7 @@ class SocketServer {
    * @param {String} service Service definition
    * @param {String} [path] Service path, e.g. "/path" (relative to websocket server path), undefined: default service path
    * @param {String} event Event name or event message JSON content (no additional parameters provided (incl. 'data', except 'local'))
-   * @param {Object} [data] Data object
+   * @param {Object} [data] Event data
    * @param {String} [tenant] Tenant for isolation
    * @param {Object} [user] Users to be included/excluded, undefined: no restriction
    * @param {[String]} [user.include] Users to be included, undefined: no restriction
@@ -164,11 +166,12 @@ class SocketServer {
    * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
    * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
    * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
+   * @param {Object} [headers] Event headers
    * @param {Object} [socket] Broadcast client socket to be excluded, undefined: no exclusion
    * @param {boolean} [local] Broadcast only locally (i.e. not via adapter), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast({ service, path, event, data, tenant, user, context, identifier, socket, local }) {}
+  async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket, local }) {}
 
   /**
    * Handle HTTP request response

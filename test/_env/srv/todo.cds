@@ -26,8 +26,8 @@ service TodoService {
     @ws
     @ws.pcp.event
     @ws.pcp.message: ''
-    @ws.path       : 'fns-websocket'
     @ws.format     : 'pcp'
+    @ws.path       : 'fns-websocket'
     event notify {
         text : String
     };

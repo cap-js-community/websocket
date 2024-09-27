@@ -52,35 +52,22 @@ class PCPFormat extends BaseFormat {
     };
   }
 
-  compose(event, data) {
+  compose(event, data, headers) {
     const eventDefinition = this.service.events()[event];
-    const eventElements = Object.values(eventDefinition?.elements || {});
-    const messageElement = eventElements.find((element) => {
-      return element["@websocket.pcp.message"] || element["@ws.pcp.message"];
+    const pcpMessage = this.deriveValue(event, data, headers, {
+      headerNames: ["pcp-message", "pcp_message", "pcp.message", "pcpmessage"],
+      annotationNames: ["@websocket.pcp.message", "@ws.pcp.message"],
+      fallback: event,
     });
-    const actionElement = eventElements.find((element) => {
-      return element["@websocket.pcp.action"] || element["@ws.pcp.action"];
+    const pcpAction = this.deriveValue(event, data, headers, {
+      headerNames: ["pcp-action", "pcp_action", "pcp.action", "pcpaction"],
+      annotationNames: ["@websocket.pcp.action", "@ws.pcp.action"],
+      fallback: MESSAGE,
     });
-    const message =
-      eventDefinition?.["@websocket.pcp.message"] ??
-      eventDefinition?.["@ws.pcp.message"] ??
-      data[messageElement?.name] ??
-      event;
-    if (data[messageElement?.name]) {
-      delete data[messageElement?.name];
-    }
-    const pcpAction =
-      eventDefinition?.["@websocket.pcp.action"] ??
-      eventDefinition?.["@ws.pcp.action"] ??
-      data[actionElement?.name] ??
-      MESSAGE;
-    if (data[actionElement?.name]) {
-      delete data[actionElement?.name];
-    }
     const pcpEvent =
       eventDefinition?.["@websocket.pcp.event"] || eventDefinition?.["@ws.pcp.event"] ? event : undefined;
-    const pcpFields = serializePcpFields(data, typeof message, pcpAction, pcpEvent, eventDefinition?.elements);
-    return pcpFields + message;
+    const pcpFields = serializePcpFields(data, typeof pcpMessage, pcpAction, pcpEvent, eventDefinition?.elements);
+    return pcpFields + pcpMessage;
   }
 }
 

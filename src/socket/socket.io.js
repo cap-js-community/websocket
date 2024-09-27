@@ -70,7 +70,7 @@ class SocketIOServer extends SocketServer {
           emit: async (event, data) => {
             await socket.emit(event, format.compose(event, data));
           },
-          broadcast: async (event, data, user, context, identifier) => {
+          broadcast: async (event, data, user, context, identifier, headers) => {
             await this.broadcast({
               service,
               path,
@@ -80,10 +80,11 @@ class SocketIOServer extends SocketServer {
               user,
               context,
               identifier,
+              headers,
               socket,
             });
           },
-          broadcastAll: async (event, data, user, context, identifier) => {
+          broadcastAll: async (event, data, user, context, identifier, headers) => {
             await this.broadcast({
               service,
               path,
@@ -93,6 +94,7 @@ class SocketIOServer extends SocketServer {
               user,
               context,
               identifier,
+              headers,
               socket: null,
             });
           },
@@ -161,7 +163,7 @@ class SocketIOServer extends SocketServer {
     });
   }
 
-  async broadcast({ service, path, event, data, tenant, user, context, identifier, socket }) {
+  async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket }) {
     path = path || this.defaultPath(service);
     tenant = tenant || socket?.context.tenant;
     let to = socket?.broadcast || this.io.of(path);
@@ -222,7 +224,7 @@ class SocketIOServer extends SocketServer {
       }
     }
     const format = this.format(service, event, "json");
-    to.emit(event, format.compose(event, data));
+    to.emit(event, format.compose(event, data, headers));
   }
 
   respond(socket, statusCode, body) {
