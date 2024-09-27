@@ -40,7 +40,7 @@ class PCPFormat extends BaseFormat {
           }
         }
         return {
-          event: localName(operation.name, this.service),
+          event: this.localName(operation.name),
           data: result,
         };
       }
@@ -81,7 +81,7 @@ const serializePcpFields = (pcpFields, messageType, pcpAction, pcpEvent, element
   let serialized = "";
   if (pcpFields && typeof pcpFields === "object") {
     for (const fieldName in pcpFields) {
-      const fieldValue = stringValue(pcpFields[fieldName]);
+      const fieldValue = this.stringValue(pcpFields[fieldName]);
       if (fieldValue && fieldName.indexOf("pcp-") !== 0 && elements?.[fieldName]) {
         serialized += escape(fieldName) + ":" + escape(fieldValue) + "\n";
       }
@@ -125,18 +125,5 @@ const unescape = (escaped) => {
     })
     .join("\u0008");
 };
-
-const localName = (name, service) => {
-  return name.startsWith(`${service.name}.`) ? name.substring(service.name.length + 1) : name;
-};
-
-function stringValue(value) {
-  if (value instanceof Date) {
-    return value.toISOString();
-  } else if (value instanceof Object) {
-    return JSON.stringify(value);
-  }
-  return String(value);
-}
 
 module.exports = PCPFormat;

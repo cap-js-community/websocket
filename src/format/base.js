@@ -71,6 +71,19 @@ class BaseFormat {
     }
     return fallback;
   }
+
+  localName(name) {
+    return name.startsWith(`${this.service.name}.`) ? name.substring(this.service.name.length + 1) : name;
+  };
+
+  stringValue(value) {
+    if (value instanceof Date) {
+      return value.toISOString();
+    } else if (value instanceof Object) {
+      return JSON.stringify(value);
+    }
+    return String(value);
+  }
 }
 
 module.exports = BaseFormat;

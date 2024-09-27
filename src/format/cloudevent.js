@@ -14,8 +14,23 @@ class CloudEventFormat extends BaseFormat {
   parse(data) {
     try {
       const cloudEvent = data?.constructor === Object ? data : JSON.parse(data);
-      // TODO: Map to CAP operation
-
+      const result = {};
+      const operation = Object.values(this.service.operations || {}).find((operation) => {
+        return (
+          operation["@websocket.cloudevent.type"] === cloudEvent.type ||
+          operation["@ws.cloudevent.type"] === cloudEvent.type ||
+          operation.name === cloudEvent.type
+        );
+      });
+      if (operation) {
+        for (const param of operation.params) {
+          // TODO: Parse into data
+        }
+        return {
+          event: this.localName(operation.name),
+          data: result,
+        };
+      }
     } catch (err) {
       LOG?.error(err);
     }
@@ -40,7 +55,13 @@ class CloudEventFormat extends BaseFormat {
     const annotations = this.collectAnnotations(event);
     for (const annotation of annotations) {
       const value = this.deriveValue(event, data, headers, {
-        headerValues: [`cloudevent-${annotation}`, `cloudevent_${annotation}`, `cloudevent.${annotation}`, `cloudevent${annotation}`, annotation],
+        headerValues: [
+          `cloudevent-${annotation}`,
+          `cloudevent_${annotation}`,
+          `cloudevent.${annotation}`,
+          `cloudevent${annotation}`,
+          annotation,
+        ],
         annotationValues: [`@websocket.cloudevent.${annotation}`, `@ws.cloudevent.${annotation}`],
       });
       if (value !== undefined) {

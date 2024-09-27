@@ -2,9 +2,14 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitMessage, waitForMessage } = require("../_env/util/ws");
+const { connect, disconnect, emitEvent, emitMessage, waitForEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");
+
+cds.env.websocket = {
+  kind: "socket.io",
+  impl: null,
+};
 
 const cloudEvent1Message = JSON.stringify({
   specversion: "1.0",
@@ -92,17 +97,17 @@ describe("CloudEvent", () => {
     await disconnect(socket);
   });
 
-  test("Event Cloud Protocol", async () => {
+  test("Cloud Event Protocol", async () => {
     expect(socket._protocol).toEqual("cloudevents.json");
   });
 
-  test.skip("Cloud event", async () => {
-    const waitCloudEvent1Promise = waitForMessage(socket, "cloudEvent1");
-    const waitCloudEvent2Promise = waitForMessage(socket, "cloudEvent2");
-    const waitCloudEvent3Promise = waitForMessage(socket, "cloudEvent3");
-    const waitCloudEvent4Promise = waitForMessage(socket, "cloudEvent4");
-    const result = await emitMessage(socket, cloudEvent1Message);
-    expect(result).toBeNull();
+  test("Cloud event", async () => {
+    const waitCloudEvent1Promise = waitForEvent(socket, "cloudEvent1");
+    const waitCloudEvent2Promise = waitForEvent(socket, "cloudEvent2");
+    const waitCloudEvent3Promise = waitForEvent(socket, "cloudEvent3");
+    const waitCloudEvent4Promise = waitForEvent(socket, "cloudEvent4");
+    const result = await emitEvent(socket, "sendCloudEvent", cloudEvent1Message);
+    expect(result).toBe(true);
     const waitResult1 = await waitCloudEvent1Promise;
     expect(waitResult1).toEqual(cloudEvent1Message);
     const waitResult2 = await waitCloudEvent2Promise;
