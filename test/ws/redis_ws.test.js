@@ -57,7 +57,7 @@ describe("Redis", () => {
     expect(redis.client.subscribe).toHaveBeenNthCalledWith(4, "websocket/main", expect.any(Function));
     expect(redis.client.publish).toHaveBeenCalledWith(
       "websocket/chat",
-      `{"event":"received","data":{"text":"test","user":"alice"},"tenant":"t1"}`,
+      '{"event":"received","data":{"text":"test","user":"alice"},"tenant":"t1","headers":{"header":"value"}}',
     );
 
     // Duplicated because Redis mock publishes to same client (not done for real Redis)

@@ -765,6 +765,25 @@ specification. All event annotation values (static or dynamic) and header values
 emit according to their kind. Values of all headers and annotations of same semantic type are unified for
 single and array values.
 
+#### Format Headers
+
+In addition to the above event emit headers, format specific event headers can be specified in the `websocket` or `ws` section
+during event emit.
+
+```js
+await srv.emit("customEvent", { ... }, {
+  ws: {
+    a: 1
+  },
+  websocket: {
+    b: "c"
+  }
+});
+```
+
+These headers are made available to the format `compose(event, data, headers)` function, to be included in the
+composed WebSocket message, if applicable (e.g. format: `pcp`, `cloudevent`).
+
 ### Ignore Elements
 
 To ignore elements during event emit, the annotation `@websocket.ignore` or `@ws.ignore` is available on event element level.
@@ -850,7 +869,14 @@ A Cloud Event message has the following structure:
 }
 ```
 
+To create a cloud-event compatible CDS event, either the event is modeled as CDS service event according to the specification
+or a CDS event is mapped via annotations to a cloud-event compatible event.
+
 ##### Modeling Cloud Event
+
+Cloud event can be explicitly modelled as CDS event, matching the specification of cloud event attributes.
+
+**Example:**
 
 ```cds
 event cloudEvent {
@@ -871,14 +897,61 @@ event cloudEvent {
 }
 ```
 
+The CDS event `cloudEvent` is explicitly modeled according to the cloud-event specification.
+The event data is passed inbound and outbound in the exact same representation as JSON object, as specified.
+No additional annotation is necessary to be defined.
+
 ##### Mapping Cloud Event
+
+CDS events can also be mapped to cloud-event compatible events via headers and CDS annotations. The implementation is based on the
+`generic` formatter (see section below), that allows to map CDS events to cloud-event compatible events based on
+cloud event specific headers and wildcard annotations, starting with `@websocket.cloudevent.<annotation>` or `@ws.cloudevent.<annotation>`
+to match the cloud-event specific attributes.
+
+The provided header values in the `websocket` or `ws` section are mapped to the cloud event attributes generically, if available.
+
+**Example:**
+
+```js
+await srv.emit("cloudEvent",
+  {
+    appinfoA,
+    appinfoB,
+    appinfoC,
+  },
+  {
+    ws: {
+      specversion: "1.0",
+      type: "com.example.someevent.cloudEvent4",
+      source: "/mycontext",
+      subject: req.data._subject || "example",
+      id: "C234-1234-1234",
+      time: "2018-04-05T17:31:00Z",
+      comexampleextension1: "value",
+      comexampleothervalue: 5,
+      datacontenttype: "application/json",
+    },
+  },
+);
+```
+
+Subsequently, the following annotations are respected:
+
+- **Event level**:
+  - `@websocket.cloudevent.<attribute>: <value>`
+  - Type: `any` (according to Cloud Event JSON format)
+  - Provide static cloud event attribute value, according to cloud event specification
+- **Event element level**:
+  - `@websocket.cloudevent.<attribute>`
+  - Type: `Boolean`
+  - Value from event data for the annotated element is used as dynamic cloud event attribute value, according to cloud event attribute specification
 
 **Examples:**
 
 **Event Level:**
 
 ```cds
-@ws.cloudevent.specversion         : '1.1'
+@ws.cloudevent.specversion         : '1.0'
 @ws.cloudevent.type                : 'com.example.someevent'
 @ws.cloudevent.source              : '/mycontext'
 @ws.cloudevent.subject             : 'example'
@@ -886,7 +959,7 @@ event cloudEvent {
 @ws.cloudevent.time                : '2018-04-05T17:31:00Z'
 @ws.cloudevent.comexampleextension1: 'value'
 @ws.cloudevent.comexampleothervalue: 5
-@ws.cloudevent.datacontenttype     : 'application/cloudevents+json'
+@ws.cloudevent.datacontenttype     : 'application/json'
 event cloudEvent2 {
     appinfoA : String;
     appinfoB : Integer;
@@ -894,7 +967,8 @@ event cloudEvent2 {
 }
 ```
 
-Event is published only via cloud event sub-protocol, with the specified static cloud event attributes.
+Event is published via cloud event sub-protocol, with the specified static cloud event attributes. The event data is
+consumed as cloud event data section.
 
 **Event Element Level:**
 
@@ -924,8 +998,11 @@ event cloudEvent3 {
 }
 ```
 
-Event is published only via cloud event sub-protocol, with the specified dynamic cloud event attributes derived from
-CDS event elements.
+Event is published via cloud event sub-protocol, with the specified dynamic cloud event attributes derived from
+CDS event elements. Annotated elements are consumed as cloud event attributes, non-annotated elements are consumed as
+cloud event data section.
+
+Static and dynamic annotations can be combined. Dynamnic values are overwritten by static values, if defined.
 
 #### Custom Format
 
@@ -944,9 +1021,21 @@ In addition, it can implement the following functions (optional):
 
 #### Generic Format
 
-Additionally, a custom formatter can be based on the generic implementation `format/generic.js` providing a name.
-CDS annotations and header values are then derived from format name based on wildcard annotations
-`@websocket.<name>.<annotation>` or `@ws.<name>.<annotation>`.
+Additionally, a custom formatter can be based on the generic implementation `format/generic.js` providing a name and identifier.
+Values are derived via CDS annotations based on wildcard annotations
+`@websocket.<format>.<annotation>` or `@ws.<format>.<annotation>` using the formatter name.
+In addition, provided header values in the `websocket` or `ws` section are also used to derived values from.
+
+The following generic implementation specifics are included:
+
+- **parse:** Data is parsed generically
+  - Parsing is based on formatter specific wildcard annotations on operation level (static) or operation parameter level (dynamic), if available.
+  - CDS operation (action or function) is derived from generic annotation `@websocket.<format>.name` or `@ws.<format>.name`.
+  - Operation identification is based on the formatter identifier (default `name`) on event data, that can be specified per formatter.
+  - Data is passed further as-is, in case no CDS annotations are present for format
+- **compose:** Data is composed generically
+  - First data is composed based on headers, if available
+  - Subsequently, formatter specific wildcard annotations on event level (static) or event element level (dynamic) are processed
 
 ### Connect & Disconnect
 

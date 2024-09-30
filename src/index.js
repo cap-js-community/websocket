@@ -150,7 +150,8 @@ function bindServiceEvents(socketServer, service, path) {
         const user = deriveUser(event, req.data, req.headers, req);
         const context = deriveContext(event, req.data, req.headers);
         const identifier = deriveIdentifier(event, req.data, req.headers);
-        const headers = req.headers?.websocket || req.headers?.ws;
+        const headers =
+          req.headers?.websocket || req.headers?.ws ? { ...req.headers?.websocket, ...req.headers?.ws } : undefined;
         path = normalizeEventPath(event["@websocket.path"] || event["@ws.path"] || path);
         await socketServer.broadcast({
           service,

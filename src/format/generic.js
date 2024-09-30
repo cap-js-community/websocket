@@ -171,14 +171,14 @@ class GenericFormat extends BaseFormat {
    * @param {String} name Definition name (event, operation)
    * @param {Object} data Data
    * @param {Object} mappedData Data to be mapped into
-   * @param {[String]} [localAnnotationNames] Local annotation names to be mapped
+   * @param {[String]} [localAnnotations] Local annotation names to be mapped
    * @returns {*} Derived value
    */
-  mapValues(name, data, mappedData, localAnnotationNames) {
+  mapValues(name, data, mappedData, localAnnotations) {
     data ??= {};
     const definition = this.service.events()[name] || this.service.operations()[this.localName(name)];
     if (definition) {
-      for (const localAnnotation of localAnnotationNames || []) {
+      for (const localAnnotation of localAnnotations || []) {
         for (const annotation of [
           `@websocket.${this.name}.${localAnnotation}`,
           `@ws.${this.name}.${localAnnotation}`,
@@ -194,7 +194,7 @@ class GenericFormat extends BaseFormat {
           continue;
         }
         let mapped = false;
-        for (const localAnnotation of localAnnotationNames || []) {
+        for (const localAnnotation of localAnnotations || []) {
           if (mapped) {
             break;
           }
