@@ -913,7 +913,8 @@ The provided header values in the `websocket` or `ws` section are mapped to the 
 **Example:**
 
 ```js
-await srv.emit("cloudEvent",
+await srv.emit(
+  "cloudEvent",
   {
     appinfoA,
     appinfoB,
