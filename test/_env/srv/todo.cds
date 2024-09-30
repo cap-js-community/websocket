@@ -20,7 +20,7 @@ service TodoService {
 
     @ws
     event refresh {
-        ID : String
+        ID : String;
     };
 
     @ws
@@ -29,6 +29,6 @@ service TodoService {
     @ws.format     : 'pcp'
     @ws.path       : 'fns-websocket'
     event notify {
-        text : String
+        text : String;
     };
 }

@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Add support for cloud events
+- Add support for Cloud Events
 - Include or exclude defined list of users
 - Support exclusion of event contexts
 - Overrule path of websocket event via `@websocket.path` or `@ws.path` for non-websocket services
 - Overrule format of websocket event via `@websocket.format` or `@ws.format` for non-websocket services
+- Ignore event elements or operation parameters with `@websocket.ignore` or `@ws.ignore`
 - Optimization of client determination for kind `ws`
 - Allow empty PCP message in event definition
 - Improve documentation and examples

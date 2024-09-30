@@ -6,7 +6,7 @@ const { connect, disconnect, emitMessage, waitForMessage } = require("../_env/ut
 
 cds.test(__dirname + "/../_env");
 
-const cloudEvent1Message = JSON.stringify({
+const cloudEvent = {
   specversion: "1.0",
   type: "com.example.someevent",
   source: "/mycontext",
@@ -21,58 +21,58 @@ const cloudEvent1Message = JSON.stringify({
     appinfoB: 123,
     appinfoC: true,
   },
-});
+};
 
-const cloudEvent2Message = JSON.stringify({
-  specversion: "1.0",
-  type: "com.example.someevent",
-  source: "/mycontext",
-  subject: null,
-  id: "C234-1234-1234",
-  time: "2018-04-05T17:31:00Z",
-  comexampleextension1: "value",
-  comexampleothervalue: 5,
-  datacontenttype: "application/json",
-  data: {
-    appinfoA: "abc",
-    appinfoB: 123,
-    appinfoC: true,
-  },
-});
+const cloudEventModel = {
+  ...cloudEvent,
+  type: "com.example.someevent.model",
+};
 
-const cloudEvent3Message = JSON.stringify({
-  specversion: "1.0",
-  type: "com.example.someevent",
-  source: "/mycontext",
-  subject: null,
-  id: "C234-1234-1234",
-  time: "2018-04-05T17:31:00Z",
-  comexampleextension1: "value",
-  comexampleothervalue: 5,
-  datacontenttype: "application/json",
-  data: {
-    appinfoA: "abc",
-    appinfoB: 123,
-    appinfoC: true,
-  },
-});
+const cloudEventMap = {
+  ...cloudEvent,
+  type: "com.example.someevent.map",
+};
 
-const cloudEvent4Message = JSON.stringify({
+const cloudEvent1 = {
   specversion: "1.0",
-  type: "com.example.someevent",
-  source: "/mycontext",
+  type: "CloudEventService.cloudEvent1",
+  source: "CloudEventService",
   subject: null,
-  id: "C234-1234-1234",
-  time: "2018-04-05T17:31:00Z",
-  comexampleextension1: "value",
-  comexampleothervalue: 5,
+  id: expect.any(String),
+  time: expect.any(String),
   datacontenttype: "application/json",
   data: {
-    appinfoA: "abc",
-    appinfoB: 123,
-    appinfoC: true,
+    appinfoA: "abcd",
+    appinfoB: 1234,
+    appinfoC: false,
   },
-});
+};
+
+const cloudEvent2 = {
+  ...cloudEvent1,
+  specversion: "1.1",
+  type: "com.example.someevent.cloudEvent2",
+  source: "/mycontext",
+  subject: "example",
+  comexampleextension1: "value",
+  comexampleothervalue: 5,
+  datacontenttype: "application/cloudevents+json",
+};
+
+const cloudEvent3 = {
+  ...cloudEvent2,
+  type: "com.example.someevent.cloudEvent3",
+};
+
+const cloudEvent4 = {
+  ...cloudEvent3,
+  type: "com.example.someevent.cloudEvent4",
+};
+
+const cloudEvent5 = {
+  ...cloudEvent4,
+  type: "com.example.someevent.cloudEvent5",
+};
 
 describe("CloudEvent", () => {
   let socket;
@@ -96,21 +96,44 @@ describe("CloudEvent", () => {
     expect(socket._protocol).toEqual("cloudevents.json");
   });
 
-  test.skip("Cloud event", async () => {
-    const waitCloudEvent1Promise = waitForMessage(socket, "cloudEvent1");
-    const waitCloudEvent2Promise = waitForMessage(socket, "cloudEvent2");
-    const waitCloudEvent3Promise = waitForMessage(socket, "cloudEvent3");
-    const waitCloudEvent4Promise = waitForMessage(socket, "cloudEvent4");
-    const result = await emitMessage(socket, cloudEvent1Message);
+  test("Cloud event (modeling)", async () => {
+    const waitCloudEvent1Promise = waitForMessage(socket, "cloudEvent1", null, true);
+    const waitCloudEvent2Promise = waitForMessage(socket, "cloudEvent2", null, true);
+    const waitCloudEvent3Promise = waitForMessage(socket, "cloudEvent3", null, true);
+    const waitCloudEvent4Promise = waitForMessage(socket, "cloudEvent4", null, true);
+    const waitCloudEvent5Promise = waitForMessage(socket, "cloudEvent5", null, true);
+    const result = await emitMessage(socket, JSON.stringify(cloudEventModel));
     expect(result).toBeNull();
     const waitResult1 = await waitCloudEvent1Promise;
-    expect(waitResult1).toEqual(cloudEvent1Message);
+    expect(waitResult1).toEqual(cloudEvent1);
     const waitResult2 = await waitCloudEvent2Promise;
-    expect(waitResult2).toEqual(cloudEvent2Message);
+    expect(waitResult2).toEqual(cloudEvent2);
     const waitResult3 = await waitCloudEvent3Promise;
-    expect(waitResult3).toEqual(cloudEvent3Message);
+    expect(waitResult3).toEqual(cloudEvent3);
     const waitResult4 = await waitCloudEvent4Promise;
-    expect(waitResult4).toEqual(cloudEvent4Message);
+    expect(waitResult4).toEqual(cloudEvent4);
+    const waitResult5 = await waitCloudEvent5Promise;
+    expect(waitResult5).toEqual(cloudEvent5);
+  });
+
+  test("Cloud event (mapping)", async () => {
+    const waitCloudEvent1Promise = waitForMessage(socket, "cloudEvent1", null, true);
+    const waitCloudEvent2Promise = waitForMessage(socket, "cloudEvent2", null, true);
+    const waitCloudEvent3Promise = waitForMessage(socket, "cloudEvent3", null, true);
+    const waitCloudEvent4Promise = waitForMessage(socket, "cloudEvent4", null, true);
+    const waitCloudEvent5Promise = waitForMessage(socket, "cloudEvent5", null, true);
+    const result = await emitMessage(socket, JSON.stringify(cloudEventMap));
+    expect(result).toBeNull();
+    const waitResult1 = await waitCloudEvent1Promise;
+    expect(waitResult1).toEqual(cloudEvent1);
+    const waitResult2 = await waitCloudEvent2Promise;
+    expect(waitResult2).toEqual(cloudEvent2);
+    const waitResult3 = await waitCloudEvent3Promise;
+    expect(waitResult3).toEqual({ ...cloudEvent3, subject: "cloud-example" });
+    const waitResult4 = await waitCloudEvent4Promise;
+    expect(waitResult4).toEqual({ ...cloudEvent4, subject: "cloud-example" });
+    const waitResult5 = await waitCloudEvent5Promise;
+    expect(waitResult5).toEqual({ ...cloudEvent5, subject: "cloud-example" });
   });
 
   test("Cloud event format error", async () => {

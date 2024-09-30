@@ -11,7 +11,7 @@ async function connect(service, options = {}, headers = {}, protoocls) {
   const socket = new WebSocket(`ws://localhost:${port}` + service, protoocls, {
     headers: {
       authorization: options?.authorization || auth.alice,
-      ...headers
+      ...headers,
     },
   });
   cds.wss.once("connection", async (serverSocket) => {
@@ -82,12 +82,13 @@ async function waitForNoEvent(socket, event, timeout = 100) {
   });
 }
 
-async function waitForMessage(socket, event, cb) {
+async function waitForMessage(socket, event, cb, parse) {
   _initListeners(socket);
   return new Promise((resolve) => {
     socket._listeners.push((message) => {
       message = message.toString();
       if (message.includes(event)) {
+        message = parse ? JSON.parse(message) : message;
         resolve(message);
         cb && cb(message);
       }

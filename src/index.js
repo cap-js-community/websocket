@@ -71,7 +71,7 @@ function serveWebSocketServer(options) {
                   return interableObject();
                 },
                 _events: interableObject(),
-                events: function() {
+                events: function () {
                   return this._events;
                 },
                 on: service.on.bind(service),
@@ -553,6 +553,9 @@ function deriveValues(
       if (event.elements) {
         for (const name in event.elements) {
           const element = event.elements[name];
+          if (element["@websocket.ignore"] || element["@ws.ignore"]) {
+            continue;
+          }
           const annotationValue = element[annotationName];
           if (annotationExcludeValues?.includes(annotationValue)) {
             continue;

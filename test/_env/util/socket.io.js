@@ -11,7 +11,7 @@ async function connect(service, options = {}, headers) {
     path: "/ws",
     extraHeaders: {
       authorization: options?.authorization || auth.alice,
-      ...headers
+      ...headers,
     },
   });
   cds.io.of(service).once("connection", (serverSocket) => {

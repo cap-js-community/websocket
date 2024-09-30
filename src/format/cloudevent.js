@@ -2,47 +2,29 @@
 
 const cds = require("@sap/cds");
 
-const BaseFormat = require("./base");
+const GenericFormat = require("./generic");
 
-const LOG = cds.log("/websocket/cloudevent");
-
-class CloudEventFormat extends BaseFormat {
+class CloudEventFormat extends GenericFormat {
   constructor(service, origin) {
-    super(service, origin);
+    super(service, origin, "cloudevent", "type");
   }
 
   parse(data) {
-    try {
-      const cloudEvent = data?.constructor === Object ? data : JSON.parse(data);
-      const result = {};
-      const operation = Object.values(this.service.operations || {}).find((operation) => {
-        return (
-          operation["@websocket.cloudevent.type"] === cloudEvent.type ||
-          operation["@ws.cloudevent.type"] === cloudEvent.type ||
-          operation.name === cloudEvent.type
-        );
-      });
-      if (operation) {
-        for (const param of operation.params) {
-          // TODO: Parse into data
-        }
-        return {
-          event: this.localName(operation.name),
-          data: result,
-        };
-      }
-    } catch (err) {
-      LOG?.error(err);
+    data = this.deserialize(data);
+    const operation = this.determineOperation(data);
+    if (typeof data?.data === "object" && !operation?.params?.data) {
+      const ceData = data.data;
+      delete data.data;
+      data = {
+        ...data,
+        ...ceData,
+      };
     }
-    LOG?.warn("Error parsing cloud-event format", data);
-    return {
-      event: undefined,
-      data: {},
-    };
+    return super.parse(data);
   }
 
   compose(event, data, headers) {
-    const cloudEvent = {
+    let cloudEvent = {
       specversion: "1.0",
       type: `${this.service.name}.${event}`,
       source: this.service.name,
@@ -50,50 +32,22 @@ class CloudEventFormat extends BaseFormat {
       id: cds.utils.uuid(),
       time: new Date().toISOString(),
       datacontenttype: "application/json",
-      data,
+      data: {},
     };
-    const annotations = this.collectAnnotations(event);
-    for (const annotation of annotations) {
-      const value = this.deriveValue(event, data, headers, {
-        headerValues: [
-          `cloudevent-${annotation}`,
-          `cloudevent_${annotation}`,
-          `cloudevent.${annotation}`,
-          `cloudevent${annotation}`,
-          annotation,
-        ],
-        annotationValues: [`@websocket.cloudevent.${annotation}`, `@ws.cloudevent.${annotation}`],
-      });
-      if (value !== undefined) {
-        cloudEvent[annotation] = value;
-      }
-    }
-    return this.origin === "json" ? cloudEvent : JSON.stringify(cloudEvent);
-  }
-
-  collectAnnotations(event) {
-    const annotations = new Set();
     const eventDefinition = this.service.events()[event];
-    for (const annotation in eventDefinition) {
-      if (annotation.startsWith("@websocket.cloudevent.")) {
-        annotations.add(annotation.substring("@websocket.cloudevent.".length));
-      }
-      if (annotation.startsWith("@ws.cloudevent.")) {
-        annotations.add(annotation.substring("@ws.cloudevent.".length));
-      }
+    if (eventDefinition?.elements?.data && data.data) {
+      cloudEvent = {
+        ...data,
+      };
+    } else {
+      cloudEvent.data = data;
     }
-    const eventElements = Object.values(eventDefinition?.elements || {});
-    for (const element of eventElements) {
-      for (const annotation in element) {
-        if (annotation.startsWith("@websocket.cloudevent.")) {
-          annotations.add(annotation.substring("@websocket.cloudevent.".length));
-        }
-        if (annotation.startsWith("@ws.cloudevent.")) {
-          annotations.add(annotation.substring("@ws.cloudevent.".length));
-        }
-      }
-    }
-    return annotations;
+    const result = super.compose(event, data, headers);
+    cloudEvent = {
+      ...cloudEvent,
+      ...result,
+    };
+    return this.serialize(cloudEvent);
   }
 }
 

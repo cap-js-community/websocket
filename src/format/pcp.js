@@ -2,7 +2,7 @@
 
 const cds = require("@sap/cds");
 
-const BaseFormat = require("./base");
+const GenericFormat = require("./generic");
 
 const DESERIALIZE_REGEX = /((?:[^:\\]|(?:\\.))+):((?:[^:\\\n]|(?:\\.))*)/;
 const MESSAGE = "MESSAGE";
@@ -10,7 +10,7 @@ const SEPARATOR = "\n\n";
 
 const LOG = cds.log("/websocket/pcp");
 
-class PCPFormat extends BaseFormat {
+class PCPFormat extends GenericFormat {
   constructor(service, origin) {
     super(service, origin);
   }
@@ -23,18 +23,23 @@ class PCPFormat extends BaseFormat {
     }
     if (splitPos !== -1) {
       const result = {};
+      const message = data.substring(splitPos + SEPARATOR.length);
       const pcpFields = extractPcpFields(data.substring(0, splitPos));
       const operation = Object.values(this.service.operations || {}).find((operation) => {
         return (
-          operation["@websocket.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE) ||
-          operation["@ws.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE) ||
+          (operation["@websocket.pcp.action"] &&
+            operation["@websocket.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE)) ||
+          (operation["@ws.pcp.action"] && operation["@ws.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE)) ||
           operation.name === (pcpFields["pcp-action"] || MESSAGE)
         );
       });
       if (operation) {
         for (const param of operation.params) {
+          if (param["@websocket.ignore"] || param["@ws.ignore"]) {
+            continue;
+          }
           if (param["@websocket.pcp.message"] || param["@ws.pcp.message"]) {
-            result[param.name] = data.substring(splitPos + SEPARATOR.length);
+            result[param.name] = message;
           } else if (pcpFields[param.name] !== undefined) {
             result[param.name] = pcpFields[param.name];
           }
@@ -45,7 +50,7 @@ class PCPFormat extends BaseFormat {
         };
       }
     }
-    LOG?.warn("Error parsing pcp format", data);
+    LOG?.error("Error parsing pcp format", data);
     return {
       event: undefined,
       data: {},
@@ -81,9 +86,15 @@ const serializePcpFields = (pcpFields, messageType, pcpAction, pcpEvent, element
   let serialized = "";
   if (pcpFields && typeof pcpFields === "object") {
     for (const fieldName in pcpFields) {
-      const fieldValue = this.stringValue(pcpFields[fieldName]);
-      if (fieldValue && fieldName.indexOf("pcp-") !== 0 && elements?.[fieldName]) {
-        serialized += escape(fieldName) + ":" + escape(fieldValue) + "\n";
+      const fieldValue = stringValue(pcpFields[fieldName]);
+      const element = elements?.[fieldName];
+      if (element) {
+        if (element["@websocket.ignore"] || element["@ws.ignore"]) {
+          continue;
+        }
+        if (fieldValue && fieldName.indexOf("pcp-") !== 0) {
+          serialized += escape(fieldName) + ":" + escape(fieldValue) + "\n";
+        }
       }
     }
   }
@@ -124,6 +135,15 @@ const unescape = (escaped) => {
         .replace(/\u0008/g, "\\");
     })
     .join("\u0008");
+};
+
+const stringValue = (value) => {
+  if (value instanceof Date) {
+    return value.toISOString();
+  } else if (value instanceof Object) {
+    return JSON.stringify(value);
+  }
+  return String(value);
 };
 
 module.exports = PCPFormat;
