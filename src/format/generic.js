@@ -17,7 +17,7 @@ class GenericFormat extends BaseFormat {
     const operation = this.determineOperation(data);
     if (operation) {
       const annotations = this.collectAnnotations(operation.name);
-      // Ignore identifier annotation
+      // Ignore name annotation corresponding to the identifier
       annotations.delete("name");
       let mappedData = {};
       if (annotations.size > 0) {
@@ -76,7 +76,7 @@ class GenericFormat extends BaseFormat {
     if (!data) {
       return;
     }
-    return Object.values(this.service.operations || {}).find((operation) => {
+    return Object.values(this.service.operations).find((operation) => {
       return (
         (operation[`@websocket.${this.name}.name`] &&
           operation[`@websocket.${this.name}.name`] === data[this.identifier]) ||
@@ -102,14 +102,16 @@ class GenericFormat extends BaseFormat {
         annotations.add(annotation.substring(`@ws.${this.name}.`.length));
       }
     }
-    const elements = Object.values(definition?.elements || definition?.params || {});
-    for (const element of elements) {
-      for (const annotation in element) {
-        if (annotation.startsWith(`@websocket.${this.name}.`)) {
-          annotations.add(annotation.substring(`@websocket.${this.name}.`.length));
-        }
-        if (annotation.startsWith(`@ws.${this.name}.`)) {
-          annotations.add(annotation.substring(`@ws.${this.name}.`.length));
+    if (definition?.elements || definition?.params) {
+      const elements = Object.values(definition?.elements || definition?.params);
+      for (const element of elements) {
+        for (const annotation in element) {
+          if (annotation.startsWith(`@websocket.${this.name}.`)) {
+            annotations.add(annotation.substring(`@websocket.${this.name}.`.length));
+          }
+          if (annotation.startsWith(`@ws.${this.name}.`)) {
+            annotations.add(annotation.substring(`@ws.${this.name}.`.length));
+          }
         }
       }
     }
@@ -127,8 +129,8 @@ class GenericFormat extends BaseFormat {
    * @returns {*} Derived value
    */
   deriveValue(name, data, headers, { headerNames, annotationNames, fallback }) {
-    if (headers) {
-      for (const header of headerNames || []) {
+    if (headers && headerNames) {
+      for (const header of headerNames) {
         if (headers[header] !== undefined) {
           return headers[header];
         }
@@ -136,22 +138,26 @@ class GenericFormat extends BaseFormat {
     }
     const definition = this.service.events()[name] || this.service.operations()[this.localName(name)];
     if (definition) {
-      for (const annotation of annotationNames || []) {
-        if (definition[annotation] !== undefined) {
-          return definition[annotation];
+      if (annotationNames) {
+        for (const annotation of annotationNames) {
+          if (definition[annotation] !== undefined) {
+            return definition[annotation];
+          }
         }
       }
       if (data) {
         const elements = Object.values(definition?.elements || definition?.params || {});
-        for (const annotation of annotationNames || []) {
-          const element = elements.find((element) => {
-            return element[annotation] && !(element["@websocket.ignore"] || element["@ws.ignore"]);
-          });
-          if (element) {
-            const elementValue = data[element.name];
-            if (elementValue !== undefined) {
-              delete data[element.name];
-              return elementValue;
+        for (const annotation of annotationNames) {
+          if (annotationNames) {
+            const element = elements.find((element) => {
+              return element[annotation] && !(element["@websocket.ignore"] || element["@ws.ignore"]);
+            });
+            if (element) {
+              const elementValue = data[element.name];
+              if (elementValue !== undefined) {
+                delete data[element.name];
+                return elementValue;
+              }
             }
           }
         }

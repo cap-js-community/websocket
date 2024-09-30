@@ -25,7 +25,7 @@ class PCPFormat extends GenericFormat {
       const result = {};
       const message = data.substring(splitPos + SEPARATOR.length);
       const pcpFields = extractPcpFields(data.substring(0, splitPos));
-      const operation = Object.values(this.service.operations || {}).find((operation) => {
+      const operation = Object.values(this.service.operations).find((operation) => {
         return (
           (operation["@websocket.pcp.action"] &&
             operation["@websocket.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE)) ||
