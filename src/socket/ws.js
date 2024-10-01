@@ -73,7 +73,7 @@ class SocketWSServer extends SocketServer {
             emit: async (event, data) => {
               await ws.send(format.compose(event, data));
             },
-            broadcast: async (event, data, user, context, identifier) => {
+            broadcast: async (event, data, user, context, identifier, headers) => {
               await this.broadcast({
                 service,
                 path,
@@ -83,10 +83,11 @@ class SocketWSServer extends SocketServer {
                 user,
                 context,
                 identifier,
+                headers,
                 socket: ws,
               });
             },
-            broadcastAll: async (event, data, user, context, identifier) => {
+            broadcastAll: async (event, data, user, context, identifier, headers) => {
               await this.broadcast({
                 service,
                 path,
@@ -96,6 +97,7 @@ class SocketWSServer extends SocketServer {
                 user,
                 context,
                 identifier,
+                headers,
                 socket: null,
               });
             },
@@ -127,7 +129,7 @@ class SocketWSServer extends SocketServer {
     };
   }
 
-  async broadcast({ service, path, event, data, tenant, user, context, identifier, socket, local }) {
+  async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket, local }) {
     const eventMessage = event;
     const isEventMessage = !data;
     if (isEventMessage) {
@@ -179,7 +181,7 @@ class SocketWSServer extends SocketServer {
     }
     if (clients.size > 0) {
       const format = this.format(service, event);
-      const clientMessage = format.compose(event, data);
+      const clientMessage = format.compose(event, data, headers);
       for (const client of clients) {
         if (client !== socket && client.readyState === WebSocket.OPEN) {
           await client.send(clientMessage);
@@ -189,7 +191,7 @@ class SocketWSServer extends SocketServer {
     if (!local) {
       const adapterMessage = isEventMessage
         ? eventMessage
-        : JSON.stringify({ event, data, tenant, user, context, identifier });
+        : JSON.stringify({ event, data, tenant, user, context, identifier, headers });
       await this.adapter?.emit(service, path, adapterMessage);
     }
   }

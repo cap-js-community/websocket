@@ -221,10 +221,10 @@ It abstracts from the concrete websocket implementation by exposing the followin
 - `context: Object`: CDS context object for the websocket server socket
 - `on(event: String, callback: Function)`: Register websocket event
 - `async emit(event: String, data: Object)`: Emit websocket event with data
-- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?)`:
-  Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers
-- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?)`:
-  Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers
+- `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?, headers: Object?)`:
+  Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers and optionally providing headers
+- `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?, headers: Object?)`:
+  Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers and optionally providing headers
 - `async enter(context: String)`: Enter a context
 - `async exit(context: String)`: Exit a context
 - `async disconnect()`: Disconnect server socket
@@ -377,7 +377,7 @@ Furthermore, also additional equivalent annotations alternatives are available:
 
 **Examples:**
 
-**Entity Level:**
+**Event Level:**
 
 ```cds
 @websocket.user: 'includeCurrent'
@@ -434,7 +434,7 @@ Valid annotation values are:
 
 **Examples:**
 
-**Entity Level:**
+**Event Level:**
 
 ```cds
 @websocket.user.exclude: 'ABC'
@@ -498,7 +498,7 @@ Valid annotation values are:
 
 **Examples:**
 
-**Entity Level:**
+**Event Level:**
 
 ```cds
 @websocket.context: 'ABC'
@@ -642,7 +642,7 @@ Valid annotation values are:
 
 **Examples:**
 
-**Entity Level:**
+**Event Level:**
 
 ```cds
 @websocket.identifier.include: 'ABC'
@@ -765,6 +765,34 @@ specification. All event annotation values (static or dynamic) and header values
 emit according to their kind. Values of all headers and annotations of same semantic type are unified for
 single and array values.
 
+#### Format Headers
+
+In addition to the above event emit headers, format specific event headers can be specified in the `websocket` or `ws` section
+during event emit.
+
+```js
+await srv.emit("customEvent", { ... }, {
+  ws: {
+    a: 1,
+    cloudevent: {
+      e: true
+    }
+  },
+  websocket: {
+    b: "c"
+  }
+});
+```
+
+These headers are made available to the format `compose(event, data, headers)` function, to be included in the
+composed WebSocket message, if applicable (e.g. format: `pcp`, `cloudevent`). Format specific headers can also be defined
+in formatter named subsection, e.g. `ws.cloudevent.e: true` (for format `cloudevent`), to avoid conflicts.
+
+### Ignore Definitions
+
+To ignore elements and parameters during event processing, the annotation `@websocket.ignore` or `@ws.ignore` is available
+on event element and operation parameter level. The annotation can be used to exclude elements and parameters from WebSocket event.
+
 ### WebSocket Format
 
 Per default the CDS websocket format is `json`, as CDS internally works with JSON objects.
@@ -820,6 +848,168 @@ To configure the PCP message format the following annotations are available:
   - `@websocket.pcp.action, @ws.pcp.action: Boolean`: Expose the string value of the annotated event element as
     `pcp-action` field in the PCP message. Default `MESSAGE`.
 
+#### Cloud Events
+
+CDS WebSocket module supports the Cloud Events specification out-of-the-box according to
+[WebSockets Protocol Binding for CloudEvents](https://github.com/cloudevents/spec/blob/main/cloudevents/bindings/websockets-protocol-binding.md).
+
+A Cloud Event message has the following structure:
+
+```json
+{
+  "specversion": "1.0",
+  "type": "com.example.someevent",
+  "source": "/mycontext",
+  "subject": null,
+  "id": "C234-1234-1234",
+  "time": "2018-04-05T17:31:00Z",
+  "comexampleextension1": "value",
+  "comexampleothervalue": 5,
+  "datacontenttype": "application/json",
+  "data": {
+    "appinfoA": "abc",
+    "appinfoB": 123,
+    "appinfoC": true
+  }
+}
+```
+
+To create a Cloud Event compatible CDS event, either the event is modeled as CDS service event according to the specification
+or a CDS event is mapped via annotations to a Cloud Event compatible event.
+
+##### Modeling Cloud Event
+
+Cloud event can be explicitly modelled as CDS event, matching the specification of cloud event attributes.
+
+**Example:**
+
+```cds
+event cloudEvent {
+    specversion : String;
+    type : String;
+    source : String;
+    subject : String;
+    id : String;
+    time : String;
+    comexampleextension1 : String;
+    comexampleothervalue : String;
+    datacontenttype : String;
+    data: {
+        appinfoA : String;
+        appinfoB : Integer;
+        appinfoC : Boolean;
+    }
+}
+```
+
+The CDS event `cloudEvent` is explicitly modeled according to the Cloud Event specification.
+The event data is passed inbound and outbound in the exact same representation as JSON object, as specified.
+No additional annotations are necessary to be defined.
+
+##### Mapping Cloud Event
+
+CDS events can also be mapped to Cloud Event compatible events via headers and CDS annotations. The implementation is based on the
+`generic` formatter (see section below), that allows to map CDS events to Cloud Event compatible events based on
+cloud event specific headers and wildcard annotations, starting with `@websocket.cloudevent.<annotation>` or `@ws.cloudevent.<annotation>`
+to match the Cloud Event specific attributes.
+
+The provided header values in the `websocket` or `ws` section are mapped to the cloud event attributes generically, if available.
+
+**Example:**
+
+```js
+await srv.emit(
+  "cloudEvent",
+  {
+    appinfoA,
+    appinfoB,
+    appinfoC,
+  },
+  {
+    ws: {
+      specversion: "1.0",
+      type: "com.example.someevent.cloudEvent4",
+      source: "/mycontext",
+      subject: req.data._subject || "example",
+      id: "C234-1234-1234",
+      time: "2018-04-05T17:31:00Z",
+      comexampleextension1: "value",
+      comexampleothervalue: 5,
+      datacontenttype: "application/json",
+    },
+  },
+);
+```
+
+Subsequently, the following annotations are respected:
+
+- **Event level**:
+  - `@websocket.cloudevent.<attribute>: <value>`
+  - Type: `any` (according to Cloud Event JSON format)
+  - Provide static cloud event attribute value, according to cloud event specification
+- **Event element level**:
+  - `@websocket.cloudevent.<attribute>`
+  - Type: `Boolean`
+  - Value from event data for the annotated element is used as dynamic cloud event attribute value, according to cloud event attribute specification
+
+**Examples:**
+
+**Event Level:**
+
+```cds
+@ws.cloudevent.specversion         : '1.0'
+@ws.cloudevent.type                : 'com.example.someevent'
+@ws.cloudevent.source              : '/mycontext'
+@ws.cloudevent.subject             : 'example'
+@ws.cloudevent.id                  : 'C234-1234-1234'
+@ws.cloudevent.time                : '2018-04-05T17:31:00Z'
+@ws.cloudevent.comexampleextension1: 'value'
+@ws.cloudevent.comexampleothervalue: 5
+@ws.cloudevent.datacontenttype     : 'application/json'
+event cloudEvent2 {
+    appinfoA : String;
+    appinfoB : Integer;
+    appinfoC : Boolean;
+}
+```
+
+Event is published via cloud event sub-protocol, with the specified static cloud event attributes.
+The CDS event data is consumed as cloud event data section.
+
+**Event Element Level:**
+
+```cds
+event cloudEvent3 {
+    @ws.cloudevent.specversion
+    specversion     : String
+    @ws.cloudevent.type
+    type            : String
+    @ws.cloudevent.source
+    source          : String
+    @ws.cloudevent.subject
+    subject         : String
+    @ws.cloudevent.id
+    id              : String
+    @ws.cloudevent.time
+    time            : String
+    @ws.cloudevent.comexampleextension1
+    extension1      : String
+    @ws.cloudevent.comexampleothervalue
+    othervalue      : String
+    @ws.cloudevent.datacontenttype
+    datacontenttype : String;
+    appinfoA        : String;
+    appinfoB        : Integer;
+    appinfoC        : Boolean;
+}
+```
+
+Event is published via cloud event sub-protocol, with the specified dynamic cloud event attributes derived from
+CDS event elements. Annotated elements are consumed as cloud event attributes, non-annotated elements are consumed as
+cloud event data section.
+
+Static and dynamic annotations can be combined. Static values have precedence over dynamic values, if defined.
+
 #### Custom Format
 
 A custom websocket format implementation can be provided via a path relative to the project root
@@ -828,12 +1018,33 @@ in `@websocket.format` resp. `@ws.format` annotation (e.g. `@ws.format: './forma
 The custom format class needs to implement the following functions:
 
 - **parse(data)**: Parse the event data into internal data (JSON), i.e. `{ event, data }`
-- **compose(event, data)**: Compose the event and internal data (JSON) into a formatted string. For kind `socket.io`, it
-  can also be a JSON object.
+- **compose(event, data, headers)**: Compose the internal event data (JSON) and event headers into a formatted string.
+  For kind `socket.io`, it can also be a JSON object.
 
 In addition, it can implement the following functions (optional):
 
-- **constructor(service)**: Setup instance with service definition on creation
+- **constructor(service, origin)**: Setup instance with service definition and origin format on creation
+
+#### Generic Format
+
+Additionally, a custom formatter can be based on the generic implementation `src/format/generic.js` providing a name and identifier.
+Values are derived via CDS annotations based on wildcard annotations
+`@websocket.<format>.<annotation>` or `@ws.<format>.<annotation>` using the formatter name.
+
+In addition, provided header values in the `websocket` or `ws` section are also used to derived values from.
+Format specific headers can also be defined in formatter named subsection, e.g. `ws.cloudevent.e: true` (for format `cloudevent`),
+to avoid conflicts.
+
+The following generic implementation specifics are included:
+
+- **parse:** Data is parsed generically
+  - Parsing is based on formatter specific wildcard annotations on operation level (static) or operation parameter level (dynamic), if available.
+  - CDS operation (action or function) is derived from generic annotation `@websocket.<format>.name` or `@ws.<format>.name`.
+  - Operation identification is based on the formatter identifier (default `name`) on event data, that can be specified per formatter.
+  - Data is passed further as-is, in case no CDS annotations are present for format
+- **compose:** Data is composed generically
+  - First data is composed based on headers, if available (see section Format Headers)
+  - Subsequently, formatter specific wildcard annotations on event level (static) or event element level (dynamic) are processed
 
 ### Connect & Disconnect
 
@@ -845,8 +1056,8 @@ service operation:
 
 #### Approuter
 
-Authorization in provided in production by approuter component (e.g. via XSUAA auth).
-Valid UAA bindings for approuter and backend are necessary, so that the authorization flow is working.
+Authorization in provided in production by Approuter component (e.g. via XSUAA auth).
+Valid UAA bindings for Approuter and backend are necessary, so that the authorization flow is working.
 Locally, the following default environment files need to exist:
 
 - `test/_env/default-env.json`

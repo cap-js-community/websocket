@@ -47,8 +47,10 @@ describe("Fns", () => {
     expect(waitResult).toMatchObject({ ID });
     const waitFnsResult = await waitNotifyPromise;
     expect(waitFnsResult).toEqual(`pcp-action:MESSAGE
+pcp-event:notify
 pcp-body-type:text
+text:4711
 
-notify`);
+`);
   });
 });

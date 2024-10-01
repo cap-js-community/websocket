@@ -5,12 +5,13 @@ const ioc = require("socket.io-client");
 
 const auth = require("./auth");
 
-async function connect(service, options = {}) {
+async function connect(service, options = {}, headers) {
   const port = cds.app.server.address().port;
   const socket = ioc(`http://localhost:${port}/${service}${options?.id ? `?id=${options?.id}` : ""}`, {
     path: "/ws",
     extraHeaders: {
       authorization: options?.authorization || auth.alice,
+      ...headers,
     },
   });
   cds.io.of(service).once("connection", (serverSocket) => {

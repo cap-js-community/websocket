@@ -13,7 +13,7 @@ class BaseFormat {
   /**
    * Parse the event data into internal data (JSON), i.e. `{ event, data }`
    * @param {String|Object} data Event data
-   * @returns {event: String, data: Object} Parsed data
+   * @returns [{event: String, data: Object}] Parsed data
    */
   parse(data) {}
 
@@ -21,9 +21,10 @@ class BaseFormat {
    * Compose the event and internal data (JSON) into a formatted string
    * @param {String} event Event name
    * @param {Object} data Event internal data
+   * @param {Object} headers Event headers
    * @returns {String|Object} Formatted string or a JSON object (for kind `socket.io` only)
    */
-  compose(event, data) {}
+  compose(event, data, headers) {}
 }
 
 module.exports = BaseFormat;

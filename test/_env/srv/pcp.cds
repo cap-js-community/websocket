@@ -4,7 +4,7 @@
 service PCPService {
 
     @ws.pcp.action: 'MESSAGE'
-    action sendNotification(@ws.pcp.message message: String, field1: String, field2: String, ![pcp-action]: String) returns Boolean;
+    action sendNotification(@ws.pcp.message message: String, field1: String, field2: String, @ws.ignore field3: String, ![pcp-action]: String) returns Boolean;
 
     @ws.pcp.event
     @ws.pcp.message: 'this is the body!'
@@ -29,5 +29,14 @@ service PCPService {
         action: String;
         field1: String;
         field2: String;
+    }
+
+    @ws.pcp.event
+    event notification4 {
+        action: String;
+        field1: String;
+        field2: String;
+        @ws.ignore
+        field3: String;
     }
 }

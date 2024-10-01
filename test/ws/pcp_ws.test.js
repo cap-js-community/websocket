@@ -37,6 +37,15 @@ field2:value2
 
 `;
 
+const pcpMessage4 = `pcp-action:ABC
+pcp-event:notification4
+pcp-body-type:text
+action:MESSAGE
+field1:value1
+field2:value2
+
+Header`;
+
 describe("PCP", () => {
   let socket;
 
@@ -52,6 +61,7 @@ describe("PCP", () => {
     const waitNotification1Promise = waitForMessage(socket, "notification1");
     const waitNotification2Promise = waitForMessage(socket, "notification2");
     const waitNotification3Promise = waitForMessage(socket, "notification3");
+    const waitNotification4Promise = waitForMessage(socket, "notification4");
     const result = await emitMessage(socket, pcpMessage);
     expect(result).toBeNull();
     const waitResult1 = await waitNotification1Promise;
@@ -60,6 +70,8 @@ describe("PCP", () => {
     expect(waitResult2).toEqual(pcpMessage2);
     const waitResult3 = await waitNotification3Promise;
     expect(waitResult3).toEqual(pcpMessage3);
+    const waitResult4 = await waitNotification4Promise;
+    expect(waitResult4).toEqual(pcpMessage4);
   });
 
   test("PCP format error", async () => {

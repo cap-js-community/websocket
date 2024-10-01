@@ -17,6 +17,22 @@ module.exports = (srv) => {
       field1: req.data.field1 || "value1",
       field2: req.data.field2 || "value2",
     });
+    await srv.emit(
+      "notification4",
+      {
+        message: "no body!",
+        action: "MESSAGE",
+        field1: req.data.field1 || "value1",
+        field2: req.data.field2 || "value2",
+        field3: "ignore",
+      },
+      {
+        ws: {
+          pcpaction: "ABC",
+          pcpmessage: "Header",
+        },
+      },
+    );
     return true;
   });
 };
