@@ -788,9 +788,10 @@ These headers are made available to the format `compose(event, data, headers)` f
 composed WebSocket message, if applicable (e.g. format: `pcp`, `cloudevent`). Format specific headers can also be defined
 in formatter named subsection, e.g. `ws.cloudevent.e: true` (for format `cloudevent`), to avoid conflicts.
 
-### Ignore Elements
+### Ignore Definitions
 
-To ignore elements during event emit, the annotation `@websocket.ignore` or `@ws.ignore` is available on event element level.
+To ignore elements and parameters during event processing, the annotation `@websocket.ignore` or `@ws.ignore` is available
+on event element and operation parameter level. The annotation can be used to exclude elements and parameters from WebSocket event.
 
 ### WebSocket Format
 
@@ -873,8 +874,8 @@ A Cloud Event message has the following structure:
 }
 ```
 
-To create a cloud-event compatible CDS event, either the event is modeled as CDS service event according to the specification
-or a CDS event is mapped via annotations to a cloud-event compatible event.
+To create a Cloud Event compatible CDS event, either the event is modeled as CDS service event according to the specification
+or a CDS event is mapped via annotations to a Cloud Event compatible event.
 
 ##### Modeling Cloud Event
 
@@ -901,16 +902,16 @@ event cloudEvent {
 }
 ```
 
-The CDS event `cloudEvent` is explicitly modeled according to the cloud-event specification.
+The CDS event `cloudEvent` is explicitly modeled according to the Cloud Event specification.
 The event data is passed inbound and outbound in the exact same representation as JSON object, as specified.
-No additional annotation is necessary to be defined.
+No additional annotations are necessary to be defined.
 
 ##### Mapping Cloud Event
 
-CDS events can also be mapped to cloud-event compatible events via headers and CDS annotations. The implementation is based on the
-`generic` formatter (see section below), that allows to map CDS events to cloud-event compatible events based on
+CDS events can also be mapped to Cloud Event compatible events via headers and CDS annotations. The implementation is based on the
+`generic` formatter (see section below), that allows to map CDS events to Cloud Event compatible events based on
 cloud event specific headers and wildcard annotations, starting with `@websocket.cloudevent.<annotation>` or `@ws.cloudevent.<annotation>`
-to match the cloud-event specific attributes.
+to match the Cloud Event specific attributes.
 
 The provided header values in the `websocket` or `ws` section are mapped to the cloud event attributes generically, if available.
 
@@ -972,8 +973,8 @@ event cloudEvent2 {
 }
 ```
 
-Event is published via cloud event sub-protocol, with the specified static cloud event attributes. The event data is
-consumed as cloud event data section.
+Event is published via cloud event sub-protocol, with the specified static cloud event attributes.
+The CDS event data is consumed as cloud event data section.
 
 **Event Element Level:**
 
@@ -1007,7 +1008,7 @@ Event is published via cloud event sub-protocol, with the specified dynamic clou
 CDS event elements. Annotated elements are consumed as cloud event attributes, non-annotated elements are consumed as
 cloud event data section.
 
-Static and dynamic annotations can be combined. Dynamnic values are overwritten by static values, if defined.
+Static and dynamic annotations can be combined. Static values have precedence over dynamic values, if defined.
 
 #### Custom Format
 
@@ -1017,18 +1018,19 @@ in `@websocket.format` resp. `@ws.format` annotation (e.g. `@ws.format: './forma
 The custom format class needs to implement the following functions:
 
 - **parse(data)**: Parse the event data into internal data (JSON), i.e. `{ event, data }`
-- **compose(event, data)**: Compose the event and internal data (JSON) into a formatted string. For kind `socket.io`, it
-  can also be a JSON object.
+- **compose(event, data, headers)**: Compose the internal event data (JSON) and event headers into a formatted string.
+  For kind `socket.io`, it can also be a JSON object.
 
 In addition, it can implement the following functions (optional):
 
-- **constructor(service)**: Setup instance with service definition on creation
+- **constructor(service, origin)**: Setup instance with service definition and origin format on creation
 
 #### Generic Format
 
-Additionally, a custom formatter can be based on the generic implementation `format/generic.js` providing a name and identifier.
+Additionally, a custom formatter can be based on the generic implementation `src/format/generic.js` providing a name and identifier.
 Values are derived via CDS annotations based on wildcard annotations
 `@websocket.<format>.<annotation>` or `@ws.<format>.<annotation>` using the formatter name.
+
 In addition, provided header values in the `websocket` or `ws` section are also used to derived values from.
 Format specific headers can also be defined in formatter named subsection, e.g. `ws.cloudevent.e: true` (for format `cloudevent`),
 to avoid conflicts.
@@ -1041,7 +1043,7 @@ The following generic implementation specifics are included:
   - Operation identification is based on the formatter identifier (default `name`) on event data, that can be specified per formatter.
   - Data is passed further as-is, in case no CDS annotations are present for format
 - **compose:** Data is composed generically
-  - First data is composed based on headers, if available
+  - First data is composed based on headers, if available (see section Format Headers)
   - Subsequently, formatter specific wildcard annotations on event level (static) or event element level (dynamic) are processed
 
 ### Connect & Disconnect
@@ -1054,8 +1056,8 @@ service operation:
 
 #### Approuter
 
-Authorization in provided in production by approuter component (e.g. via XSUAA auth).
-Valid UAA bindings for approuter and backend are necessary, so that the authorization flow is working.
+Authorization in provided in production by Approuter component (e.g. via XSUAA auth).
+Valid UAA bindings for Approuter and backend are necessary, so that the authorization flow is working.
 Locally, the following default environment files need to exist:
 
 - `test/_env/default-env.json`
