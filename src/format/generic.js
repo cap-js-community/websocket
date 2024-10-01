@@ -47,17 +47,43 @@ class GenericFormat extends BaseFormat {
     const result = {};
     const annotations = this.collectAnnotations(event);
     for (const header in headers) {
-      annotations.add(header);
+      if (header === this.name && typeof headers[header] === "object") {
+        continue;
+      }
+      const value = this.deriveValue(event, {
+        headers,
+        headerNames: [
+          `${this.name}-${header}`,
+          `${this.name}_${header}`,
+          `${this.name}.${header}`,
+          `${this.name}${header}`,
+          header,
+        ],
+      });
+      if (value !== undefined) {
+        result[header] = value;
+      }
+    }
+    if (headers?.[this.name]) {
+      for (const header in headers?.[this.name]) {
+        const value = this.deriveValue(event, {
+          headers: headers?.[this.name],
+          headerNames: [
+            `${this.name}-${header}`,
+            `${this.name}_${header}`,
+            `${this.name}.${header}`,
+            `${this.name}${header}`,
+            header,
+          ],
+        });
+        if (value !== undefined) {
+          result[header] = value;
+        }
+      }
     }
     for (const annotation of annotations) {
-      const value = this.deriveValue(event, data, headers, {
-        headerNames: [
-          `${this.name}-${annotation}`,
-          `${this.name}_${annotation}`,
-          `${this.name}.${annotation}`,
-          `${this.name}${annotation}`,
-          annotation,
-        ],
+      const value = this.deriveValue(event, {
+        data,
         annotationNames: [`@websocket.${this.name}.${annotation}`, `@ws.${this.name}.${annotation}`],
       });
       if (value !== undefined) {
@@ -121,14 +147,14 @@ class GenericFormat extends BaseFormat {
   /**
    * Derive value from data, headers and fallback using header names and annotation names
    * @param {String} name Definition name (event, operation)
-   * @param {Object} data Data
    * @param {Object} [headers] Header data
    * @param {[String]} [headerNames] Header names to derive value from
+   * @param {Object} [data] Data
    * @param {[String]} [annotationNames] Annotation names to derived values from
    * @param {*} [fallback] Fallback value
    * @returns {*} Derived value
    */
-  deriveValue(name, data, headers, { headerNames, annotationNames, fallback }) {
+  deriveValue(name, { headers, headerNames, data, annotationNames, fallback }) {
     if (headers && headerNames) {
       for (const header of headerNames) {
         if (headers[header] !== undefined) {
@@ -136,16 +162,16 @@ class GenericFormat extends BaseFormat {
         }
       }
     }
-    const definition = this.service.events()[name] || this.service.operations()[this.localName(name)];
-    if (definition) {
-      if (annotationNames) {
-        for (const annotation of annotationNames) {
-          if (definition[annotation] !== undefined) {
-            return definition[annotation];
+    if (data && annotationNames) {
+      const definition = this.service.events()[name] || this.service.operations()[this.localName(name)];
+      if (definition) {
+        if (annotationNames) {
+          for (const annotation of annotationNames) {
+            if (definition[annotation] !== undefined) {
+              return definition[annotation];
+            }
           }
         }
-      }
-      if (data) {
         const elements = Object.values(definition?.elements || definition?.params || {});
         for (const annotation of annotationNames) {
           if (annotationNames) {

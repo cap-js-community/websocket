@@ -59,13 +59,17 @@ class PCPFormat extends GenericFormat {
 
   compose(event, data, headers) {
     const eventDefinition = this.service.events()[event];
-    const pcpMessage = this.deriveValue(event, data, headers, {
+    const pcpMessage = this.deriveValue(event, {
+      headers,
       headerNames: ["pcp-message", "pcp_message", "pcp.message", "pcpmessage"],
+      data,
       annotationNames: ["@websocket.pcp.message", "@ws.pcp.message"],
       fallback: event,
     });
-    const pcpAction = this.deriveValue(event, data, headers, {
+    const pcpAction = this.deriveValue(event, {
+      headers,
       headerNames: ["pcp-action", "pcp_action", "pcp.action", "pcpaction"],
+      data,
       annotationNames: ["@websocket.pcp.action", "@ws.pcp.action"],
       fallback: MESSAGE,
     });

@@ -48,9 +48,11 @@ module.exports = (srv) => {
           subject: req.data._subject || "example",
           id: "C234-1234-1234",
           time: "2018-04-05T17:31:00Z",
-          comexampleextension1: "value",
-          comexampleothervalue: 5,
-          datacontenttype: "application/cloudevents+json",
+          cloudevent: {
+            comexampleextension1: "value",
+            comexampleothervalue: 5,
+            datacontenttype: "application/cloudevents+json",
+          },
         },
       },
     );

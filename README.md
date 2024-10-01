@@ -773,7 +773,10 @@ during event emit.
 ```js
 await srv.emit("customEvent", { ... }, {
   ws: {
-    a: 1
+    a: 1,
+    cloudevent: {
+      e: true
+    }
   },
   websocket: {
     b: "c"
@@ -782,7 +785,8 @@ await srv.emit("customEvent", { ... }, {
 ```
 
 These headers are made available to the format `compose(event, data, headers)` function, to be included in the
-composed WebSocket message, if applicable (e.g. format: `pcp`, `cloudevent`).
+composed WebSocket message, if applicable (e.g. format: `pcp`, `cloudevent`). Format specific headers can also be defined
+in formatter named subsection, e.g. `ws.cloudevent.e: true` (for format `cloudevent`), to avoid conflicts.
 
 ### Ignore Elements
 
@@ -1026,6 +1030,8 @@ Additionally, a custom formatter can be based on the generic implementation `for
 Values are derived via CDS annotations based on wildcard annotations
 `@websocket.<format>.<annotation>` or `@ws.<format>.<annotation>` using the formatter name.
 In addition, provided header values in the `websocket` or `ws` section are also used to derived values from.
+Format specific headers can also be defined in formatter named subsection, e.g. `ws.cloudevent.e: true` (for format `cloudevent`),
+to avoid conflicts.
 
 The following generic implementation specifics are included:
 
