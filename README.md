@@ -850,7 +850,7 @@ To configure the PCP message format the following annotations are available:
 
 #### Cloud Events
 
-CDS WebSocket module supports the Cloud Events specification out-of-the-box according to
+CDS WebSocket module supports the [Cloud Events](https://cloudevents.io) specification out-of-the-box according to
 [WebSockets Protocol Binding for CloudEvents](https://github.com/cloudevents/spec/blob/main/cloudevents/bindings/websockets-protocol-binding.md).
 
 A Cloud Event message has the following structure:
