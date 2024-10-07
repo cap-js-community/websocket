@@ -1061,6 +1061,17 @@ action sendCloudEventMap(
 ) returns Boolean;
 ```
 
+The following annotations are respected:
+
+- **Operation level**:
+  - `@websocket.cloudevent.<attribute>: <value>`
+  - Type: `any` (according to Cloud Event JSON format)
+  - Provide static cloud event attribute value, according to cloud event specification
+- **Operation parameter level**:
+  - `@websocket.cloudevent.<attribute>`
+  - Type: `Boolean`
+  - Value from operation parameter for the annotated element is used as dynamic cloud event attribute value, according to cloud event attribute specification
+
 Unmapped operation parameters are consumed as cloud event data section and can be skipped for cloud event data section
 via `@ws.ignore`, if not necessary.
 
