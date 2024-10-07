@@ -874,6 +874,17 @@ A Cloud Event message has the following structure:
 }
 ```
 
+To configure the CloudEvents format, the service needs to be annotated in addition with `@websocket.format: 'cloudevent'` or
+`@ws.format: 'cloudevent'`.
+
+```cds
+@ws
+@ws.format: 'cloudevent'
+service CloudEventService {
+  // ...
+}
+```
+
 To create a Cloud Event compatible CDS event, either the event is modeled as CDS service event according to the specification
 or a CDS event is mapped via annotations to a Cloud Event compatible event.
 
@@ -1009,6 +1020,54 @@ CDS event elements. Annotated elements are consumed as cloud event attributes, n
 cloud event data section.
 
 Static and dynamic annotations can be combined. Static values have precedence over dynamic values, if defined.
+
+##### Cloud Event Operation
+
+CDS service operations (actions or functions) can also be exposed via cloud event. The operation name is derived from the `@websocket.cloudevent.name` or
+`@ws.cloudevent.name` annotation. Emitting a cloud event based websocket event that matches the annotation value of `name`, calls the
+respective service operation handler.
+
+The operation parameter structure can be either modelled according to the Cloud Event specification using the attributes as parameter names or
+mapped via annotations like `@websocket.cloudevent.<annotation>` or `@ws.cloudevent.<annotation>` to a Cloud Event compatible structure.
+
+**Examples:**
+
+**Model Operation Parameters:**
+
+```cds
+type CloudEventDataType : {
+    appinfoA : String;
+    appinfoB : Integer;
+    appinfoC : Boolean;
+};
+
+@ws.cloudevent.name: 'com.example.someevent'
+action sendCloudEventModel( subject : String, comexampleextension1 : String, comexampleothervalue : Integer, data: CloudEventDataType) returns Boolean;
+```
+
+**Map Operation Parameters:**
+
+```cds
+@ws.cloudevent.name: 'com.example.someevent'
+@ws.cloudevent.subject: 'cloud'
+action sendCloudEventMap(
+  @ws.cloudevent.subject subject : String,
+  @ws.cloudevent.comexampleextension1 extension1 : String,
+  @ws.cloudevent.comexampleothervalue othervalue : Integer,
+  appinfoA : String,
+  appinfoB : Integer,
+  appinfoC : Boolean
+  @ws.ignore appinfoD : String
+) returns Boolean;
+```
+
+Unmapped operation parameters are consumed as cloud event data section and can be skipped for cloud event data section
+via `@ws.ignore`, if not necessary.
+
+##### Cloud Event Format Alternative
+
+Alternatives for format `cloudevent` also allows to use the plural name `@websocket.format: 'cloudevents'` or `@ws.format: 'cloudevents'`,
+if preferred. All headers and annotations are also named in plural form accordingly, e.g. `@ws.cloudevents.name`, etc.
 
 #### Custom Format
 
