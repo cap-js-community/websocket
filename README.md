@@ -1030,6 +1030,17 @@ respective service operation handler.
 The operation parameter structure can be either modelled according to the Cloud Event specification using the attributes as parameter names or
 mapped via annotations like `@websocket.cloudevent.<annotation>` or `@ws.cloudevent.<annotation>` to a Cloud Event compatible structure.
 
+The following annotations are respected:
+
+- **Operation level**:
+  - `@websocket.cloudevent.<attribute>: <value>`
+  - Type: `any` (according to Cloud Event JSON format)
+  - Provide static cloud event attribute value, according to cloud event specification
+- **Operation parameter level**:
+  - `@websocket.cloudevent.<attribute>`
+  - Type: `Boolean`
+  - Value from operation parameter for the annotated element is used as dynamic cloud event attribute value, according to cloud event attribute specification
+
 **Examples:**
 
 **Model Operation Parameters:**
@@ -1060,17 +1071,6 @@ action sendCloudEventMap(
   @ws.ignore appinfoD : String
 ) returns Boolean;
 ```
-
-The following annotations are respected:
-
-- **Operation level**:
-  - `@websocket.cloudevent.<attribute>: <value>`
-  - Type: `any` (according to Cloud Event JSON format)
-  - Provide static cloud event attribute value, according to cloud event specification
-- **Operation parameter level**:
-  - `@websocket.cloudevent.<attribute>`
-  - Type: `Boolean`
-  - Value from operation parameter for the annotated element is used as dynamic cloud event attribute value, according to cloud event attribute specification
 
 Unmapped operation parameters are consumed as cloud event data section and can be skipped for cloud event data section
 via `@ws.ignore`, if not necessary.
