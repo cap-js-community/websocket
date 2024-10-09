@@ -42,8 +42,8 @@
   },
   "dependencies": {
     "@sap/xsenv": "^5.3.0",
-    "cookie": "^0.7.2",
-    "express": "^4.21.0",
+    "cookie": "^1.0.0",
+    "express": "^4.21.1",
     "redis": "^4.7.0",
     "socket.io": "^4.8.0",
     "ws": "^8.18.0"
@@ -52,7 +52,7 @@
     "@cap-js-community/websocket": "./",
     "@cap-js/sqlite": "^1.7.3",
     "@eslint/js": "^9.12.0",
-    "@sap/cds": "^8.3.0",
+    "@sap/cds": "^8.3.1",
     "@sap/cds-dk": "^8.3.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-streams-adapter": "^0.2.2",

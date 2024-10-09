@@ -114,6 +114,7 @@ The CDS Websocket module supports the following use-cases:
 - Broadcast CDS events across multiple CAP server applications and application instances (via Redis)
 - Tenant-ware emit/broadcast CDS events from server websockets to websocket clients (browser and non-browser)
 - Emit/Broadcast CDS events to a subset of websocket clients leveraging users, event contexts or client identifiers
+- Websocket events support different formats (JSON, PCP, CloudEvents or custom format)
 
 ### WebSocket Server
 
@@ -212,7 +213,7 @@ Events can be directly emitted via the native `socket`, bypassing CDS runtime, i
 #### Service Facade
 
 The service facade provides native access to websocket implementation independent of CDS context
-and is accessible on socket via `socket.facade` or in CDS context via `req.context.ws.service`.:
+and is accessible on socket via `socket.facade` or in CDS context via `req.context.ws.service`.
 It abstracts from the concrete websocket implementation by exposing the following public interface:
 
 - `service: Object`: Service definition
@@ -400,7 +401,7 @@ event received {
 }
 ```
 
-Event is published only to websocket clients established in context to the current context user, if the event data of
+Event is published only to websocket clients not established in context to the current context user, if the event data of
 `flag` is falsy.
 
 #### Defined Users
@@ -1312,8 +1313,8 @@ describe("WebSocket", () => {
   });
 
   afterAll(() => {
-    cds.ws.close();
     socket.close();
+    cds.ws.close();
   });
 
   test("Test", (done) => {
@@ -1323,6 +1324,7 @@ describe("WebSocket", () => {
         data: {},
       }),
     );
+    done();
   });
 });
 ```
@@ -1359,8 +1361,8 @@ describe("WebSocket", () => {
   });
 
   afterAll(() => {
-    cds.ws.close();
     socket.disconnect();
+    cds.ws.close();
   });
 
   test("Test", (done) => {
@@ -1496,6 +1498,6 @@ times.
 
 ## Licensing
 
-Copyright 2023 SAP SE or an SAP affiliate company and websocket contributors. Please see our [LICENSE](LICENSE) for
+Copyright 2024 SAP SE or an SAP affiliate company and websocket contributors. Please see our [LICENSE](LICENSE) for
 copyright and license information. Detailed information including third-party components and their licensing/copyright
 information is available [via the REUSE tool](https://api.reuse.software/info/github.com/cap-js-community/websocket).
