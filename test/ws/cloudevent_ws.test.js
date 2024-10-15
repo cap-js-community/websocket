@@ -66,11 +66,13 @@ const cloudEvent3 = {
 
 const cloudEvent4 = {
   ...cloudEvent3,
+  comexampleextension1: "value2",
   type: "com.example.someevent.cloudEvent4",
 };
 
 const cloudEvent5 = {
   ...cloudEvent4,
+  comexampleextension1: "value",
   type: "com.example.someevent.cloudEvent5",
 };
 

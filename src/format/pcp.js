@@ -34,7 +34,7 @@ class PCPFormat extends GenericFormat {
         );
       });
       if (operation) {
-        for (const param of operation.params) {
+        for (const param of operation.params || []) {
           if (param["@websocket.ignore"] || param["@ws.ignore"]) {
             continue;
           }

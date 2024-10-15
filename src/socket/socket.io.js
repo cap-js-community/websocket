@@ -64,11 +64,21 @@ class SocketIOServer extends SocketServer {
           },
           on: (event, callback) => {
             socket.on(event, async (data, fn) => {
-              await callback(format.parse(data).data, fn);
+              try {
+                await callback(format.parse(data).data, fn);
+              } catch (err) {
+                LOG?.error(err);
+                throw err;
+              }
             });
           },
           emit: async (event, data) => {
-            await socket.emit(event, format.compose(event, data));
+            try {
+              await socket.emit(event, format.compose(event, data));
+            } catch (err) {
+              LOG?.error(err);
+              throw err;
+            }
           },
           broadcast: async (event, data, user, context, identifier, headers) => {
             await this.broadcast({
@@ -164,67 +174,72 @@ class SocketIOServer extends SocketServer {
   }
 
   async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket }) {
-    path = path || this.defaultPath(service);
-    tenant = tenant || socket?.context.tenant;
-    let to = socket?.broadcast || this.io.of(path);
-    if (context?.include?.length && identifier?.include?.length) {
-      for (const contextInclude of context.include) {
+    try {
+      path = path || this.defaultPath(service);
+      tenant = tenant || socket?.context.tenant;
+      let to = socket?.broadcast || this.io.of(path);
+      if (context?.include?.length && identifier?.include?.length) {
+        for (const contextInclude of context.include) {
+          for (const identifierInclude of identifier.include) {
+            if (user?.include?.length) {
+              for (const userInclude of user.include) {
+                to = to.to(room({ tenant, user: userInclude, context: contextInclude, identifier: identifierInclude }));
+              }
+            } else {
+              to = to.to(room({ tenant, context: contextInclude, identifier: identifierInclude }));
+            }
+          }
+        }
+      } else if (context?.include?.length) {
+        for (const contextInclude of context.include) {
+          if (user?.include?.length) {
+            for (const userInclude of user.include) {
+              to = to.to(room({ tenant, user: userInclude, context: contextInclude }));
+            }
+          } else {
+            to = to.to(room({ tenant, context: contextInclude }));
+          }
+        }
+      } else if (identifier?.include?.length) {
         for (const identifierInclude of identifier.include) {
           if (user?.include?.length) {
             for (const userInclude of user.include) {
-              to = to.to(room({ tenant, user: userInclude, context: contextInclude, identifier: identifierInclude }));
+              to = to.to(room({ tenant, user: userInclude, identifier: identifierInclude }));
             }
           } else {
-            to = to.to(room({ tenant, context: contextInclude, identifier: identifierInclude }));
+            to = to.to(room({ tenant, identifier: identifierInclude }));
           }
-        }
-      }
-    } else if (context?.include?.length) {
-      for (const contextInclude of context.include) {
-        if (user?.include?.length) {
-          for (const userInclude of user.include) {
-            to = to.to(room({ tenant, user: userInclude, context: contextInclude }));
-          }
-        } else {
-          to = to.to(room({ tenant, context: contextInclude }));
-        }
-      }
-    } else if (identifier?.include?.length) {
-      for (const identifierInclude of identifier.include) {
-        if (user?.include?.length) {
-          for (const userInclude of user.include) {
-            to = to.to(room({ tenant, user: userInclude, identifier: identifierInclude }));
-          }
-        } else {
-          to = to.to(room({ tenant, identifier: identifierInclude }));
-        }
-      }
-    } else {
-      if (user?.include?.length) {
-        for (const userInclude of user.include) {
-          to = to.to(room({ tenant, user: userInclude }));
         }
       } else {
-        to = to.to(room({ tenant }));
+        if (user?.include?.length) {
+          for (const userInclude of user.include) {
+            to = to.to(room({ tenant, user: userInclude }));
+          }
+        } else {
+          to = to.to(room({ tenant }));
+        }
       }
-    }
-    if (user?.exclude?.length) {
-      for (const userExclude of user.exclude) {
-        to = to.except(room({ tenant, user: userExclude }));
+      if (user?.exclude?.length) {
+        for (const userExclude of user.exclude) {
+          to = to.except(room({ tenant, user: userExclude }));
+        }
       }
-    }
-    if (context?.exclude?.length) {
-      for (const contextExclude of context.exclude) {
-        to = to.except(room({ tenant, context: contextExclude }));
+      if (context?.exclude?.length) {
+        for (const contextExclude of context.exclude) {
+          to = to.except(room({ tenant, context: contextExclude }));
+        }
       }
-    }
-    if (identifier?.exclude?.length) {
-      for (const identifierExclude of identifier.exclude) {
-        to = to.except(room({ tenant, identifier: identifierExclude }));
+      if (identifier?.exclude?.length) {
+        for (const identifierExclude of identifier.exclude) {
+          to = to.except(room({ tenant, identifier: identifierExclude }));
+        }
       }
+      const format = this.format(service, event, "json");
+      to.emit(event, format.compose(event, data, headers));
+    } catch (err) {
+      LOG?.error(err);
+      throw err;
     }
-    const format = this.format(service, event, "json");
-    to.emit(event, format.compose(event, data, headers));
   }
 
   respond(socket, statusCode, body) {

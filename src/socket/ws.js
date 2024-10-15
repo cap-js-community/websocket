@@ -27,7 +27,11 @@ class SocketWSServer extends SocketServer {
         const urlObj = URL.parse(url, true);
         request.queryOptions = urlObj.query;
         request.url = urlObj.pathname;
-        this.services[request.url]?.(ws, request);
+        if (this.services[request.url]) {
+          this.services[request.url](ws, request);
+        } else {
+          DEBUG?.("No websocket service for url", request.url);
+        }
       }
     });
   }
@@ -47,13 +51,14 @@ class SocketWSServer extends SocketServer {
         LOG?.error(err);
       });
       ws.on("message", async (message) => {
-        const payload = format.parse(message);
         try {
+          const payload = format.parse(message);
           for (const callback of this.getFromMap(ws.events, payload?.event, new Set())) {
             await callback(payload.data);
           }
         } catch (err) {
           LOG?.error(err);
+          throw err;
         }
       });
       this.applyMiddlewares(ws, async () => {
@@ -71,7 +76,12 @@ class SocketWSServer extends SocketServer {
               this.addToSetOfMap(ws.events, event, callback);
             },
             emit: async (event, data) => {
-              await ws.send(format.compose(event, data));
+              try {
+                await ws.send(format.compose(event, data));
+              } catch (err) {
+                LOG?.error(err);
+                throw err;
+              }
             },
             broadcast: async (event, data, user, context, identifier, headers) => {
               await this.broadcast({
@@ -130,69 +140,74 @@ class SocketWSServer extends SocketServer {
   }
 
   async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket, local }) {
-    const eventMessage = event;
-    const isEventMessage = !data;
-    if (isEventMessage) {
-      const message = JSON.parse(eventMessage);
-      event = message.event;
-      data = message.data;
-      tenant = message.tenant;
-      user = message.user;
-      context = message.context;
-      identifier = message.identifier;
-    }
-    path = path || this.defaultPath(service);
-    tenant = tenant || socket?.context.tenant;
-    const servicePath = `${this.path}${path}`;
-    const serviceClients = this.fetchClients(tenant, servicePath);
-    const clients = new Set(serviceClients.all);
-    if (user?.include?.length) {
-      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));
-    }
-    if (context?.include?.length) {
-      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context?.include));
-    }
-    if (identifier?.include?.length) {
-      this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier?.include));
-    }
-    if (user?.exclude?.length) {
-      this.keepEntriesFromSet(
-        clients,
-        this.collectFromSet(clients, (client) => {
-          return !user?.exclude.includes(client.context.user?.id);
-        }),
-      );
-    }
-    if (context?.exclude?.length) {
-      this.keepEntriesFromSet(
-        clients,
-        this.collectFromSet(clients, (client) => {
-          return !context?.exclude.find((context) => client.contexts.has(context));
-        }),
-      );
-    }
-    if (identifier?.exclude?.length) {
-      this.keepEntriesFromSet(
-        clients,
-        this.collectFromSet(clients, (client) => {
-          return !identifier?.exclude.includes(client.request?.queryOptions?.id);
-        }),
-      );
-    }
-    if (clients.size > 0) {
-      const format = this.format(service, event);
-      const clientMessage = format.compose(event, data, headers);
-      for (const client of clients) {
-        if (client !== socket && client.readyState === WebSocket.OPEN) {
-          await client.send(clientMessage);
+    try {
+      const eventMessage = event;
+      const isEventMessage = !data;
+      if (isEventMessage) {
+        const message = JSON.parse(eventMessage);
+        event = message.event;
+        data = message.data;
+        tenant = message.tenant;
+        user = message.user;
+        context = message.context;
+        identifier = message.identifier;
+      }
+      path = path || this.defaultPath(service);
+      tenant = tenant || socket?.context.tenant;
+      const servicePath = `${this.path}${path}`;
+      const serviceClients = this.fetchClients(tenant, servicePath);
+      const clients = new Set(serviceClients.all);
+      if (user?.include?.length) {
+        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));
+      }
+      if (context?.include?.length) {
+        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context?.include));
+      }
+      if (identifier?.include?.length) {
+        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier?.include));
+      }
+      if (user?.exclude?.length) {
+        this.keepEntriesFromSet(
+          clients,
+          this.collectFromSet(clients, (client) => {
+            return !user?.exclude.includes(client.context.user?.id);
+          }),
+        );
+      }
+      if (context?.exclude?.length) {
+        this.keepEntriesFromSet(
+          clients,
+          this.collectFromSet(clients, (client) => {
+            return !context?.exclude.find((context) => client.contexts.has(context));
+          }),
+        );
+      }
+      if (identifier?.exclude?.length) {
+        this.keepEntriesFromSet(
+          clients,
+          this.collectFromSet(clients, (client) => {
+            return !identifier?.exclude.includes(client.request?.queryOptions?.id);
+          }),
+        );
+      }
+      if (clients.size > 0) {
+        const format = this.format(service, event);
+        const clientMessage = format.compose(event, data, headers);
+        for (const client of clients) {
+          if (client !== socket && client.readyState === WebSocket.OPEN) {
+            await client.send(clientMessage);
+          }
         }
       }
-    }
-    if (!local) {
-      const adapterMessage = isEventMessage
-        ? eventMessage
-        : JSON.stringify({ event, data, tenant, user, context, identifier, headers });
-      await this.adapter?.emit(service, path, adapterMessage);
+      if (!local) {
+        const adapterMessage = isEventMessage
+          ? eventMessage
+          : JSON.stringify({ event, data, tenant, user, context, identifier, headers });
+        await this.adapter?.emit(service, path, adapterMessage);
+      }
+    } catch (err) {
+      LOG?.error(err);
+      throw err;
     }
   }
 

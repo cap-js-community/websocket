@@ -147,11 +147,12 @@ function bindServiceEvents(socketServer, service, path) {
     service.on(event, async (req) => {
       try {
         const localEventName = serviceLocalName(service, event.name);
-        const user = deriveUser(event, req.data, req.headers, req);
-        const context = deriveContext(event, req.data, req.headers);
-        const identifier = deriveIdentifier(event, req.data, req.headers);
-        const headers =
-          req.headers?.websocket || req.headers?.ws ? { ...req.headers?.websocket, ...req.headers?.ws } : undefined;
+        const format = deriveFormat(service, event);
+        const headers = deriveHeaders(req.headers, format);
+        const user = deriveUser(event, req.data, headers, req);
+        const context = deriveContext(event, req.data, headers);
+        const identifier = deriveIdentifier(event, req.data, headers);
+        const eventHeaders = headers?.websocket || headers?.ws ? { ...headers?.websocket, ...headers?.ws } : undefined;
         path = normalizeEventPath(event["@websocket.path"] || event["@ws.path"] || path);
         await socketServer.broadcast({
           service,
@@ -162,7 +163,7 @@ function bindServiceEvents(socketServer, service, path) {
           user,
           context,
           identifier,
-          headers,
+          headers: eventHeaders,
           socket: null,
         });
       } catch (err) {
@@ -365,6 +366,16 @@ function broadcastData(entity, data, event) {
     case "none":
       return;
   }
+}
+
+function deriveFormat(service, event) {
+  return (
+    event["@websocket.format"] ||
+    event["@ws.format"] ||
+    service.definition["@websocket.format"] ||
+    service.definition["@ws.format"] ||
+    "json"
+  );
 }
 
 function deriveKey(entity, data) {
@@ -647,6 +658,50 @@ function stringValue(value) {
   return String(value);
 }
 
+function parseStringValue(value) {
+  if (value === undefined || value === null || typeof value !== "string") {
+    return value;
+  }
+  if (["false", "true"].includes(value)) {
+    return value === "true";
+  }
+  if (!isNaN(value)) {
+    return parseFloat(value);
+  }
+  return value;
+}
+
+function deriveHeaders(headers, format) {
+  for (const header in headers ?? {}) {
+    let xHeader = header.toLocaleLowerCase();
+    if (!xHeader.startsWith("x-websocket-") && !xHeader.startsWith("x-ws-")) {
+      continue;
+    }
+    if (header.toLocaleLowerCase().startsWith("x-websocket-")) {
+      xHeader = xHeader.substring("x-websocket-".length);
+    } else if (xHeader.startsWith("x-ws-")) {
+      xHeader = xHeader.substring("x-ws-".length);
+    }
+    let formatSpecific = false;
+    if (xHeader.startsWith(`${format}-`)) {
+      xHeader = xHeader.substring(`${format}-`.length);
+      formatSpecific = true;
+    }
+    const value = parseStringValue(headers[header]);
+    delete headers[header];
+    if (formatSpecific) {
+      headers.ws ??= {};
+      headers.ws[format] ??= {};
+      headers.ws[format][xHeader] = value;
+      headers.ws[format][toCamelCase(xHeader)] = value;
+    } else {
+      headers[xHeader] = value;
+      headers[toCamelCase(xHeader)] = value;
+    }
+  }
+  return headers;
+}
+
 function getDeepEntityColumns(entity) {
   const columns = [];
   for (const element of Object.values(entity.elements)) {
@@ -677,6 +732,10 @@ function serviceLocalName(service, name) {
     return name.substring(servicePrefix.length);
   }
   return name;
+}
+
+function toCamelCase(string) {
+  return string.replace(/([-_][a-z])/g, (group) => group.toUpperCase().replace("-", "").replace("_", ""));
 }
 
 function interableObject(object) {

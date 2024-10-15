@@ -41,6 +41,8 @@ module.exports = (srv) => {
         appinfoC,
       },
       {
+        "x-ws-cloudevent-comexampleextension1": "value2",
+        "x-websocket-cloudevent-source": "/mycontext",
         ws: {
           specversion: "1.1",
           type: "com.example.someevent.cloudEvent4",

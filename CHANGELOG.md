@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Support for http conform headers (`x-ws` and `x-websocket`) 
+- Revise error handling for websocket events
+- Fix for operations without parameters
 
 ## Version 1.3.0 - 2024-10-07
 

@@ -110,6 +110,8 @@ module.exports = (srv) => {
       "customContextHeaderEvent",
       { ID, text },
       {
+        "x-ws-current-user": String(req.data.num === 0),
+        "x-websocket-current-user-exclude": String(req.data.num === 0),
         context: [ID, new Date(), { a: 1 }],
         contexts: {
           include: [ID, new Date(), { a: 1 }],

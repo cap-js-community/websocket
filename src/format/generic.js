@@ -26,7 +26,7 @@ class GenericFormat extends BaseFormat {
         mappedData = data;
       }
       const result = {};
-      for (const param of operation.params) {
+      for (const param of operation.params || []) {
         if (mappedData[param.name] !== undefined) {
           result[param.name] = mappedData[param.name];
         }
