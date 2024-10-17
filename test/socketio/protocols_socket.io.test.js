@@ -23,7 +23,6 @@ const protocols = [
 ];
 
 describe("Protocols", () => {
-
   afterAll(() => {
     cds.ws.close();
   });
