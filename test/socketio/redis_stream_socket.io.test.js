@@ -20,7 +20,7 @@ cds.env.websocket.adapter = {
   local: true,
   options: {
     key: "websocket",
-  }
+  },
 };
 
 describe("Redis", () => {

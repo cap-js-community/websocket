@@ -1353,7 +1353,7 @@ const ioc = require("socket.io-client");
 cds.test(__dirname + "/..");
 
 cds.env.websocket.kind = "socket.io";
-  
+
 const authorization = `Basic ${Buffer.from("alice:alice").toString("base64")}`;
 
 describe("WebSocket", () => {
