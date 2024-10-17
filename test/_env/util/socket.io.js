@@ -8,7 +8,7 @@ const auth = require("./auth");
 async function connect(service, options = {}, headers) {
   const port = cds.app.server.address().port;
   const socket = ioc(`http://localhost:${port}/${service}${options?.id ? `?id=${options?.id}` : ""}`, {
-    path: "/ws",
+    path: options.absolute ? undefined : "/ws",
     extraHeaders: {
       authorization: options?.authorization || auth.alice,
       ...headers,

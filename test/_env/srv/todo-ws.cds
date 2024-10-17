@@ -1,6 +1,6 @@
 using test from '../db';
 
-@protocol: 'ws'
+@ws
 @requires: 'WS_Todo'
 @path: 'todo-ws'
 service TodoWSService {

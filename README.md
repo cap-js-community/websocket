@@ -759,6 +759,19 @@ await srv.emit("customEvent", { ... }, {
 });
 ```
 
+#### Event HTTP Headers
+
+In addition to the above event emit headers, HTTP conform headers can be specified starting with `x-websocket-` or `x-ws-`  
+prefix. The lower case header names are converted to camel-cased header names removing prefix, e.g. `x-ws-current-user` becomes `currentUser`.
+Header string values are parsed according to their value to types `Boolean`, `Number` or `String`.
+
+Format specific HTTP conform headers can be defined in formatter named subsection, `x-websocket-<format>-` or `x-ws-<format>-`. 
+
+**Examples** (for format `cloudevent`): 
+
+- `x-ws-cloudevent-subject: 'xyz'`  becomes nested JSON header object `{ "cloudevent": { subject: "xyz" } }` in `cloudvent` formatter.
+- `x-ws-cloudevent-value: '1'` becomes nested JSON header object `{ "cloudevent": { value: 1 } }` in `cloudvent` formatter.
+
 ### Value Aggregation
 
 The respective event annotations (described in sections above) are respected in addition to event emit header

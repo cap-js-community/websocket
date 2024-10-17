@@ -14,7 +14,15 @@ module.exports = class TodoService extends cds.ApplicationService {
           await this.emit("refresh", { ID });
           await this.emit("notify", { text: "4711" });
           const service = await cds.connect.to("TodoWSService");
-          await service.emit("refresh", { ID });
+          await service.tx(context).emit(
+            "refresh",
+            { ID },
+            {
+              currentUser: {
+                include: true,
+              },
+            },
+          );
         }
       });
     });
