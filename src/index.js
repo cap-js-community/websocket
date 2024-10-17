@@ -43,49 +43,46 @@ function serveWebSocketServer(options) {
         }
       }
       // Websockets events
-      if (cds.env.protocols.websocket || cds.env.protocols.ws) {
-        const eventServices = {};
-        for (const name in cds.model.definitions) {
-          const definition = cds.model.definitions[name];
-          if (definition.kind === "event" && (definition["@websocket"] || definition["@ws"])) {
-            const service = cds.services[definition._service?.name];
-            if (service && !isServedViaWebsocket(service)) {
-              eventServices[service.name] ??= eventServices[service.name] || {
-                name: service.name,
-                definition: service.definition,
-                endpoints: service.endpoints.map((endpoint) => {
-                  const protocol =
-                    cds.env.protocols[endpoint.kind] ||
-                    (endpoint.kind === "odata" ? cds.env.protocols["odata-v4"] : null);
-                  return {
-                    kind: "websocket",
-                    path:
-                      (cds.env.protocols.websocket?.path || cds.env.protocols.ws?.path) +
-                      normalizeServicePath(service.path, protocol.path),
-                  };
-                }),
-                operations: () => {
-                  return interableObject();
-                },
-                entities: () => {
-                  return interableObject();
-                },
-                _events: interableObject(),
-                events: function () {
-                  return this._events;
-                },
-                on: service.on.bind(service),
-                tx: service.tx.bind(service),
-              };
-              eventServices[service.name]._events[serviceLocalName(service, definition.name)] = definition;
-            }
+      const eventServices = {};
+      for (const name in cds.model.definitions) {
+        const definition = cds.model.definitions[name];
+        if (definition.kind === "event" && (definition["@websocket"] || definition["@ws"])) {
+          const service = cds.services[definition._service?.name];
+          if (service && !isServedViaWebsocket(service)) {
+            eventServices[service.name] ??= eventServices[service.name] || {
+              name: service.name,
+              definition: service.definition,
+              endpoints: service.endpoints.map((endpoint) => {
+                const protocol =
+                  cds.env.protocols[endpoint.kind] ||
+                  (endpoint.kind === "odata" ? cds.env.protocols["odata-v4"] : null);
+                let path = normalizeServicePath(service.path, protocol.path);
+                if (!path.startsWith("/")) {
+                  path = (cds.env.protocols?.websocket?.path || cds.env.protocols?.ws?.path || "/ws") + "/" + path;
+                }
+                return { kind: "websocket", path };
+              }),
+              operations: () => {
+                return interableObject();
+              },
+              entities: () => {
+                return interableObject();
+              },
+              _events: interableObject(),
+              events: function () {
+                return this._events;
+              },
+              on: service.on.bind(service),
+              tx: service.tx.bind(service),
+            };
+            eventServices[service.name]._events[serviceLocalName(service, definition.name)] = definition;
           }
         }
-        for (const name in eventServices) {
-          const eventService = eventServices[name];
-          if (Object.keys(eventService.events()).length > 0) {
-            serveWebSocketService(socketServer, eventService, options);
-          }
+      }
+      for (const name in eventServices) {
+        const eventService = eventServices[name];
+        if (Object.keys(eventService.events()).length > 0) {
+          serveWebSocketService(socketServer, eventService, options);
         }
       }
       LOG?.info("using websocket", { kind: cds.env.websocket.kind, adapter: socketServer.adapterActive });
@@ -112,8 +109,8 @@ async function initWebSocketServer(server, path) {
 }
 
 function normalizeServicePath(servicePath, protocolPath) {
-  if (servicePath.startsWith(protocolPath)) {
-    return servicePath.substring(protocolPath.length);
+  if (servicePath.startsWith(`${protocolPath}/`)) {
+    return servicePath.substring(`${protocolPath}/`.length);
   }
   return servicePath;
 }
@@ -152,11 +149,11 @@ function bindServiceEvents(socketServer, service, path) {
         const user = deriveUser(event, req.data, headers, req);
         const context = deriveContext(event, req.data, headers);
         const identifier = deriveIdentifier(event, req.data, headers);
-        const eventHeaders = headers?.websocket || headers?.ws ? { ...headers?.websocket, ...headers?.ws } : undefined;
-        path = normalizeEventPath(event["@websocket.path"] || event["@ws.path"] || path);
+        const eventHeaders = deriveEventHeaders(headers);
+        const eventPath = derivePath(event, path);
         await socketServer.broadcast({
           service,
-          path,
+          path: eventPath,
           event: localEventName,
           data: req.data,
           tenant: req.tenant,
@@ -702,6 +699,14 @@ function deriveHeaders(headers, format) {
   return headers;
 }
 
+function deriveEventHeaders(headers) {
+  return headers?.websocket || headers?.ws ? { ...headers?.websocket, ...headers?.ws } : undefined;
+}
+
+function derivePath(event, path) {
+  return event["@websocket.path"] || event["@ws.path"] || path;
+}
+
 function getDeepEntityColumns(entity) {
   const columns = [];
   for (const element of Object.values(entity.elements)) {
@@ -717,13 +722,6 @@ function getDeepEntityColumns(entity) {
     }
   }
   return columns;
-}
-
-function normalizeEventPath(path) {
-  if (!path) {
-    return path;
-  }
-  return path.startsWith("/") ? path : `/${path}`;
 }
 
 function serviceLocalName(service, name) {

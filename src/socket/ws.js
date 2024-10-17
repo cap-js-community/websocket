@@ -38,9 +38,8 @@ class SocketWSServer extends SocketServer {
 
   service(service, path, connected) {
     this.adapter?.on(service, path);
-    const servicePath = `${this.path}${path}`;
     const format = this.format(service);
-    this.services[servicePath] = (ws, request) => {
+    this.services[this.servicePath(path)] = (ws, request) => {
       this.onInit(ws, request);
       DEBUG?.("Initialized");
       ws.on("close", () => {
@@ -154,8 +153,7 @@ class SocketWSServer extends SocketServer {
       }
       path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
-      const servicePath = `${this.path}${path}`;
-      const serviceClients = this.fetchClients(tenant, servicePath);
+      const serviceClients = this.fetchClients(tenant, this.servicePath(path));
       const clients = new Set(serviceClients.all);
       if (user?.include?.length) {
         this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));

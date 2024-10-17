@@ -23,7 +23,7 @@ class RedisAdapter extends BaseAdapter {
       return;
     }
     try {
-      const channel = this.prefix + path;
+      const channel = this.getChannel(path);
       await this.client.subscribe(channel, async (message, messageChannel) => {
         try {
           if (messageChannel === channel) {
@@ -43,11 +43,15 @@ class RedisAdapter extends BaseAdapter {
       return;
     }
     try {
-      const channel = this.prefix + path;
+      const channel = this.getChannel(path);
       await this.client.publish(channel, message);
     } catch (err) {
       LOG?.error(err);
     }
+  }
+
+  getChannel(path) {
+    return `${this.prefix}/${path}`;
   }
 }
 

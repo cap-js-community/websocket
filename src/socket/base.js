@@ -371,6 +371,15 @@ class SocketServer {
   }
 
   /**
+   * Return service path including protocol prefix or absolute service path (if already absolute)
+   * @param {String} path path
+   * @returns {String} Service path
+   */
+  servicePath(path) {
+    return path.startsWith("/") ? path : `${this.path}/${path}`;
+  }
+
+  /**
    * Return format instance for service
    * @param {Object} service Service definition
    * @param {String} [event] Event name

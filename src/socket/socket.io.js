@@ -26,8 +26,7 @@ class SocketIOServer extends SocketServer {
   }
 
   service(service, path, connected) {
-    const servicePath = `${this.path}${path}`;
-    const io = this.applyMiddlewares(this.io.of(servicePath));
+    const io = this.applyMiddlewares(this.io.of(this.servicePath(path)));
     const format = this.format(service, undefined, "json");
     io.on("connection", async (socket) => {
       try {
@@ -175,8 +174,7 @@ class SocketIOServer extends SocketServer {
     try {
       path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
-      const servicePath = `${this.path}${path}`;
-      let to = socket?.broadcast || this.io.of(servicePath);
+      let to = socket?.broadcast || this.io.of(this.servicePath(path));
       if (context?.include?.length && identifier?.include?.length) {
         for (const contextInclude of context.include) {
           for (const identifierInclude of identifier.include) {

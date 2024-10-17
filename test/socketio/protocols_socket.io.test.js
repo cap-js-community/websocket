@@ -25,7 +25,8 @@ describe("Protocols", () => {
   });
 
   test.each(protocols)("Protocol - %p", async (protocol) => {
-    const socket = await connect(`/ws/${protocol}`);
+    const path = (protocol.includes("absolute") ? "/" : "/ws/") + protocol;
+    const socket = await connect(path);
     const waitProtocol = waitForEvent(socket, "test");
     await emitEvent(socket, "trigger", { text: protocol });
     const waitResult = await waitProtocol;
