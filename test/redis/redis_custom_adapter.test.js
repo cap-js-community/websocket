@@ -27,7 +27,7 @@ describe("Redis", () => {
   let socket;
 
   beforeAll(async () => {
-    socket = await connect("chat");
+    socket = await connect("/ws/chat");
   });
 
   afterAll(async () => {

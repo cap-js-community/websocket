@@ -7,18 +7,15 @@ const { connect, disconnect, waitForEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 describe("Fns", () => {
   let socket;
   let socketFns;
 
   beforeAll(async () => {
-    socket = await connect("todo-ws");
-    socketFns = await connect("fns-websocket");
+    socket = await connect("/ws/todo-ws");
+    socketFns = await connect("/ws/fns-websocket");
   });
 
   afterAll(async () => {

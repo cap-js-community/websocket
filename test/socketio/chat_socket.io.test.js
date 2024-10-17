@@ -6,18 +6,15 @@ const { connect, disconnect, emitEvent, waitForEvent } = require("../_env/util/s
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 describe("Chat", () => {
   let socket;
   let socketOther;
 
   beforeAll(async () => {
-    socket = await connect("chat");
-    socketOther = await connect("chat");
+    socket = await connect("/ws/chat");
+    socketOther = await connect("/ws/chat");
   });
 
   afterAll(async () => {

@@ -7,16 +7,13 @@ const { connect, disconnect, waitForEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 describe("OData", () => {
   let socket;
 
   beforeAll(async () => {
-    socket = await connect("odata");
+    socket = await connect("/ws/odata");
   });
 
   afterAll(async () => {

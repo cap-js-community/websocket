@@ -12,15 +12,12 @@ jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-  adapter: {
-    impl: "@socket.io/redis-adapter",
-    local: true,
-    options: {
-      key: "websocket",
-    },
+cds.env.websocket.kind = "socket.io";
+cds.env.websocket.adapter = {
+  impl: "@socket.io/redis-adapter",
+  local: true,
+  options: {
+    key: "websocket",
   },
 };
 
@@ -28,7 +25,7 @@ describe("Redis", () => {
   let socket;
 
   beforeAll(async () => {
-    socket = await connect("chat");
+    socket = await connect("/ws/chat");
   });
 
   afterAll(async () => {
@@ -50,6 +47,6 @@ describe("Redis", () => {
     expect(redis.client.on).toHaveBeenNthCalledWith(4, "reconnecting", expect.any(Function));
     expect(redis.client.on).toHaveBeenNthCalledWith(5, "error", expect.any(Function));
     expect(redis.client.subscribe).toHaveBeenCalled();
-    expect(redis.client.publish).toHaveBeenCalledWith("websocket#/chat#/tenant:t1##", expect.anything());
+    expect(redis.client.publish).toHaveBeenCalledWith("websocket#/ws/chat#/tenant:t1##", expect.anything());
   });
 });

@@ -14,23 +14,20 @@ jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-  adapter: {
-    impl: "@socket.io/redis-streams-adapter",
-    local: true,
-    options: {
-      key: "websocket",
-    },
-  },
+cds.env.websocket.kind = "socket.io";
+cds.env.websocket.adapter = {
+  impl: "@socket.io/redis-streams-adapter",
+  local: true,
+  options: {
+    key: "websocket",
+  }
 };
 
 describe("Redis", () => {
   let socket;
 
   beforeAll(async () => {
-    socket = await connect("chat");
+    socket = await connect("/ws/chat");
   });
 
   afterAll(async () => {

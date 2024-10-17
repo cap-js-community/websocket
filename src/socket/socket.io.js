@@ -12,10 +12,7 @@ const DEBUG = cds.debug("websocket");
 class SocketIOServer extends SocketServer {
   constructor(server, path, config) {
     super(server, path, config);
-    this.io = new Server(server, {
-      path,
-      ...config?.options,
-    });
+    this.io = new Server(server, config?.options);
     this.io.engine.on("connection_error", (err) => {
       delete err.req;
       LOG?.error(err);
@@ -29,7 +26,8 @@ class SocketIOServer extends SocketServer {
   }
 
   service(service, path, connected) {
-    const io = this.applyMiddlewares(this.io.of(path));
+    const servicePath = `${this.path}${path}`;
+    const io = this.applyMiddlewares(this.io.of(servicePath));
     const format = this.format(service, undefined, "json");
     io.on("connection", async (socket) => {
       try {
@@ -177,7 +175,8 @@ class SocketIOServer extends SocketServer {
     try {
       path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
-      let to = socket?.broadcast || this.io.of(path);
+      const servicePath = `${this.path}${path}`;
+      let to = socket?.broadcast || this.io.of(servicePath);
       if (context?.include?.length && identifier?.include?.length) {
         for (const contextInclude of context.include) {
           for (const identifierInclude of identifier.include) {

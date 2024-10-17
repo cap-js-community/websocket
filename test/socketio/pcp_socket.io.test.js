@@ -6,10 +6,7 @@ const { connect, disconnect, emitEvent, emitMessage, waitForEvent } = require(".
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 const pcpMessage = `pcp-action:MESSAGE
 pcp-body-type:text
@@ -55,7 +52,7 @@ describe("PCP", () => {
   let socket;
 
   beforeAll(async () => {
-    socket = await connect("pcp");
+    socket = await connect("/ws/pcp");
   });
 
   afterAll(async () => {

@@ -7,15 +7,12 @@ const auth = require("../_env/util/auth");
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 describe("Auth", () => {
   test("Invalid Auth", async () => {
     await expect(
-      connect("chat", {
+      connect("/ws/chat", {
         authorization: auth.invalid,
       }),
     ).rejects.toThrow(new Error("401"));

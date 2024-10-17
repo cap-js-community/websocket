@@ -6,10 +6,7 @@ const { connect, disconnect, emitEvent, emitMessage, waitForEvent } = require(".
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 const cloudEvent = {
   specversion: "1.0",
@@ -86,7 +83,7 @@ describe("CloudEvent", () => {
 
   beforeAll(async () => {
     socket = await connect(
-      "cloudevent",
+      "/ws/cloudevent",
       {},
       {
         "Sec-WebSocket-Protocol": "cloudevents.json",

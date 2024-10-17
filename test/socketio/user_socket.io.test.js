@@ -4,10 +4,7 @@ const cds = require("@sap/cds");
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 const auth = require("../_env/util/auth");
 const { wait } = require("../_env/util/common");
@@ -26,9 +23,9 @@ describe("User", () => {
   let socketOtherUser;
 
   beforeAll(async () => {
-    socket = await connect("main");
-    socketOther = await connect("main");
-    socketOtherUser = await connect("main", {
+    socket = await connect("/ws/main");
+    socketOther = await connect("/ws/main");
+    socketOtherUser = await connect("/ws/main", {
       authorization: auth.carol,
     });
   });

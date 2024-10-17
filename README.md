@@ -87,7 +87,7 @@ In browser environment implement the websocket client: **index.html**
 
 - Connect with Socket.IO client
   ```js
-  const socket = io("/chat", { path: "/ws" });
+  const socket = io("/ws/chat");
   ```
 - Emit event
   ```js
@@ -147,7 +147,7 @@ Annotated services with websocket protocol are exposed at endpoint: `/ws/<servic
 Websocket client connection happens as follows for exposed endpoints:
 
 - **WS**: `const socket = new WebSocket("ws://localhost:4004/ws/chat");`
-- **Socket.IO**: `const socket = io("/chat", { path: "/ws" })`
+- **Socket.IO**: `const socket = io("ws/chat")`
 
 #### WebSocket Event
 
@@ -677,7 +677,7 @@ The unique identifier can be provided for a websocket client as follows:
   ```
 - Socket.IO:
   ```js
-  const socket = io("/chat?id=1234", { path: "/ws" });
+  const socket = io("/ws/chat?id=1234");
   ```
 
 ### Event Emit Headers
@@ -1352,11 +1352,8 @@ const ioc = require("socket.io-client");
 
 cds.test(__dirname + "/..");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
-
+cds.env.websocket.kind = "socket.io";
+  
 const authorization = `Basic ${Buffer.from("alice:alice").toString("base64")}`;
 
 describe("WebSocket", () => {
@@ -1364,8 +1361,7 @@ describe("WebSocket", () => {
 
   beforeAll((done) => {
     const port = cds.app.server.address().port;
-    socket = ioc(`http://localhost:${port}/chat`, {
-      path: "/ws",
+    socket = ioc(`http://localhost:${port}/ws/chat`, {
       extraHeaders: {
         authorization,
       },

@@ -15,18 +15,15 @@ const { wait } = require("../_env/util/common");
 
 cds.test(__dirname + "/../_env");
 
-cds.env.websocket = {
-  kind: "socket.io",
-  impl: null,
-};
+cds.env.websocket.kind = "socket.io";
 
 describe("Identifier", () => {
   let socket;
   let socketOther;
 
   beforeAll(async () => {
-    socket = await connect("odata", { id: 1234 });
-    socketOther = await connect("odata", { id: 5678 });
+    socket = await connect("/ws/odata", { id: 1234 });
+    socketOther = await connect("/ws/odata", { id: 5678 });
   });
 
   afterAll(async () => {
