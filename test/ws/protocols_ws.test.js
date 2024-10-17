@@ -12,9 +12,9 @@ const protocols = [
   "protocol-annotation-websocket",
   "protocol-annotation-ws",
   "protocol-path",
-  // "protocol-absolute-path",
+  "protocol-absolute-path",
   "protocol-multiple-websocket",
-  // "protocol-multiple-ws-absolute",
+  "protocol-multiple-ws-absolute",
 ];
 
 describe("Protocols", () => {
@@ -23,7 +23,7 @@ describe("Protocols", () => {
   });
 
   test.each(protocols)("Protocol - %p", async (protocol) => {
-    const socket = await connect(protocol.includes("absolute") ? "/" + protocol : "/ws/" + protocol);
+    const socket = await connect("/ws/" + protocol);
     const waitProtocol = waitForEvent(socket, "test");
     await emitEvent(socket, "trigger", { text: protocol });
     const waitResult = await waitProtocol;
