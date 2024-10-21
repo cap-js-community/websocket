@@ -1,5 +1,3 @@
-using test from '../db';
-
 @ws
 @requires: 'WS_Todo'
 @path: 'todo-ws'

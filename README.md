@@ -1131,7 +1131,7 @@ The following generic implementation specifics are included:
   - Subsequently, formatter specific wildcard annotations on event level (static) or event element level (dynamic) are processed
 
 The generic formatter can also directly be used via annotations `@websocket.format: 'generic'` or `@ws.format: 'generic'`.
-Values are derived from data via CDS annotations based on wildcard annotations `@websocket.generic.<annotation>` or `@ws.generic.<annotation>` 
+Values are derived from data via CDS annotations based on wildcard annotations `@websocket.generic.<annotation>` or `@ws.generic.<annotation>`
 and headers from subsections `websocket.generic.<header>` or `ws.generic.<header>`.
 
 ### Connect & Disconnect
