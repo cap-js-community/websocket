@@ -1130,6 +1130,10 @@ The following generic implementation specifics are included:
   - First data is composed based on headers, if available (see section Format Headers)
   - Subsequently, formatter specific wildcard annotations on event level (static) or event element level (dynamic) are processed
 
+The generic formatter can also directly be used via annotations `@websocket.format: 'generic'` or `@ws.format: 'generic'`.
+Values are derived from data via CDS annotations based on wildcard annotations `@websocket.generic.<annotation>` or `@ws.generic.<annotation>` 
+and headers from subsections `websocket.generic.<header>` or `ws.generic.<header>`.
+
 ### Connect & Disconnect
 
 Every time a server socket is connected via websocket client, the CDS service is notified by calling the corresponding

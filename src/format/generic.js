@@ -7,7 +7,7 @@ const BaseFormat = require("./base");
 class GenericFormat extends BaseFormat {
   constructor(service, origin, name, identifier) {
     super(service, origin);
-    this.name = name;
+    this.name = name || "generic";
     this.identifier = identifier || "name";
     this.LOG = cds.log(`/websocket/${this.name}`);
   }
@@ -90,7 +90,11 @@ class GenericFormat extends BaseFormat {
         result[annotation] = value;
       }
     }
-    return result;
+    const serialize = arguments[3];
+    if (serialize === false) {
+      return result;
+    }
+    return this.serialize(result);
   }
 
   /**

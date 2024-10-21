@@ -42,7 +42,7 @@ class CloudEventFormat extends GenericFormat {
     } else {
       cloudEvent.data = data;
     }
-    const result = super.compose(event, data, headers);
+    const result = super.compose(event, data, headers, false);
     cloudEvent = {
       ...cloudEvent,
       ...result,
