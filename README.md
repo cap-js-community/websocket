@@ -14,17 +14,21 @@
 ## Getting Started
 
 - Run `npm add @cap-js-community/websocket` in `@sap/cds` project
-- Annotate a service, that shall be exposed via WebSocket using one of the following annotations:
+- Add a WebSocket enabled CDS service:
   ```cds
   @ws
-  @websocket
-  @protocol: 'ws'
-  @protocol: 'websocket'
-  @protocol: [{ kind: 'websocket', path: 'chat' }]
-  @protocol: [{ kind: 'ws', path: 'chat' }]
+  service ChatService {
+    event received {
+      text: String;
+    }
+  }
   ```
-- Execute `cds-serve` to start server
-- Access the service endpoint via WebSocket
+- Emit event from business logic:
+  ```js
+  await srv.emit("received", { text: "Hello World!" });
+  ```
+- Start server via `cds-serve`
+- Access the service endpoint via WebSocket client
 
 ## Usage
 
@@ -115,6 +119,19 @@ The CDS Websocket module supports the following use-cases:
 - Tenant-ware emit/broadcast CDS events from server websockets to websocket clients (browser and non-browser)
 - Emit/Broadcast CDS events to a subset of websocket clients leveraging users, event contexts or client identifiers
 - Websocket events support different formats (JSON, PCP, CloudEvents or custom format)
+
+### Protocol Annotations
+
+The CDS WebSocket module supports the following protocols definitions options in CDS:
+
+- `@ws`
+- `@websocket`
+- `@protocol: 'ws'`
+- `@protocol: 'websocket'`
+- `@protocol: [{ kind: 'ws', path: 'chat' }]`
+- `@protocol: [{ kind: 'websocket', path: 'chat' }]`
+
+If protocol path is not specified, it is determined from service name.
 
 ### WebSocket Server
 
