@@ -131,7 +131,15 @@ The CDS WebSocket module supports the following protocols definitions options in
 - `@protocol: [{ kind: 'ws', path: 'chat' }]`
 - `@protocol: [{ kind: 'websocket', path: 'chat' }]`
 
-If protocol path is not specified, it is determined from service name.
+If protocol path is not specified (e.g. via `@path`), it is determined from service name.
+
+If the specified path is relative (i.e. does not start with a slash `/`), it is appended to the default protocol path e.g. `/ws`.
+If the path is absolute (i.e. starts with a slash `/`), it is used as is.
+
+Examples:
+
+- `@path: 'chat`: Service is exposed at `/ws/chat`
+- `@path: '/chat`: Service is exposed at `/chat`
 
 ### WebSocket Server
 
@@ -197,8 +205,7 @@ In addition, also non-websocket services can contain events that are exposed as 
 ```
 
 Although the service is exposed as an OData protocol at `/odata/v4/chat`, the service events annotated with `@websocket`
-or
-`@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
+or `@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
 are not exposed, as the service itself is not marked as websocket protocol.
 
 The service path can be overruled on event level via `@websocket.path` or `@ws.path` annotation as follows:
