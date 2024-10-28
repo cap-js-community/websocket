@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 1.4.0 - 2024-11-xx
+
+## Version 1.4.0 - 2024-11-04
 
 ### Changed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Revise error handling for websocket events
 - Fix for operations without parameters
 - Fix support for absolute service paths
+- Update documentation
 
 ## Version 1.3.0 - 2024-10-07
 

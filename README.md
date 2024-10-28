@@ -5,11 +5,65 @@
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js-community/websocket)](https://api.reuse.software/info/github.com/cap-js-community/websocket)
 [![Main CI](https://github.com/cap-js-community/websocket/actions/workflows/main-ci.yml/badge.svg)](https://github.com/cap-js-community/websocket/commits/main)
 
-### [WebSocket adapter for CDS](https://www.npmjs.com/package/@cap-js-community/websocket)
+### [WebSocket Adapter for CDS](https://www.npmjs.com/package/@cap-js-community/websocket)
 
 > Exposes a WebSocket protocol via WebSocket standard or Socket.IO for CDS services.
 > Runs in context of the [SAP Cloud Application Programming Model (CAP)](https://cap.cloud.sap/docs/)
 > using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
+
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+  - [Server](#server)
+  - [Client](#client)
+- [Documentation](#documentation)
+  - [Architecture Overview](#architecture-overview)
+  - [Protocol Annotations](#protocol-annotations)
+  - [WebSocket Server](#websocket-server)
+  - [WebSocket Implementation](#websocket-implementation)
+    - [WebSocket Service](#websocket-service)
+    - [WebSocket Event](#websocket-event)
+  - [Server Socket](#server-socket)
+  - [Service Facade](#service-facade) 
+  - [Middlewares](#middlewares)
+  - [Tenant Isolation](#tenant-isolation)
+  - [Authentication & Authorization](#authentication--authorization)
+  - [Invocation Context](#invocation-context)
+  - [Transactional Safety](#transactional-safety)
+    - [CDS Persistent Outbox](#cds-persistent-outbox)
+  - [Client Determination](#client-determination)
+    - [Event Users](#event-users)
+    - [Event Contexts](#event-contexts)
+    - [Event Client Identifiers](#event-client-identifiers)
+    - [Event Emit Headers](#event-emit-headers)
+    - [Value Aggregation](#value-aggregation)
+    - [Format Headers](#format-headers)
+    - [Ignore Definitions](#ignore-definitions)
+  - [WebSocket Format](#websocket-format)
+    - [SAP Push Channel Protocol (PCP)](#sap-push-channel-protocol-pcp)
+    - [Cloud Events](#cloud-events)
+    - [Custom Format](#custom-format)
+    - [Generic Format](#generic-format)
+  - [Connect & Disconnect](#connect--disconnect)
+  - [Approuter](#approuter)
+  - [Operations](#operations)
+    - [Operation Results](#operation-results)
+    - [Unbound Operations](#unbound-operations)
+    - [Special Operations](#special-operations)
+    - [Bound Operations](#bound-operations)
+    - [CRUD Operations](#crud-operations)
+  - [Examples](#examples)
+    - [Todo (UI5)](#todo-ui5)
+    - [Chat (HTML)](#chat-html)
+  - [Unit-Tests](#unit-tests)
+  - [Adapters](#adapters)
+    - [WS Standard Adapters](#ws-standard-adapters) 
+    - [Socket.IO Adapters](#socketio-adapters)
+  - [Deployment](#deployment)
+- [Support, Feedback, Contributing](#support-feedback-contributing)
+- [Code of Conduct](#code-of-conduct)
+- [Licensing](#licensing)
 
 ## Getting Started
 
@@ -234,7 +288,7 @@ It can be accessed via the service websocket facade via `req.context.ws.service`
 In addition the native websocket server socket can be accessed via `req.context.ws.socket` or `cds.context.ws.socket`.
 Events can be directly emitted via the native `socket`, bypassing CDS runtime, if necessary.
 
-#### Service Facade
+### Service Facade
 
 The service facade provides native access to websocket implementation independent of CDS context
 and is accessible on socket via `socket.facade` or in CDS context via `req.context.ws.service`.
@@ -361,9 +415,9 @@ The diagram shows the mandatory filtering layer `tenant` and `service` and the o
 The `+` and `-` symbols on the optional filter layers indicating the possibility to include (`+`) or exclude (`-`)
 filtering conditions as described in the upcoming sections.
 
-### Event Users
+#### Event Users
 
-#### Current User
+##### Current User
 
 Events are broadcast to all websocket clients, including clients established in context of current context user.
 To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is
@@ -484,7 +538,7 @@ event received {
 
 Event is only published to all users listed in the event data of `users`.
 
-### Event Contexts
+#### Event Contexts
 
 It is possible to broadcast events to a subset of clients. By entering or exiting contexts, the server can be instructed
 to determine to which subset of clients the event shall be emitted, based on the event. To specify which data parts of the
@@ -609,10 +663,9 @@ Multiple contexts can be entered for the same server socket at the same time. Fu
 `wsContext` is invoked, if existing on the websocket enabled CDS service. Event context isolation is also ensured
 over remote distribution via Redis.
 
-For Socket.IO (`kind: socket.io`) contexts are implemented
-leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
+For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
 
-### Event Client Identifiers
+#### Event Client Identifiers
 
 Events are broadcast to all websocket clients, including clients that performed certain action. When events are send
 as part of websocket context, access to current socket is given, but if actions are performed outside websocket context,
@@ -691,7 +744,7 @@ event received {
 
 Event is only published to all clients with identifiers listed in the event data of `ids`.
 
-#### Client Setup
+##### Client Setup
 
 The unique identifier can be provided for a websocket client as follows:
 
@@ -704,7 +757,7 @@ The unique identifier can be provided for a websocket client as follows:
   const socket = io("/ws/chat?id=1234");
   ```
 
-### Event Emit Headers
+#### Event Emit Headers
 
 The websocket implementation allows to provide event emit headers to dynamically control websocket processing.
 The following headers are available:
@@ -783,7 +836,7 @@ await srv.emit("customEvent", { ... }, {
 });
 ```
 
-#### Event HTTP Headers
+##### Event HTTP Headers
 
 In addition to the above event emit headers, HTTP conform headers can be specified starting with `x-websocket-` or `x-ws-`  
 prefix. The lower case header names are converted to camel-cased header names removing prefix, e.g. `x-ws-current-user` becomes `currentUser`.
@@ -796,7 +849,7 @@ Format specific HTTP conform headers can be defined in formatter named subsectio
 - `x-ws-cloudevent-subject: 'xyz'` becomes nested JSON header object `{ "cloudevent": { subject: "xyz" } }` in `cloudvent` formatter.
 - `x-ws-cloudevent-value: '1'` becomes nested JSON header object `{ "cloudevent": { value: 1 } }` in `cloudvent` formatter.
 
-### Value Aggregation
+#### Value Aggregation
 
 The respective event annotations (described in sections above) are respected in addition to event emit header
 specification. All event annotation values (static or dynamic) and header values are aggregated during event
@@ -826,7 +879,7 @@ These headers are made available to the format `compose(event, data, headers)` f
 composed WebSocket message, if applicable (e.g. format: `pcp`, `cloudevent`). Format specific headers can also be defined
 in formatter named subsection, e.g. `ws.cloudevent.e: true` (for format `cloudevent`), to avoid conflicts.
 
-### Ignore Definitions
+#### Ignore Definitions
 
 To ignore elements and parameters during event processing, the annotation `@websocket.ignore` or `@ws.ignore` is available
 on event element and operation parameter level. The annotation can be used to exclude elements and parameters from WebSocket event.
@@ -1166,7 +1219,7 @@ service operation:
 - `Connect`: Invoke service operation `wsConnect`, if available
 - `Disconnect`: Invoke service operation `wsDisconnect`, if available
 
-#### Approuter
+### Approuter
 
 Authorization in provided in production by Approuter component (e.g. via XSUAA auth).
 Valid UAA bindings for Approuter and backend are necessary, so that the authorization flow is working.
@@ -1198,9 +1251,7 @@ to [@sap/approuter - websockets property](https://www.npmjs.com/package/@sap/app
 }
 ```
 
-#### Local
-
-For local testing a mocked basic authorization is hardcoded in `flp.html/index.html`.
+For local testing without approuter a mocked basic authorization is hardcoded in `flp.html/index.html`.
 
 ### Operations
 
@@ -1208,19 +1259,19 @@ Operations comprise actions and function in the CDS service that are
 exposed by CDS service either unbound (static level) or bound (entity instance level).
 Operations are exposed as part of the websocket protocol as described below.
 
-### Operation Results
+#### Operation Results
 
 Operation results will be provided via optional websocket acknowledgement callback.
 
 > Operation results are only supported with Socket.IO (`kind: socket.io`) using acknowledgement callbacks.
 
-#### Unbound
+#### Unbound Operations
 
 Each unbound function and action is exposed as websocket event.
 The signature (parameters and return type) is passed through without additional modification.
 Operation result will be provided as part of acknowledgment callback.
 
-##### Special operations
+#### Special operations
 
 The websocket adapter tries to call the following special operations on the CDS service, if available:
 
@@ -1228,7 +1279,7 @@ The websocket adapter tries to call the following special operations on the CDS 
 - `wsDisconnect`: Callback to notify that a socket was disconnected
 - `wsContext`: Callback to notify that a socket changed the event context (details see section Event Contexts)
 
-#### Bound
+#### Bound Operations
 
 Each service entity is exposed as CRUD interface via as special events as
 proposed [here](https://socket.io/get-started/basic-crud-application/).
@@ -1238,7 +1289,7 @@ The signature (parameters and return type) is passed through without additional 
 It is expected, that the event payload contains the primary key information.
 CRUD/action/function result will be provided as part of acknowledgment callback.
 
-#### CRUD
+#### CRUD Operations
 
 Create, Read, Update and Delete (CRUD) actions are mapped to websocket events as follows:
 
@@ -1252,7 +1303,7 @@ Create, Read, Update and Delete (CRUD) actions are mapped to websocket events as
 
 Events can be emitted and the response can be retrieved via acknowledgment callback (`kind: socket.io` only).
 
-#### CRUD Broadcast Events
+##### CRUD Broadcast Events
 
 CRUD events that modify entities automatically emit another event after successful processing:
 
@@ -1411,21 +1462,19 @@ describe("WebSocket", () => {
 });
 ```
 
-### Adapters (Socket.IO)
+### Adapters
 
 An Adapter is a server-side component which is responsible for broadcasting events to all or a subset of clients.
 
-#### Redis
+#### WS Standard Adapters
+
+The following adapters for WS Standard are supported out-of-the-box.
+
+##### Redis
 
 Every event that is sent to multiple clients is sent to all matching clients connected to the current server
 and published in a Redis channel, and received by the other websocket servers of the cluster.
 The app needs to be bound to a Redis service instance to set up and connect Redis client.
-
-##### WS Standard
-
-The following adapters for WS Standard are supported out-of-the-box.
-
-###### Redis
 
 To use the Redis Adapter (basic publish/subscribe), the following steps have to be performed:
 
@@ -1439,10 +1488,10 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
     - Use option `cds.websocket.adapter.local: true` to enable Redis adapter
     - File `default-env.json` need to exist with Redis configuration
 - Redis Adapter options can be specified via `cds.websocket.adapter.options`
-- Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
+- Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`
 - Redis client connection configuration can be passed via `cds.websocket.adapter.config`
 
-###### Custom Adapter
+##### Custom Adapter
 
 A custom websocket adapter implementation can be provided via a path relative to the project root
 with the configuration `cds.websocket.adapter.impl` (e.g. `cds.websocket.adapter.impl: './adapter/xyz.js'`).
@@ -1457,11 +1506,11 @@ In addition, it can implement the following functions (optional):
 - **constructor(server, config)**: Setup instance on creation
 - **setup()**: Perform some async setup activities (optional)
 
-##### Socket.IO
+#### Socket.IO Adapters
 
 The following adapters for Socket.IO are supported out-of-the-box.
 
-###### Redis Adapter
+##### Redis Adapter
 
 To use the Redis Adapter, the following steps have to be performed:
 
@@ -1476,7 +1525,7 @@ To use the Redis Adapter, the following steps have to be performed:
 Details:
 https://socket.io/docs/v4/index-adapter/
 
-###### Redis Streams Adapter
+##### Redis Streams Adapter
 
 To use the Redis Stream Adapter, the following steps have to be performed:
 
@@ -1491,7 +1540,7 @@ To use the Redis Stream Adapter, the following steps have to be performed:
 Details:
 https://socket.io/docs/v4/index-streams-adapter/
 
-###### Custom Adapter
+##### Custom Adapter
 
 A custom websocket adapter implementation can be provided via a path relative to the project root
 with the configuration `cds.websocket.adapter.impl` (e.g. `cds.websocket.adapter.impl: './adapter/xyz.js'`).
