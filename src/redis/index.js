@@ -84,27 +84,29 @@ const createClientBase = (options = {}) => {
   }
 };
 
-const createClientAndConnect = async (options, errorHandlerCreateClient) => {
+const createClientAndConnect = async (options, errorHandlerCreateClient, isConnectionCheck) => {
   try {
     const client = createClientBase(options);
     if (!client) {
       return;
     }
-    client.on("error", (err) => {
-      const dateNow = Date.now();
-      if (dateNow - lastErrorLog > LOG_AFTER_SEC * 1000) {
-        LOG?.error("Error from redis client for pub/sub failed", err);
-        lastErrorLog = dateNow;
-      }
-    });
+    if (!isConnectionCheck) {
+      client.on("error", (err) => {
+        const dateNow = Date.now();
+        if (dateNow - lastErrorLog > LOG_AFTER_SEC * 1000) {
+          LOG?.error("Error from redis client for pub/sub failed", err);
+          lastErrorLog = dateNow;
+        }
+      });
 
-    client.on("reconnecting", () => {
-      const dateNow = Date.now();
-      if (dateNow - lastErrorLog > LOG_AFTER_SEC * 1000) {
-        LOG?.info("Redis client trying reconnect...");
-        lastErrorLog = dateNow;
-      }
-    });
+      client.on("reconnecting", () => {
+        const dateNow = Date.now();
+        if (dateNow - lastErrorLog > LOG_AFTER_SEC * 1000) {
+          LOG?.info("Redis client trying reconnect...");
+          lastErrorLog = dateNow;
+        }
+      });
+    }
     await client.connect();
     return client;
   } catch (err) {
@@ -142,7 +144,7 @@ const resilientClientClose = async (client) => {
 
 const connectionCheck = async (options) => {
   return new Promise((resolve, reject) => {
-    createClientAndConnect(options, reject)
+    createClientAndConnect(options, reject, true)
       .then((client) => {
         if (client) {
           resilientClientClose(client);
@@ -154,7 +156,10 @@ const connectionCheck = async (options) => {
       .catch(reject);
   })
     .then(() => true)
-    .catch(() => false);
+    .catch((err) => {
+      LOG?.error("Redis connection check failed! Falling back to no redis mode", err);
+      return false;
+    });
 };
 
 const closeClients = async () => {
