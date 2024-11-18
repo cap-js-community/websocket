@@ -90,7 +90,6 @@ const createClientAndConnect = async (options, errorHandlerCreateClient) => {
     if (!client) {
       return;
     }
-    await client.connect();
     client.on("error", (err) => {
       const dateNow = Date.now();
       if (dateNow - lastErrorLog > LOG_AFTER_SEC * 1000) {
@@ -106,6 +105,7 @@ const createClientAndConnect = async (options, errorHandlerCreateClient) => {
         lastErrorLog = dateNow;
       }
     });
+    await client.connect();
     return client;
   } catch (err) {
     errorHandlerCreateClient(err);
