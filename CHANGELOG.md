@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Redis adapter error handling
 
 ## Version 1.4.0 - 2024-11-04
 
