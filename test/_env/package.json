@@ -31,11 +31,13 @@
     "websocket": {
       "kind": "ws",
       "impl": null,
-      "adapter": {
-        "impl": "redis",
-        "local": true,
-        "options": {
-          "key": "websocket"
+      "[ws]": {
+        "adapter": {
+          "impl": "redis",
+          "local": true,
+          "options": {
+            "key": "websocket"
+          }
         }
       },
       "[socketio]": {

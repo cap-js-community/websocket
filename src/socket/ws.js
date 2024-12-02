@@ -267,9 +267,11 @@ class SocketWSServer extends SocketServer {
       const config = { ...this.config?.adapter };
       if (config.impl) {
         const adapterFactory = SocketServer.require(config.impl, "adapter");
-        this.adapter = new adapterFactory(this, config);
-        await this.adapter?.setup?.();
-        this.adapterActive = !!this.adapter?.client;
+        if (adapterFactory) {
+          this.adapter = new adapterFactory(this, config);
+          await this.adapter?.setup?.();
+          this.adapterActive = !!this.adapter?.client;
+        }
       }
     } catch (err) {
       LOG?.error(err);

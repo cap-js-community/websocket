@@ -358,7 +358,7 @@ class SocketServer {
    * @returns {*} Implementation module
    */
   static require(impl, context = "") {
-    if (impl.startsWith("./") || impl.startsWith("../")) {
+    if (impl.startsWith("./") || impl.startsWith("../") || impl.startsWith("/")) {
       return require(path.join(process.cwd(), impl));
     } else if (context) {
       try {

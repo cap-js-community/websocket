@@ -261,34 +261,36 @@ class SocketIOServer extends SocketServer {
         let client;
         let subClient;
         const options = { ...config?.options };
-        const adapterFactory = SocketServer.require(config.impl);
-        switch (config.impl) {
-          case "@socket.io/redis-adapter":
-            if (await redis.connectionCheck(config)) {
-              client = await redis.createPrimaryClientAndConnect(config);
-              if (client) {
-                subClient = await redis.createSecondaryClientAndConnect(config);
-                if (subClient) {
-                  this.adapter = adapterFactory.createAdapter(client, subClient, options);
+        const adapterFactory = SocketServer.require(config.impl, "adapter");
+        if (adapterFactory) {
+          switch (config.impl) {
+            case "@socket.io/redis-adapter":
+              if (await redis.connectionCheck(config)) {
+                client = await redis.createPrimaryClientAndConnect(config);
+                if (client) {
+                  subClient = await redis.createSecondaryClientAndConnect(config);
+                  if (subClient) {
+                    this.adapter = adapterFactory.createAdapter(client, subClient, options);
+                  }
                 }
               }
-            }
-            break;
-          case "@socket.io/redis-streams-adapter":
-            if (await redis.connectionCheck(config)) {
-              client = await redis.createPrimaryClientAndConnect(config);
-              if (client) {
-                this.adapter = adapterFactory.createAdapter(client, options);
+              break;
+            case "@socket.io/redis-streams-adapter":
+              if (await redis.connectionCheck(config)) {
+                client = await redis.createPrimaryClientAndConnect(config);
+                if (client) {
+                  this.adapter = adapterFactory.createAdapter(client, options);
+                }
               }
-            }
-            break;
-          default:
-            this.adapter = adapterFactory.createAdapter(this, options, config);
-            break;
-        }
-        if (this.adapter) {
-          this.io.adapter(this.adapter);
-          this.adapterActive = true;
+              break;
+            default:
+              this.adapter = adapterFactory.createAdapter(this, options, config);
+              break;
+          }
+          if (this.adapter) {
+            this.io.adapter(this.adapter);
+            this.adapterActive = true;
+          }
         }
       }
     } catch (err) {
