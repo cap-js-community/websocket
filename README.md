@@ -1491,6 +1491,7 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
 - Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
 - Redis client connection configuration can be passed via `cds.websocket.adapter.config`
 - Redis lookup is performed via `cds.env`.
+
   - Default lookup is done via VCAP `label: "redis-cache"`
   - Custom lookup can be specified via `cds.requires.redis-websocket`.
 
