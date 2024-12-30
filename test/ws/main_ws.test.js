@@ -2,11 +2,12 @@
 
 const cds = require("@sap/cds");
 
-cds.test(__dirname + "/../_env");
-
 const auth = require("../_env/util/auth");
 const { cleanData, wait } = require("../_env/util/common");
+
 const { connect, disconnect, emitEvent, emitMessage, waitForEvent, waitForNoEvent } = require("../_env/util/ws");
+
+cds.test(__dirname + "/../_env");
 
 describe("Main", () => {
   let socket;

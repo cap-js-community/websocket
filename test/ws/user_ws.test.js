@@ -6,6 +6,7 @@ cds.test(__dirname + "/../_env");
 
 const auth = require("../_env/util/auth");
 const { wait } = require("../_env/util/common");
+
 const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent, enterContext } = require("../_env/util/ws");
 
 describe("User", () => {

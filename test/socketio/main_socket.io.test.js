@@ -2,13 +2,14 @@
 
 const cds = require("@sap/cds");
 
+const auth = require("../_env/util/auth");
+const { cleanData, wait } = require("../_env/util/common");
+
+const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent } = require("../_env/util/socket.io");
+
 cds.test(__dirname + "/../_env");
 
 cds.env.websocket.kind = "socket.io";
-
-const auth = require("../_env/util/auth");
-const { cleanData, wait } = require("../_env/util/common");
-const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent } = require("../_env/util/socket.io");
 
 describe("Main", () => {
   let socket;

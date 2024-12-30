@@ -1,13 +1,9 @@
 "use strict";
 
-const path = require("path");
-const redis = require("redis");
-const xsenv = require("@sap/xsenv");
 const cds = require("@sap/cds");
+const redis = require("redis");
 
 const LOG = cds.log("/websocket/redis");
-
-xsenv.loadEnv(path.join(process.cwd(), "default-env.json"));
 
 const IS_ON_CF = process.env.USER === "vcap";
 const LOG_AFTER_SEC = 5;
@@ -54,12 +50,7 @@ const createClientBase = (options = {}) => {
     LOG?.info("Redis not available in local environment");
     return;
   }
-  let credentials;
-  try {
-    credentials = xsenv.serviceCredentials({ label: "redis-cache", ...options?.vcap });
-  } catch (err) {
-    LOG?.info(err.message);
-  }
+  const credentials = cds.env.requires?.["redis-websocket"]?.credentials;
   if (!credentials) {
     LOG?.info("No Redis credentials found");
     return;

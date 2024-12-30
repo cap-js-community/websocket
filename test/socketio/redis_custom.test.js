@@ -2,12 +2,9 @@
 
 const cds = require("@sap/cds");
 
-const { connect, disconnect, emitEvent } = require("../_env/util/socket.io");
-const xsenv = require("@sap/xsenv");
-
 jest.mock("redis", () => require("../_env/mocks/redis"));
 
-jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
+const { connect, disconnect, emitEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");
 

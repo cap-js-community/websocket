@@ -1,15 +1,12 @@
 "use strict";
 
 const cds = require("@sap/cds");
-const xsenv = require("@sap/xsenv");
-
-jest.mock("redis", () => require("../_env/mocks/redis"));
 const redis = require("redis");
 
+jest.mock("redis", () => require("../_env/mocks/redis"));
 const auth = require("../_env/util/auth");
-const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent } = require("../_env/util/ws");
 
-jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
+const { connect, disconnect, emitEvent, waitForEvent, waitForNoEvent } = require("../_env/util/ws");
 
 cds.test(__dirname + "/../_env");
 
@@ -20,6 +17,7 @@ cds.env.websocket = {
     local: true,
   },
 };
+cds.env.requires["redis-websocket"].credentials = { uri: "uri" };
 
 describe("Redis", () => {
   let socket;

@@ -3,6 +3,7 @@
 const cds = require("@sap/cds");
 
 const auth = require("../_env/util/auth");
+
 const { connect, disconnect, waitForEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");

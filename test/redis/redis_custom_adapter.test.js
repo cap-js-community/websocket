@@ -3,9 +3,6 @@
 const cds = require("@sap/cds");
 
 const { connect, disconnect, emitEvent } = require("../_env/util/socket.io");
-const xsenv = require("@sap/xsenv");
-
-jest.spyOn(xsenv, "serviceCredentials").mockReturnValue({ uri: "uri" });
 
 cds.test(__dirname + "/../_env");
 
@@ -22,6 +19,7 @@ cds.env.websocket = {
   impl: null,
   adapter: adapterOptions,
 };
+cds.env.requires["redis-websocket"].credentials = { uri: "uri" };
 
 describe("Redis", () => {
   let socket;

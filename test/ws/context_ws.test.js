@@ -2,10 +2,9 @@
 
 const cds = require("@sap/cds");
 
-cds.test(__dirname + "/../_env");
-
 const auth = require("../_env/util/auth");
 const { wait } = require("../_env/util/common");
+
 const {
   connect,
   disconnect,
@@ -15,6 +14,8 @@ const {
   enterContext,
   exitContext,
 } = require("../_env/util/ws");
+
+cds.test(__dirname + "/../_env");
 
 describe("Context", () => {
   let socket;
