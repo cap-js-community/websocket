@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Redis lookup for websocket via CDS env
+- Redis lookup for websocket via CDS env `cds.requires.redis-websocket`
 
 ## Version 1.4.1 - 2024-12-02
 
