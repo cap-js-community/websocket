@@ -17,6 +17,7 @@
 - [Usage](#usage)
   - [Server](#server)
   - [Client](#client)
+- [Options](#options)
 - [Documentation](#documentation)
   - [Architecture Overview](#architecture-overview)
   - [Protocol Annotations](#protocol-annotations)
@@ -157,6 +158,23 @@ In browser environment implement the websocket client: **index.html**
     console.log(message.text);
   });
   ```
+
+## Options
+
+The CDS websocket modules can be configured with the following options:
+
+- **kind: String**: Websocket implementation kind (`ws`, `socket.io`). Default is `'ws'`.
+- **impl: String**: Websocket implementation path. Default is provided by module for kind.
+- **options: Object**: Websocket implementation configuration options. Default is `{}`.
+- **adapter: Object**: Websocket adapter configuration options. Default is `{}`.
+- **adapter.impl: String**: Websocket adapter implementation (`redis`, `@socket.io/redis-adapter`, `@socket.io/redis-streams-adapter`). Default is `''`.
+- **adapter.options: Object**: Websocket adapter implementation options. Default is `{}`.
+- **adapter.config: Object**: Websocket adapter implementation configurations (i.e. Redis client options). Default is `{}`.
+- **adapter.active: Boolean**: Enable websocket adapter. Default is `true`.
+- **adapter.local: Boolean**: Enable websocket adapter in local environment. Default is `false`.
+
+> All CDS Websocket options can also be specified as part of CDS project-specific configuration
+> under section `cds.websocket` and accessed during runtime via `cds.env.websocket`.
 
 ## Documentation
 
