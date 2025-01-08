@@ -1534,13 +1534,13 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
 
     **Example:**
 
-    ```
+    ```json
     {
-      cds: {
-        requires: {
-          redis-websocket: {
-            vcap: {
-              tag: "ws-redis"
+      "cds": {
+        "requires": {
+          "redis-websocket": {
+            "vcap": {
+              "tag": "ws-redis"
             }
           }
         }
@@ -1552,14 +1552,14 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
 
     **Example:**
 
-    ```
+    ```json
     {
-      cds: {
-        requires: {
-          redis-websocket: null,
-          redis: {
-            vcap: {
-              tag: "ws-redis"
+      "cds": {
+        "requires": {
+          "redis-websocket": null,
+          "redis": {
+            "vcap": {
+              "tag": "ws-redis"
             }
           }
         }
