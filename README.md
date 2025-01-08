@@ -344,7 +344,7 @@ over remote distribution via Redis.
 Authentication works best via [AppRouter](https://www.npmjs.com/package/@sap/approuter) (e.g. using a UAA configuration),
 as the auth token is forwarded via authorization header bearer token by AppRouter to backend websocket call.
 
-CDS auth strategy (e.g. `cds.auth.kind: 'xsuaa'`) is applied and CDS auth middleware processes the auth token and
+CDS auth strategy (e.g. `cds.requires.auth.kind: 'xsuaa'`) is applied and CDS auth middleware processes the auth token and
 set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations
 and authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
 
@@ -356,8 +356,10 @@ Example for xsuaa based CDS auth strategy:
 ```json
 {
   "cds": {
-    "auth": {
-      "kind": "xsuaa"
+    "requires": {
+      "auth": {
+        "kind": "xsuaa"
+      }
     }
   }
 }
