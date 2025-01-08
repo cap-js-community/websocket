@@ -12,7 +12,7 @@ const DEBUG = cds.debug("websocket");
 class SocketWSServer extends SocketServer {
   constructor(server, path, config) {
     super(server, path, config);
-    this.wss = new WebSocket.Server({ server });
+    this.wss = new WebSocket.Server({ ...config?.options, server });
     this.services = {};
     cds.ws = this;
     cds.wss = this.wss;

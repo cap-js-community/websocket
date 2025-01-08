@@ -16,8 +16,21 @@ cds.env.websocket.adapter = {
   options: {
     key: "websocket",
   },
+  config: {
+    a: 1,
+    password: "12345",
+    socket: {
+      port: 6380,
+      rejectUnauthorized: false,
+    },
+  },
 };
-cds.env.requires["redis-websocket"].credentials = { uri: "uri" };
+cds.env.requires["redis-websocket"].credentials = {
+  hostname: "localhost",
+  tls: true,
+  port: 6379,
+  password: "1234",
+};
 
 describe("Redis", () => {
   let socket;
@@ -37,7 +50,16 @@ describe("Redis", () => {
     const waitResult = await waitResultPromise;
     expect(waitResult).toEqual({ text: "test", user: "alice" });
 
-    expect(redis.createClient).toHaveBeenCalledWith({ url: "uri" });
+    expect(redis.createClient).toHaveBeenCalledWith({
+      a: 1,
+      password: "12345",
+      socket: {
+        host: "localhost",
+        port: 6380,
+        rejectUnauthorized: false,
+        tls: true,
+      },
+    });
     expect(redis.client.connect).toHaveBeenCalledWith();
     expect(redis.client.on).toHaveBeenNthCalledWith(1, "error", expect.any(Function));
     expect(redis.client.on).toHaveBeenNthCalledWith(2, "reconnecting", expect.any(Function));

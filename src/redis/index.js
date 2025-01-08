@@ -55,21 +55,26 @@ const createClientBase = (options = {}) => {
     LOG?.info("No Redis credentials found");
     return;
   }
+  const config = options?.config || {};
+  const socket = {
+    host: credentials.hostname,
+    tls: credentials.tls,
+    port: credentials.port,
+    ...config.socket,
+  };
+  const redisOptions = {
+    ...config,
+    password: config.password ?? credentials.password,
+    socket,
+  };
   try {
-    const redisIsCluster = credentials.cluster_mode;
-    const url = credentials.uri.replace(/(?<=rediss:\/\/)[\w-]+?(?=:)/, "");
-    if (redisIsCluster) {
+    if (credentials.cluster_mode) {
       return redis.createCluster({
-        rootNodes: [{ url }],
-        // https://github.com/redis/node-redis/issues/1782
-        defaults: {
-          password: credentials.password,
-          socket: { tls: credentials.tls },
-          ...options?.config,
-        },
+        rootNodes: [redisOptions],
+        defaults: redisOptions,
       });
     }
-    return redis.createClient({ url, ...options?.config });
+    return redis.createClient(redisOptions);
   } catch (err) {
     throw new Error("Error during create client with redis-cache service:" + err);
   }

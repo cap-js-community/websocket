@@ -169,6 +169,7 @@ The CDS websocket modules can be configured with the following options:
 - **adapter: Object**: Websocket adapter configuration options. Default is `{}`.
 - **adapter.impl: String**: Websocket adapter implementation (`redis`, `@socket.io/redis-adapter`, `@socket.io/redis-streams-adapter`). Default is `''`.
 - **adapter.options: Object**: Websocket adapter implementation options. Default is `{}`.
+- **adapter.options.key: String**: Websocket adapter channel prefix. Default is `websocket`.
 - **adapter.config: Object**: Websocket adapter implementation configurations (i.e. Redis client options). Default is `{}`.
 - **adapter.active: Boolean**: Enable websocket adapter. Default is `true`.
 - **adapter.local: Boolean**: Enable websocket adapter in local environment. Default is `false`.
