@@ -61,7 +61,7 @@ const createClientBase = (options = {}) => {
     tls: !!credentials.tls,
     port: credentials.port,
     ...requiresRedis?.options?.socket,
-    ...options?.config.socket,
+    ...options?.config?.socket,
   };
   const redisOptions = {
     ...requiresRedis?.options,
