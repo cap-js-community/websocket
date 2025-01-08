@@ -27,6 +27,7 @@ cds.env.websocket.adapter = {
     },
   },
 };
+cds.env.requires["redis-websocket"].options = { b: 1 };
 cds.env.requires["redis-websocket"].credentials = {
   hostname: "localhost",
   tls: true,
@@ -51,6 +52,7 @@ describe("Redis", () => {
 
     expect(redis.createClient).toHaveBeenCalledWith({
       a: 1,
+      b: 1,
       password: "12345",
       socket: {
         host: "localhost",

@@ -341,10 +341,27 @@ over remote distribution via Redis.
 
 ### Authentication & Authorization
 
-Authentication only works via AppRouter (e.g. using a UAA configuration), as the auth token is forwarded
-via authorization header bearer token by AppRouter to backend instance. CDS middlewares process the auth token and
+Authentication works best via [AppRouter](https://www.npmjs.com/package/@sap/approuter) (e.g. using a UAA configuration), 
+as the auth token is forwarded via authorization header bearer token by AppRouter to backend websocket call.
+
+CDS auth strategy (e.g. `cds.auth.kind: 'xsuaa'`) is applied and CDS auth middleware processes the auth token and
 set the auth info accordingly. Authorization scopes are checked as defined in the CDS services `@requires` annotations
 and authorization restrictions are checked as defined in the CDS services `@restrict` annotations.
+
+Authentication can also be performed without AppRouter as long as the WebSocket Upgrade request contains
+a valid authorization header in accordance to the CDS auth strategy defined in CDS env:
+
+Example for xsuaa based CDS auth strategy:
+
+```json
+{
+  "cds": {
+    "auth": {
+      "kind": "xsuaa"
+    }
+  }
+}
+```
 
 ### Invocation Context
 
@@ -1240,7 +1257,7 @@ service operation:
 
 ### Approuter
 
-Authorization in provided in production by Approuter component (e.g. via XSUAA auth).
+Authorization is best provided in production by [Approuter](https://www.npmjs.com/package/@sap/approuter) component (e.g. via XSUAA auth).
 Valid UAA bindings for Approuter and backend are necessary, so that the authorization flow is working.
 Locally, the following default environment files need to exist:
 
@@ -1504,15 +1521,16 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
   - Other Environment (e.g. Kyma): Redis is NOT automatically active
     - Use option `cds.websocket.adapter.active: true` to enable Redis adapter
   - Local: Redis is NOT automatically active
-    - Use option `cds.websocket.adapter.local: true` to enable Redis adapter
-    - File `default-env.json` need to exist with Redis configuration
+    - Use option `cds.websocket.adapter.local: true` to enable Redis adapter locally
+    - Local Redis configuration needs to be in environment (e.g. CAP hybrid testing or `default-env.json`)
+      - Redis can be configured for local testing as described in the following documentation: https://cap-js-community.github.io/event-queue/setup/#configure-redis
 - Redis Adapter options can be specified via `cds.websocket.adapter.options`
 - Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
 - Redis client connection configuration can be passed via `cds.websocket.adapter.config`
 - Redis lookup is performed via `cds.env`.
 
   - Default lookup is done via VCAP `label: "redis-cache"`
-  - Custom lookup can be specified via `cds.requires.redis-websocket`.
+  - Custom Redis lookup can be specified via `cds.requires.redis-websocket`.
 
     **Example:**
 
@@ -1529,6 +1547,27 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
       }
     }
     ```
+
+  - A shared Redis service across multiple consumers can be configured via `cds.requires.redis`:
+
+    **Example:**
+
+    ```
+    {
+      cds: {
+        requires: {
+          redis-websocket: null,
+          redis: {
+            vcap: {
+              tag: "ws-redis"
+            }
+          }
+        }
+      }
+    }
+    ```
+
+  - Redis service options can be specified via `cds.requires.redis-websocket.options` resp. `cds.requires.redis.options`.
 
 ##### Custom Adapter
 

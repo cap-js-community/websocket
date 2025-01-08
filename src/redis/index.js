@@ -50,21 +50,23 @@ const createClientBase = (options = {}) => {
     LOG?.info("Redis not available in local environment");
     return;
   }
-  const credentials = cds.env.requires?.["redis-websocket"]?.credentials;
+  const requiresRedis = cds.env.requires?.["redis-websocket"] ?? cds.env.requires?.redis;
+  const credentials = requiresRedis?.credentials;
   if (!credentials) {
     LOG?.info("No Redis credentials found");
     return;
   }
-  const config = options?.config || {};
   const socket = {
     host: credentials.hostname,
-    tls: credentials.tls,
+    tls: !!credentials.tls,
     port: credentials.port,
-    ...config.socket,
+    ...requiresRedis?.options?.socket,
+    ...options?.config.socket,
   };
   const redisOptions = {
-    ...config,
-    password: config.password ?? credentials.password,
+    ...requiresRedis?.options,
+    ...options?.config,
+    password: options?.config?.password ?? requiresRedis?.options?.password ?? credentials.password,
     socket,
   };
   try {
