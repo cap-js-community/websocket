@@ -8,7 +8,7 @@ sap.ui.define(
         onInit: function () {
           this.base.onInit();
           socket.attachMessage("message", (event) => {
-            const object = this.base.getExtensionAPI().getBindingContext().getObject();
+            const object = this.base.getExtensionAPI().getBindingContext()?.getObject();
             const message = JSON.parse(event.getParameter("data"));
             if (message.event === "refresh") {
               if (object?.ID === message?.data?.ID && object?.IsActiveEntity) {
