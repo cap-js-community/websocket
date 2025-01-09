@@ -532,7 +532,7 @@ class SocketServer {
   /**
    * Check if error is an instance of Error
    * @param err Error
-   * @returns {boolean} True if error is an instance of Error
+   * @returns {boolean} True, if error is an instance of Error
    */
   isError(err) {
     try {
