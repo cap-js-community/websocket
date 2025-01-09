@@ -2,7 +2,6 @@
 "use strict";
 
 const cds = require("@sap/cds");
-const cookie = require("cookie");
 const crypto = require("crypto");
 const path = require("path");
 
@@ -349,9 +348,19 @@ class SocketServer {
         !req.headers.authorization &&
         req.headers.cookie
       ) {
-        const cookies = cookie.parse(req.headers.cookie);
-        if (cookies["X-Authorization"] || cookies["Authorization"]) {
-          req.headers.authorization = cookies["X-Authorization"] || cookies["Authorization"];
+        const cookies = req.headers.cookie?.split(";").reduce((result, entry) => {
+          let [name, ...rest] = entry.split("=");
+          name = name?.trim();
+          if (name) {
+            const value = rest.join("=").trim();
+            if (value) {
+              result[name] = decodeURIComponent(value);
+            }
+          }
+          return result;
+        }, {});
+        if (cookies["X-Authorization"]) {
+          req.headers.authorization = cookies["X-Authorization"];
         }
       }
     } catch (err) {
