@@ -4,6 +4,7 @@
 const cds = require("@sap/cds");
 const crypto = require("crypto");
 const path = require("path");
+const { inspect } = require("util");
 
 /**
  * Base class for a websocket server
@@ -229,6 +230,7 @@ class SocketServer {
    * @returns {[function]} Returns a list of middleware functions
    */
   middlewares() {
+    const base = this;
     function wrapMiddleware(middleware) {
       return (socket, next) => {
         let nextCalled = false;
@@ -236,7 +238,7 @@ class SocketServer {
           delete socket.request._next;
           if (!nextCalled) {
             nextCalled = true;
-            next(err);
+            next(base.toError(err));
           }
         };
         socket.request._next = wrapNext;
@@ -525,6 +527,31 @@ class SocketServer {
         set.delete(entry);
       }
     }
+  }
+
+  /**
+   * Check if error is an instance of Error
+   * @param err Error
+   * @returns {boolean} True if error is an instance of Error
+   */
+  isError(err) {
+    try {
+      return err instanceof Error || Object.prototype.toString.call(err) === "[object Error]";
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Convert error to instance of Error
+   * @param err Error
+   * @returns {Error} Error instance
+   */
+  toError(err) {
+    if ([undefined, null].includes(err)) {
+      return err;
+    }
+    return this.isError(err) ? err : new Error(inspect(err));
   }
 }
 
