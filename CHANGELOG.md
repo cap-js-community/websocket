@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Improve redis connection check
-- Improve connection error handling (e.g. unauthorized) 
+- Improve connection error handling (e.g. unauthorized)
 
 ## Version 1.5.0 - 2025-01-08
 

@@ -344,7 +344,11 @@ class SocketServer {
     let error;
     try {
       // Apply cookie to authorization header
-      if (["mocked", "basic"].includes(cds.env.requires?.auth?.kind) && !req.headers.authorization && req.headers.cookie) {
+      if (
+        ["mocked", "basic"].includes(cds.env.requires?.auth?.kind) &&
+        !req.headers.authorization &&
+        req.headers.cookie
+      ) {
         const cookies = cookie.parse(req.headers.cookie);
         if (cookies["X-Authorization"] || cookies["Authorization"]) {
           req.headers.authorization = cookies["X-Authorization"] || cookies["Authorization"];
