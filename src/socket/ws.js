@@ -60,7 +60,12 @@ class SocketWSServer extends SocketServer {
           throw err;
         }
       });
-      this.applyMiddlewares(ws, async () => {
+      this.applyMiddlewares(ws, async (err) => {
+        if (err) {
+          DEBUG?.(err);
+          this.close(ws, err.code, err.message);
+          return;
+        }
         try {
           this.enforceAuth(ws);
           ws.context = { ...cds.context };

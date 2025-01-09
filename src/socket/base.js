@@ -181,7 +181,13 @@ class SocketServer {
    */
   respond(socket, statusCode, body) {
     if (statusCode >= 400) {
-      this.close(socket, 4000 + statusCode, body);
+      const code = 4000 + statusCode;
+      this.close(socket, code, body);
+      if (socket.request?._next) {
+        const closeError = new Error(body);
+        closeError.code = code;
+        socket.request?._next(closeError);
+      }
     }
   }
 
@@ -338,7 +344,7 @@ class SocketServer {
     let error;
     try {
       // Apply cookie to authorization header
-      if (["mocked"].includes(cds.env.requires?.auth?.kind) && !req.headers.authorization && req.headers.cookie) {
+      if (["mocked", "basic"].includes(cds.env.requires?.auth?.kind) && !req.headers.authorization && req.headers.cookie) {
         const cookies = cookie.parse(req.headers.cookie);
         if (cookies["X-Authorization"] || cookies["Authorization"]) {
           req.headers.authorization = cookies["X-Authorization"] || cookies["Authorization"];

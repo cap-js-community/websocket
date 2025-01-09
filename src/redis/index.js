@@ -146,18 +146,16 @@ const connectionCheck = async (options) => {
       .then((client) => {
         if (client) {
           resilientClientClose(client);
-          resolve();
+          resolve(true);
         } else {
-          reject(new Error());
+          resolve(false);
         }
       })
       .catch(reject);
-  })
-    .then(() => true)
-    .catch((err) => {
-      LOG?.error("Redis connection check failed! Falling back to no redis mode", err);
-      return false;
-    });
+  }).catch((err) => {
+    LOG?.error("Redis connection check failed! Falling back to no redis mode", err);
+    return false;
+  });
 };
 
 const closeClients = async () => {
