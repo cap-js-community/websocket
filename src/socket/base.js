@@ -222,6 +222,7 @@ class SocketServer {
    */
   middlewares() {
     const base = this;
+
     function wrapMiddleware(middleware) {
       return (socket, next) => {
         let nextCalled = false;
@@ -366,9 +367,13 @@ class SocketServer {
   /**
    * Enforce that socket request is authenticated (no anonymous)
    * @param {Object} socket Server socket
+   * @param {Function} next Call next
    */
   enforceAuth(socket, next) {
-    if (cds.context?.user?._is_anonymous || (socket.request.isAuthenticated && !socket.request.isAuthenticated())) {
+    if (
+      cds.context?.user?._is_anonymous ||
+      (typeof socket.request?.isAuthenticated === "function" && !socket.request?.isAuthenticated())
+    ) {
       const err = new Error("401");
       err.code = 4401;
       return next(err);
