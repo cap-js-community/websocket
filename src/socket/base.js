@@ -22,6 +22,7 @@ class SocketServer {
     this.path = path;
     this.config = config;
     this.adapter = null;
+    this.adapterImpl = null;
     this.adapterActive = false;
     cds.ws = null;
   }
@@ -200,16 +201,6 @@ class SocketServer {
   close(socket, code, reason) {}
 
   /**
-   * Enforce that socket request is authenticated
-   * @param {Object} socket Server socket
-   */
-  enforceAuth(socket) {
-    if (socket.request.isAuthenticated && !socket.request.isAuthenticated()) {
-      throw new Error("403 - Forbidden");
-    }
-  }
-
-  /**
    * Middlewares executed before
    * @returns {[function]} Returns a list of middleware functions
    */
@@ -222,7 +213,7 @@ class SocketServer {
    * @returns {[function]} Returns a list of middleware functions
    */
   afterMiddlewares() {
-    return [this.removeWrapNext.bind(this)];
+    return [this.enforceAuth.bind(this), this.removeWrapNext.bind(this)];
   }
 
   /**
@@ -370,6 +361,19 @@ class SocketServer {
     } finally {
       next(error);
     }
+  }
+
+  /**
+   * Enforce that socket request is authenticated (no anonymous)
+   * @param {Object} socket Server socket
+   */
+  enforceAuth(socket, next) {
+    if (cds.context?.user?._is_anonymous || (socket.request.isAuthenticated && !socket.request.isAuthenticated())) {
+      const err = new Error("401");
+      err.code = 4401;
+      return next(err);
+    }
+    next();
   }
 
   /**

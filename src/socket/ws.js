@@ -67,7 +67,6 @@ class SocketWSServer extends SocketServer {
           return;
         }
         try {
-          this.enforceAuth(ws);
           ws.context = { ...cds.context };
           ws.facade = {
             service,
@@ -275,6 +274,7 @@ class SocketWSServer extends SocketServer {
         if (adapterFactory) {
           this.adapter = new adapterFactory(this, config);
           await this.adapter?.setup?.();
+          this.adapterImpl = config.impl;
           this.adapterActive = !!this.adapter?.client;
         }
       }

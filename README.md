@@ -1558,7 +1558,7 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
     {
       "cds": {
         "requires": {
-          "redis-websocket": null,
+          "redis-websocket": false,
           "redis": {
             "vcap": {
               "tag": "ws-redis"

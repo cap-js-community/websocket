@@ -47,10 +47,10 @@ const createClientBase = (options = {}) => {
   const adapterActiveExplicit = !!options?.active;
   const adapterLocal = !!options?.local;
   if (!(IS_ON_CF || adapterActiveExplicit || adapterLocal)) {
-    LOG?.info("Redis not available in local environment");
+    LOG?.info("Redis is not activated for local environment");
     return;
   }
-  const requiresRedis = cds.env.requires?.["redis-websocket"] ?? cds.env.requires?.redis;
+  const requiresRedis = cds.env.requires?.["redis-websocket"] || cds.env.requires?.redis;
   const credentials = requiresRedis?.credentials;
   if (!credentials) {
     LOG?.info("No Redis credentials found");

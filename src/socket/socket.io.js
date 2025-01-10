@@ -30,7 +30,6 @@ class SocketIOServer extends SocketServer {
     const format = this.format(service, undefined, "json");
     io.on("connection", async (socket) => {
       try {
-        this.enforceAuth(socket);
         socket.context = { ...cds.context };
         socket.join(room({ tenant: socket.context.tenant }));
         if (socket.context.user?.id) {
@@ -282,6 +281,7 @@ class SocketIOServer extends SocketServer {
           }
           if (this.adapter) {
             this.io.adapter(this.adapter);
+            this.adapterImpl = config.impl;
             this.adapterActive = true;
           }
         }
