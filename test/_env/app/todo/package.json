@@ -6,8 +6,8 @@
     "build": "ui5 build -a --clean-dest --include-task=generateManifestBundle generateCachebusterInfo"
   },
   "devDependencies": {
-    "@ui5/cli": "^3.3.4",
-    "ui5-task-zipper": "^3.0.0"
+    "@ui5/cli": "^4.0.12",
+    "ui5-task-zipper": "^3.3.1"
   },
   "ui5": {
     "dependencies": [
