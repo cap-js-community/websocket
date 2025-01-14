@@ -186,6 +186,7 @@ class SocketServer {
       this.close(socket, code, body);
       if (socket.request?._next) {
         const closeError = new Error(body);
+        closeError.statusCode = statusCode;
         closeError.code = code;
         socket.request?._next(closeError);
       }
@@ -370,12 +371,11 @@ class SocketServer {
    * @param {Function} next Call next
    */
   enforceAuth(socket, next) {
-    if (
-      cds.context?.user?._is_anonymous ||
-      (typeof socket.request?.isAuthenticated === "function" && !socket.request?.isAuthenticated())
-    ) {
+    const req = socket.request;
+    if (cds.context?.user?._is_anonymous || (typeof req?.isAuthenticated === "function" && !req?.isAuthenticated())) {
       const err = new Error("401");
-      err.code = 4401;
+      err.statusCode = 401;
+      err.code = 4000 + err.statusCode;
       return next(err);
     }
     next();

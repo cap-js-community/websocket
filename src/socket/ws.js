@@ -12,7 +12,7 @@ const DEBUG = cds.debug("websocket");
 class SocketWSServer extends SocketServer {
   constructor(server, path, config) {
     super(server, path, config);
-    this.wss = new WebSocket.Server({ ...config?.options, server });
+    this.wss = new WebSocket.Server({ ...config?.options, noServer: true });
     this.services = {};
     cds.ws = this;
     cds.wss = this.wss;
@@ -21,17 +21,44 @@ class SocketWSServer extends SocketServer {
   async setup() {
     await this.applyAdapter();
     this._middlewares = this.middlewares();
-    this.wss.on("connection", async (ws, request) => {
-      const url = request?.url;
-      if (url) {
-        const urlObj = URL.parse(url, true);
-        request.queryOptions = urlObj.query;
-        request.url = urlObj.pathname;
-        if (this.services[request.url]) {
-          this.services[request.url](ws, request);
-        } else {
-          DEBUG?.("No websocket service for url", request.url);
+    this.server.on("upgrade", (request, socket, head) => {
+      socket.request = request;
+      const onSocketError = (err) => {
+        LOG?.error(err);
+      };
+      socket.on("error", onSocketError);
+      this.applyMiddlewares(socket, async (err) => {
+        if (err) {
+          DEBUG?.(err);
+          socket.write(`HTTP/1.1 ${err.statusCode || err.code} ${err.message}\r\n\r\n`);
+          socket.destroy();
+          return;
         }
+        const url = request?.url;
+        if (url) {
+          const urlObj = URL.parse(url, true);
+          request.queryOptions = urlObj.query;
+          request.url = urlObj.pathname;
+          if (!(typeof this.services[request.url] === "function")) {
+            socket.write(`HTTP/1.1 404 Not Found\r\n\r\n`);
+            socket.destroy();
+            return;
+          }
+        }
+        socket.removeListener("error", onSocketError);
+        this.wss.handleUpgrade(request, socket, head, (ws) => {
+          DEBUG?.("Upgraded");
+          this.onInit(ws, request);
+          this.wss.emit("connection", ws, request);
+        });
+      });
+    });
+
+    this.wss.on("connection", async (ws, request) => {
+      if (this.services[request.url]) {
+        this.services[request.url](ws, request);
+      } else {
+        DEBUG?.("No websocket service for url", request.url);
       }
     });
   }
@@ -40,7 +67,6 @@ class SocketWSServer extends SocketServer {
     this.adapter?.on(service, path);
     const format = this.format(service);
     this.services[this.servicePath(path)] = (ws, request) => {
-      this.onInit(ws, request);
       DEBUG?.("Initialized");
       ws.on("close", () => {
         this.onDisconnect(ws);
@@ -60,85 +86,78 @@ class SocketWSServer extends SocketServer {
           throw err;
         }
       });
-      this.applyMiddlewares(ws, async (err) => {
-        if (err) {
-          DEBUG?.(err);
-          this.close(ws, err.code, err.message);
-          return;
-        }
-        try {
-          ws.context = { ...cds.context };
-          ws.facade = {
-            service,
-            path,
-            socket: ws,
-            get context() {
-              return ws.context;
-            },
-            on: (event, callback) => {
-              this.addToSetOfMap(ws.events, event, callback);
-            },
-            emit: async (event, data) => {
-              try {
-                await ws.send(format.compose(event, data));
-              } catch (err) {
-                LOG?.error(err);
-                throw err;
-              }
-            },
-            broadcast: async (event, data, user, context, identifier, headers) => {
-              await this.broadcast({
-                service,
-                path,
-                event,
-                data,
-                tenant: ws.context.tenant,
-                user,
-                context,
-                identifier,
-                headers,
-                socket: ws,
-              });
-            },
-            broadcastAll: async (event, data, user, context, identifier, headers) => {
-              await this.broadcast({
-                service,
-                path,
-                event,
-                data,
-                tenant: ws.context.tenant,
-                user,
-                context,
-                identifier,
-                headers,
-                socket: null,
-              });
-            },
-            enter: async (context) => {
-              ws.contexts.add(context);
-              const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
-              this.addToSetOfMap(clients.contexts, context, ws);
-            },
-            exit: async (context) => {
-              ws.contexts.delete(context);
-              const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
-              this.deleteFromSetOfMap(clients.contexts, context, ws);
-            },
-            disconnect() {
-              ws.close();
-            },
-            onDisconnect: (callback) => {
-              ws.on("close", callback);
-            },
-          };
-          ws.context.ws = { service: ws.facade, socket: ws };
-          this.onConnect(ws, request);
-          connected && connected(ws.facade);
-          DEBUG?.("Connected");
-        } catch (err) {
-          LOG?.error(err);
-        }
-      });
+      try {
+        ws.context = { ...cds.context };
+        ws.facade = {
+          service,
+          path,
+          socket: ws,
+          get context() {
+            return ws.context;
+          },
+          on: (event, callback) => {
+            this.addToSetOfMap(ws.events, event, callback);
+          },
+          emit: async (event, data) => {
+            try {
+              await ws.send(format.compose(event, data));
+            } catch (err) {
+              LOG?.error(err);
+              throw err;
+            }
+          },
+          broadcast: async (event, data, user, context, identifier, headers) => {
+            await this.broadcast({
+              service,
+              path,
+              event,
+              data,
+              tenant: ws.context.tenant,
+              user,
+              context,
+              identifier,
+              headers,
+              socket: ws,
+            });
+          },
+          broadcastAll: async (event, data, user, context, identifier, headers) => {
+            await this.broadcast({
+              service,
+              path,
+              event,
+              data,
+              tenant: ws.context.tenant,
+              user,
+              context,
+              identifier,
+              headers,
+              socket: null,
+            });
+          },
+          enter: async (context) => {
+            ws.contexts.add(context);
+            const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
+            this.addToSetOfMap(clients.contexts, context, ws);
+          },
+          exit: async (context) => {
+            ws.contexts.delete(context);
+            const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
+            this.deleteFromSetOfMap(clients.contexts, context, ws);
+          },
+          disconnect() {
+            ws.close();
+          },
+          onDisconnect: (callback) => {
+            ws.on("close", callback);
+          },
+        };
+        ws.context.ws = { service: ws.facade, socket: ws };
+        this.onConnect(ws, request);
+        connected && connected(ws.facade);
+        DEBUG?.("Connected");
+      } catch (err) {
+        LOG?.error(err);
+      }
     };
   }
 
@@ -215,7 +234,7 @@ class SocketWSServer extends SocketServer {
 
   close(socket, code, reason) {
     if (socket) {
-      socket.close(code, reason);
+      socket.close?.(code, reason);
     } else {
       this.wss.close();
     }
@@ -283,7 +302,7 @@ class SocketWSServer extends SocketServer {
     }
   }
 
-  applyMiddlewares(ws, next) {
+  applyMiddlewares(socket, next) {
     const middlewares = this._middlewares.slice(0);
 
     function call() {
@@ -292,7 +311,7 @@ class SocketWSServer extends SocketServer {
         if (!middleware) {
           return next(null);
         }
-        middleware(ws, (err) => {
+        middleware(socket, (err) => {
           if (err) {
             next(err);
           } else {

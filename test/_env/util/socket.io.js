@@ -13,9 +13,11 @@ async function connect(service, options = {}, headers) {
       ...headers,
     },
   });
-  cds.io.of(service).once("connection", (serverSocket) => {
-    socket.serverSocket = serverSocket;
-  });
+  if (options.serverSocket !== false) {
+    cds.io.of(service).once("connection", (serverSocket) => {
+      socket.serverSocket = serverSocket;
+    });
+  }
   return new Promise((resolve, reject) => {
     socket.once("connect", () => {
       resolve(socket);

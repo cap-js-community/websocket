@@ -14,9 +14,11 @@ async function connect(service, options = {}, headers = {}, protoocls) {
       ...headers,
     },
   });
-  cds.wss.once("connection", async (serverSocket) => {
-    socket.serverSocket = serverSocket;
-  });
+  if (options.serverSocket !== false) {
+    cds.wss.once("connection", async (serverSocket) => {
+      socket.serverSocket = serverSocket;
+    });
+  }
   return new Promise((resolve, reject) => {
     socket.once("open", () => {
       resolve(socket);
