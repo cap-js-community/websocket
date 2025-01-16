@@ -371,6 +371,10 @@ class SocketServer {
    * @param {Function} next Call next
    */
   enforceAuth(socket, next) {
+    const restrict_all = cds.env.requires?.auth?.restrict_all_services !== false;
+    if (!restrict_all) {
+      return next();
+    }
     const req = socket.request;
     if (cds.context?.user?._is_anonymous || (typeof req?.isAuthenticated === "function" && !req?.isAuthenticated())) {
       const err = new Error("401");
@@ -378,7 +382,7 @@ class SocketServer {
       err.code = 4000 + err.statusCode;
       return next(err);
     }
-    next();
+    return next();
   }
 
   /**
