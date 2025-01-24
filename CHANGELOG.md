@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Check authorization and service path before websocket upgrade
 - Reject connection to non-websocket protocol paths
-- Support unauthenticated requests via option `cds.requires.auth.restrict_all_services === false`
+- Support unauthenticated requests via option `cds.requires.auth.restrict_all_services: false`
 - Fix call to `wsDisconnect` operation without reason parameter
 - Cast reason parameter for `wsDisconnect` operation to string
 
