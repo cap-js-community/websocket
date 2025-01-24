@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Reject connection to non-websocket protocol paths
 - Support unauthenticated requests via option `cds.requires.auth.restrict_all_services === false`
 - Fix call to `wsDisconnect` operation without reason parameter
-- Cast reason parameter for `wsDisconnect` operation to string 
+- Cast reason parameter for `wsDisconnect` operation to string
 
 ## Version 1.5.2 - 2025-01-10
 
