@@ -365,6 +365,8 @@ Example for xsuaa based CDS auth strategy:
 }
 ```
 
+Headers of Websocket Upgrade request can be accessed via `req.http.req.headers` in websocket service handlers.
+
 ### Invocation Context
 
 In context of a WebSocket enabled CDS services, WebSockets events can be directly emitted to the service in the event
