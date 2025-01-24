@@ -14,7 +14,19 @@ describe("Main", () => {
   let socketOther;
   let socketOtherTenant;
 
+  let connected = false;
+  let disconnected = false;
+  let disconnectReason = false;
+
   beforeAll(async () => {
+    const mainService = await cds.connect.to("MainService");
+    mainService.after("wsConnect", async (req) => {
+      connected = true;
+    });
+    mainService.after("wsDisconnect", async (data, req) => {
+      disconnected = true;
+      disconnectReason = req.data.reason;
+    });
     socket = await connect("/ws/main");
     socketOther = await connect("/ws/main");
     socketOtherTenant = await connect("/ws/main", {
@@ -133,5 +145,8 @@ describe("Main", () => {
     await wait();
     const result = await emitEvent(socket, "triggerCustomEvent", { ID: "1234", num: 1, text: "test" });
     expect(result).toEqual(new Error("WebSocket is not open: readyState 3 (CLOSED)"));
+    expect(connected).toBe(true);
+    expect(disconnected).toBe(true);
+    expect(disconnectReason).toBe("1005");
   });
 });

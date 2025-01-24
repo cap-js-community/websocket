@@ -196,8 +196,13 @@ function bindServiceEvents(socketServer, service, path) {
 
 function bindServiceDefaults(socket, service) {
   if (service.operations[WebSocketAction.Disconnect]) {
+    const operation = service.operations[WebSocketAction.Disconnect];
     socket.onDisconnect(async (reason) => {
-      await processEvent(socket, service, WebSocketAction.Disconnect, { reason });
+      const data = {};
+      if (reason !== undefined && operation?.params?.reason?.type === "cds.String") {
+        data.reason = stringValue(reason);
+      }
+      await processEvent(socket, service, WebSocketAction.Disconnect, data);
     });
   }
   socket.on(WebSocketAction.Context, async (data, callback) => {
