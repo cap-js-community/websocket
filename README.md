@@ -784,7 +784,9 @@ event received {
 
 Event is only published to all clients with identifiers listed in the event data of `ids`.
 
-##### Client Setup
+##### Identifier Setup
+
+###### Client Side
 
 The unique identifier can be provided for a websocket client as follows:
 
@@ -796,6 +798,21 @@ The unique identifier can be provided for a websocket client as follows:
   ```js
   const socket = io("/ws/chat?id=1234");
   ```
+
+###### Server Side
+
+The unique identifier can be provided for a websocket client server connection on server side via `req.id = '1234'`
+for the WebSocket Upgrade request (`req`). A custom CDS middleware can be registered via `cds.middlewares.add`
+to set the request unique client identifier as part of the WebSocket Upgrade request.
+
+Be aware, that CDS middlewares are running for any CDS request. Restriction to WebSocket upgrade requests only
+can be done as follows:
+
+```js
+if (req.upgrade) {
+  req.id = "1234";
+}
+```
 
 #### Event Emit Headers
 

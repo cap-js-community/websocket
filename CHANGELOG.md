@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support unauthenticated requests via option `cds.requires.auth.restrict_all_services: false`
 - Fix call to `wsDisconnect` operation without reason parameter
 - Cast reason parameter for `wsDisconnect` operation to string
+- Fill `baseUrl` for websocket requests (necessary for request context specific model in toggle/extensibility scenario)
+- Clean websocket context from internal read-only attributes
+- Normalize client identifier on upgrade request `request.id`
+- Return 404 when url cannot be associated with a service in upgrade request
 
 ## Version 1.5.2 - 2025-01-10
 

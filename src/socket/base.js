@@ -34,6 +34,16 @@ class SocketServer {
   async setup() {}
 
   /**
+   * Initialize new websocket context from CDS context
+   * @returns {*} New websocket context
+   */
+  initContext() {
+    const context = { ...cds.context };
+    delete context._features;
+    return context;
+  }
+
+  /**
    * Connect a service to websocket server
    * @param {String} service service definition
    * @param {String} path service path, e.g. "/path"
@@ -276,6 +286,8 @@ class SocketServer {
    */
   mockResponse(socket, next) {
     const req = socket.request;
+    req.baseUrl ??= req.url;
+    req.originalUrl ??= req.url;
     let error;
     try {
       // Mock response (not available in websocket, CDS middlewares need it)

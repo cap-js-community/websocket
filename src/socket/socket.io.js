@@ -30,19 +30,20 @@ class SocketIOServer extends SocketServer {
     const format = this.format(service, undefined, "json");
     io.on("connection", async (socket) => {
       try {
-        socket.context = { ...cds.context };
+        socket.context = this.initContext();
+        socket.request.id ??= socket.request._query?.id;
         socket.join(room({ tenant: socket.context.tenant }));
         if (socket.context.user?.id) {
           socket.join(room({ tenant: socket.context.tenant, user: socket.context.user?.id }));
         }
-        if (socket.request._query?.id) {
-          socket.join(room({ tenant: socket.context.tenant, identifier: socket.request._query?.id }));
+        if (socket.request.id) {
+          socket.join(room({ tenant: socket.context.tenant, identifier: socket.request.id }));
           if (socket.context.user?.id) {
             socket.join(
               room({
                 tenant: socket.context.tenant,
                 user: socket.context.user?.id,
-                identifier: socket.request._query?.id,
+                identifier: socket.request.id,
               }),
             );
           }
@@ -109,12 +110,12 @@ class SocketIOServer extends SocketServer {
             if (socket.context.user?.id) {
               await socket.join(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
             }
-            if (socket.request._query?.id) {
+            if (socket.request.id) {
               await socket.join(
                 room({
                   tenant: socket.context.tenant,
                   context,
-                  identifier: socket.request._query?.id,
+                  identifier: socket.request.id,
                 }),
               );
               if (socket.context.user?.id) {
@@ -123,7 +124,7 @@ class SocketIOServer extends SocketServer {
                     tenant: socket.context.tenant,
                     user: socket.context.user?.id,
                     context,
-                    identifier: socket.request._query?.id,
+                    identifier: socket.request.id,
                   }),
                 );
               }
@@ -134,12 +135,12 @@ class SocketIOServer extends SocketServer {
             if (socket.context.user?.id) {
               await socket.leave(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
             }
-            if (socket.request._query?.id) {
+            if (socket.request.id) {
               await socket.leave(
                 room({
                   tenant: socket.context.tenant,
                   context,
-                  identifier: socket.request._query?.id,
+                  identifier: socket.request.id,
                 }),
               );
               if (socket.context.user?.id) {
@@ -148,7 +149,7 @@ class SocketIOServer extends SocketServer {
                     tenant: socket.context.tenant,
                     user: socket.context.user.id,
                     context,
-                    identifier: socket.request._query?.id,
+                    identifier: socket.request.id,
                   }),
                 );
               }

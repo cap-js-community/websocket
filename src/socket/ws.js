@@ -35,15 +35,14 @@ class SocketWSServer extends SocketServer {
           return;
         }
         const url = request?.url;
-        if (url) {
-          const urlObj = URL.parse(url, true);
-          request.queryOptions = urlObj.query;
-          request.url = urlObj.pathname;
-          if (!(typeof this.services[request.url] === "function")) {
-            socket.write(`HTTP/1.1 404 Not Found\r\n\r\n`);
-            socket.destroy();
-            return;
-          }
+        const urlObj = URL.parse(url, true);
+        request.queryOptions = urlObj?.query || {};
+        request.id ??= request.queryOptions.id;
+        request.url = urlObj?.pathname;
+        if (!(typeof this.services[request.url] === "function")) {
+          socket.write(`HTTP/1.1 404 Not Found\r\n\r\n`);
+          socket.destroy();
+          return;
         }
         socket.removeListener("error", onSocketError);
         this.wss.handleUpgrade(request, socket, head, (ws) => {
@@ -87,7 +86,7 @@ class SocketWSServer extends SocketServer {
         }
       });
       try {
-        ws.context = { ...cds.context };
+        ws.context = this.initContext();
         ws.facade = {
           service,
           path,
@@ -207,7 +206,7 @@ class SocketWSServer extends SocketServer {
         this.keepEntriesFromSet(
           clients,
           this.collectFromSet(clients, (client) => {
-            return !identifier?.exclude.includes(client.request?.queryOptions?.id);
+            return !identifier?.exclude.includes(client.request?.id);
           }),
         );
       }
@@ -252,8 +251,8 @@ class SocketWSServer extends SocketServer {
     if (ws.context.user?.id) {
       this.addToSetOfMap(clients.users, ws.context.user?.id, ws);
     }
-    if (ws.request?.queryOptions?.id) {
-      this.addToSetOfMap(clients.identifiers, ws.request?.queryOptions?.id, ws);
+    if (ws.request?.id) {
+      this.addToSetOfMap(clients.identifiers, ws.request?.id, ws);
     }
   }
 
@@ -268,8 +267,8 @@ class SocketWSServer extends SocketServer {
     for (const [key] of clients.contexts) {
       this.deleteFromSetOfMap(clients.contexts, key, ws);
     }
-    if (ws.request?.queryOptions?.id) {
-      this.deleteFromSetOfMap(clients.identifiers, ws.request?.queryOptions?.id, ws);
+    if (ws.request?.id) {
+      this.deleteFromSetOfMap(clients.identifiers, ws.request?.id, ws);
     }
   }
 
