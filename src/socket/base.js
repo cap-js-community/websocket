@@ -384,17 +384,17 @@ class SocketServer {
    */
   enforceAuth(socket, next) {
     const restrict_all = cds.env.requires?.auth?.restrict_all_services !== false;
-    if (!restrict_all) {
+    if (!restrict_all || cds.context?.user?._is_privileged || !cds.context?.user?._is_anonymous) {
       return next();
     }
     const req = socket.request;
-    if (cds.context?.user?._is_anonymous || (typeof req?.isAuthenticated === "function" && !req?.isAuthenticated())) {
-      const err = new Error("401");
-      err.statusCode = 401;
-      err.code = 4000 + err.statusCode;
-      return next(err);
+    if (typeof req?.isAuthenticated === "function" && req?.isAuthenticated()) {
+      return next();
     }
-    return next();
+    const err = new Error("401");
+    err.statusCode = 401;
+    err.code = 4000 + err.statusCode;
+    return next(err);
   }
 
   /**

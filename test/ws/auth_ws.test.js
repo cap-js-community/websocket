@@ -7,6 +7,8 @@ const { connect } = require("../_env/util/ws");
 
 cds.test(__dirname + "/../_env");
 
+cds.env.requires.auth.login_required = false;
+
 describe("Auth", () => {
   afterAll(() => {
     cds.ws.close();
@@ -16,6 +18,14 @@ describe("Auth", () => {
     await expect(
       connect("/ws/chat", {
         authorization: auth.invalid,
+      }),
+    ).rejects.toThrow(new Error("Unexpected server response: 401"));
+  });
+
+  test("Empty Auth", async () => {
+    await expect(
+      connect("/ws/chat", {
+        authorization: "",
       }),
     ).rejects.toThrow(new Error("Unexpected server response: 401"));
   });

@@ -8,6 +8,7 @@ const auth = require("../_env/util/auth");
 cds.test(__dirname + "/../_env");
 
 cds.env.websocket.kind = "socket.io";
+cds.env.requires.auth.login_required = false;
 
 describe("Auth", () => {
   afterAll(() => {
@@ -18,6 +19,14 @@ describe("Auth", () => {
     await expect(
       connect("/ws/chat", {
         authorization: auth.invalid,
+      }),
+    ).rejects.toThrow(new Error("401"));
+  });
+
+  test("Empty Auth", async () => {
+    await expect(
+      connect("/ws/chat", {
+        authorization: "",
       }),
     ).rejects.toThrow(new Error("401"));
   });

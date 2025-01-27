@@ -10,7 +10,7 @@ async function connect(service, options = {}, headers = {}, protoocls) {
   protoocls ??= [];
   const socket = new WebSocket(`ws://localhost:${port}` + service, protoocls, {
     headers: {
-      authorization: options?.authorization || auth.alice,
+      authorization: options?.authorization ?? auth.alice,
       ...headers,
     },
   });
