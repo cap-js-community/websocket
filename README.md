@@ -383,7 +383,7 @@ still the WebService events can be published by connecting to the WebSocket enab
 
 ```js
 const wsService = await cds.connect.to("WSService");
-await wsService.emit("message", req.data);
+await wsService.tx(req).emit("message", req.data);
 ```
 
 `cds.conntect.to` can be used to connect to any WebSocket enabled service, to emit events to the WebSocket service.
@@ -403,7 +403,7 @@ Alternatively you can leverage the CAP in-memory outbox via `cds.outboxed` as fo
 
 ```js
 const chatService = cds.outboxed(await cds.connect.to("ChatService"));
-await chatService.emit("received", req.data);
+await chatService.tx(req).emit("received", req.data);
 ```
 
 This has the benefit, that the event emitting is coupled to the success of the primary transaction.
@@ -424,7 +424,7 @@ The transactional safety can be achieved using `cds.outboxed` with kind `persist
 const chatService = cds.outboxed(await cds.connect.to("ChatService"), {
   kind: "persistent-outbox",
 });
-await chatService.emit("received", req.data);
+await chatService.tx(req).emit("received", req.data);
 ```
 
 In that case, the websocket event is broadcast to websocket clients exactly once, when the primary transaction succeeds.
