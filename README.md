@@ -679,7 +679,8 @@ To manage event contexts the following options exist:
     functions
     - **Enter Context**: `enter(context: String)` - Enter the current server socket into the passed context
     - **Exit Context**: `exit(context: String)` - Exit the current server socket from the passed context
-- **Client side**: Emit `wsContext` event from client socket
+    - **Reset Contexts**: `reset()` - Resets all contexts
+- **Client side**: Emit `wsContext` event from client socket.
   - **Enter Context**:
     - WS Standard:
       ```js
@@ -698,9 +699,20 @@ To manage event contexts the following options exist:
       ```js
       socket.emit("wsContext", { context: "...", exit: true });
       ```
+  - **Reset**:
+    - WS Standard:
+      ```js
+      socket.send(JSON.stringify({ event: "wsContext", data: { reset: true } }));
+      ```
+    - Socket.IO:
+      ```js
+      socket.emit("wsContext", { reset: true });
+      ```
 
-Multiple contexts can be entered for the same server socket at the same time. Furthermore, a service operation named
-`wsContext` is invoked, if existing on the websocket enabled CDS service. Event context isolation is also ensured
+Multiple contexts can be entered for the same server socket at the same time. The `context` parameter can be a single `string` value or an array of `string` values.
+Reset and enter context can be used within a single `wsContext` call. First all contexts are reset and then the new contexts are entered.
+
+Furthermore, a service operation named `wsContext` is invoked, if existing on the websocket enabled CDS service. Event context isolation is also ensured
 over remote distribution via Redis.
 
 For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).

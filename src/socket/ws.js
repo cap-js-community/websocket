@@ -143,6 +143,11 @@ class SocketWSServer extends SocketServer {
             const clients = this.fetchClients(ws.context.tenant, ws.request?.url);
             this.deleteFromSetOfMap(clients.contexts, context, ws);
           },
+          reset: async () => {
+            for (const context of ws.contexts) {
+              await ws.facade.exit(context);
+            }
+          },
           disconnect() {
             ws.close();
           },
@@ -151,7 +156,7 @@ class SocketWSServer extends SocketServer {
           },
         };
         ws.context.ws = { service: ws.facade, socket: ws };
-        this.onConnect(ws, request);
+        this.onConnect(ws);
         connected && connected(ws.facade);
         DEBUG?.("Connected");
       } catch (err) {

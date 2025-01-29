@@ -106,6 +106,10 @@ async function exitContext(socket, context) {
   return await emitEvent(socket, "wsContext", { context, exit: true });
 }
 
+async function resetContexts(socket) {
+  return await emitEvent(socket, "wsContext", { reset: true });
+}
+
 function _initListeners(socket) {
   if (!socket._listeners) {
     socket._listeners ||= [];
@@ -127,4 +131,5 @@ module.exports = {
   waitForMessage,
   enterContext,
   exitContext,
+  resetContexts,
 };

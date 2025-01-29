@@ -13,6 +13,7 @@ const {
   waitForNoEvent,
   enterContext,
   exitContext,
+  resetContexts,
 } = require("../_env/util/ws");
 
 cds.test(__dirname + "/../_env");
@@ -50,7 +51,7 @@ describe("Context", () => {
     expect(eventResult.text).toBe("test1");
     await eventNoResultPromise;
 
-    await enterContext(socketOther, ID);
+    await enterContext(socketOther, [ID]);
     await wait();
     eventResultPromise = waitForEvent(socket, "customContextIncludeEvent");
     const eventResultOtherPromise = waitForEvent(socketOther, "customContextIncludeEvent");
@@ -71,8 +72,7 @@ describe("Context", () => {
     expect(eventResult.text).toBe("test1");
     await eventNoResultPromise;
 
-    await exitContext(socket, ID);
-    await exitContext(socketOther, ID);
+    await resetContexts(socket);
     await wait();
     eventNoResultPromise = waitForNoEvent(socket, "customContextIncludeEvent");
     const eventNoOtherResultPromise = waitForNoEvent(socketOther, "customContextIncludeEvent");
@@ -108,7 +108,7 @@ describe("Context", () => {
     const eventResultOther = await eventResultOtherPromise;
     expect(eventResultOther.text).toBe("test1");
 
-    await exitContext(socketOther, context);
+    await exitContext(socketOther, [context]);
     await wait();
     eventResultPromise = waitForEvent(socket, "customContextIncludeStaticEvent");
     eventNoResultPromise = waitForNoEvent(socketOther, "customContextIncludeStaticEvent");

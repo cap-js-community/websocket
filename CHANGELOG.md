@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Normalize client identifier on upgrade request `request.id`
 - Return 404 when url cannot be associated with a service in upgrade request
 
+### Added
+
+- `reset` all contexts via `wsContext` flag `reset: true`
+- Support multiple contexts in `wsContext` with array value for `context`
+
 ## Version 1.5.2 - 2025-01-10
 
 ### Fixed

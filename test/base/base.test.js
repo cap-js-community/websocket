@@ -35,6 +35,7 @@ describe("Base", () => {
       emit: expect.any(Function),
       enter: expect.any(Function),
       exit: expect.any(Function),
+      reset: expect.any(Function),
       broadcast: expect.any(Function),
       broadcastAll: expect.any(Function),
       disconnect: expect.any(Function),

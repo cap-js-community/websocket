@@ -206,10 +206,29 @@ function bindServiceDefaults(socket, service) {
     });
   }
   socket.on(WebSocketAction.Context, async (data, callback) => {
+    if (data?.reset) {
+      await socket.reset();
+    }
     if (!data?.exit) {
-      await socket.enter(data?.context);
+      if (Array.isArray(data?.context)) {
+        for (const context of data.context) {
+          if (context) {
+            await socket.enter(context);
+          }
+        }
+      } else if (data?.context) {
+        await socket.enter(data?.context);
+      }
     } else {
-      await socket.exit(data?.context);
+      if (Array.isArray(data?.context)) {
+        for (const context of data.context) {
+          if (context) {
+            await socket.exit(context);
+          }
+        }
+      } else if (data?.context) {
+        await socket.exit(data?.context);
+      }
     }
     if (service.operations[WebSocketAction.Context]) {
       await processEvent(socket, service, WebSocketAction.Context, data, callback);

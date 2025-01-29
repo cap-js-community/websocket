@@ -149,6 +149,13 @@ class SocketServer {
         return Promise.resolve();
       },
       /**
+       * Reset all contexts
+       * @returns {Promise<void>} Promise when resetting contexts completed
+       */
+      reset: async () => {
+        return Promise.resolve();
+      },
+      /**
        * Disconnect server socket
        */
       disconnect() {},
@@ -210,6 +217,25 @@ class SocketServer {
    * @param {String} reason Reason text for close
    */
   close(socket, code, reason) {}
+
+  /**
+   * Initialize the server socket
+   * @param socket Server socket
+   * @param request Request
+   */
+  onInit(socket, request) {}
+
+  /**
+   * Handle connect event
+   * @param socket Server socket
+   */
+  onConnect(socket) {}
+
+  /**
+   * Handle disconnect event
+   * @param socket Server socket
+   */
+  onDisconnect(socket) {}
 
   /**
    * Middlewares executed before

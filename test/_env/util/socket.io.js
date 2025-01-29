@@ -78,6 +78,10 @@ async function exitContext(socket, context) {
   return await emitEvent(socket, "wsContext", { context, exit: true });
 }
 
+async function resetContexts(socket) {
+  return await emitEvent(socket, "wsContext", { reset: true });
+}
+
 module.exports = {
   connect,
   disconnect,
@@ -87,4 +91,5 @@ module.exports = {
   waitForNoEvent,
   enterContext,
   exitContext,
+  resetContexts,
 };

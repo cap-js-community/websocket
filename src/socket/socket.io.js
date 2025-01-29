@@ -30,6 +30,7 @@ class SocketIOServer extends SocketServer {
     const format = this.format(service, undefined, "json");
     io.on("connection", async (socket) => {
       try {
+        this.onInit(socket, socket.request);
         socket.context = this.initContext();
         socket.request.id ??= socket.request._query?.id;
         socket.join(room({ tenant: socket.context.tenant }));
@@ -50,6 +51,7 @@ class SocketIOServer extends SocketServer {
         }
         DEBUG?.("Connected", socket.id);
         socket.on("disconnect", () => {
+          this.onDisconnect(socket);
           DEBUG?.("Disconnected", socket.id);
         });
         socket.facade = {
@@ -106,6 +108,7 @@ class SocketIOServer extends SocketServer {
             });
           },
           enter: async (context) => {
+            socket.contexts.add(context);
             await socket.join(room({ tenant: socket.context.tenant, context }));
             if (socket.context.user?.id) {
               await socket.join(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
@@ -131,6 +134,7 @@ class SocketIOServer extends SocketServer {
             }
           },
           exit: async (context) => {
+            socket.contexts.delete(context);
             await socket.leave(room({ tenant: socket.context.tenant, context }));
             if (socket.context.user?.id) {
               await socket.leave(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
@@ -155,6 +159,11 @@ class SocketIOServer extends SocketServer {
               }
             }
           },
+          reset: async () => {
+            for (const context of socket.contexts) {
+              await socket.facade.exit(context);
+            }
+          },
           disconnect() {
             socket.disconnect();
           },
@@ -163,6 +172,7 @@ class SocketIOServer extends SocketServer {
           },
         };
         socket.context.ws = { service: socket.facade, socket: socket, io };
+        this.onConnect(socket, socket.request);
         connected && connected(socket.facade);
       } catch (err) {
         LOG?.error(err);
@@ -245,6 +255,16 @@ class SocketIOServer extends SocketServer {
     } else {
       this.io.close();
     }
+  }
+
+  onInit(socket) {
+    socket.contexts = new Set(); // Set<context>
+  }
+
+  onConnect() {}
+
+  onDisconnect(socket) {
+    socket.contexts.clear();
   }
 
   async applyAdapter() {
