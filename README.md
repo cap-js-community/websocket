@@ -387,6 +387,8 @@ await wsService.tx(req).emit("message", req.data);
 ```
 
 `cds.conntect.to` can be used to connect to any WebSocket enabled service, to emit events to the WebSocket service.
+Use `tx(req)` before `emit` in order to propagate the current context to the WebSocket enabled service,
+to especially ensure tenant and user propagation for broadcasting.
 
 ### Transactional Safety
 

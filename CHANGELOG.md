@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `reset` all contexts via `wsContext` flag `reset: true`
 - Support multiple contexts in `wsContext` with array value for `context`
+- Document usage of `srv.tx(req).emit` for tenant and user propagation in WS broadcasting
 
 ## Version 1.5.2 - 2025-01-10
 
