@@ -3,6 +3,7 @@
 const cds = require("@sap/cds");
 
 const { connect, disconnect, emitEvent, emitMessage, waitForEvent } = require("../_env/util/socket.io");
+const { wait } = require("../_env/util/common");
 
 cds.test(__dirname + "/../_env");
 
@@ -48,6 +49,22 @@ field2:value2
 
 Header`;
 
+const pcpMessageContext = `pcp-action:wsContext
+pcp-event:wsContext
+pcp-body-type:text
+context:context
+exit:false
+reset:true
+
+Header`;
+
+const pcpMessageWithContext = `pcp-action:MESSAGE_CONTEXT
+pcp-body-type:text
+field1:value1
+field2:value2
+
+this is the body!`;
+
 describe("PCP", () => {
   let socket;
 
@@ -79,5 +96,15 @@ describe("PCP", () => {
   test("PCP format error", async () => {
     const result = await emitMessage(socket, "This is not a PCP message!");
     expect(result).toEqual(null);
+  });
+
+  test("PCP format with context", async () => {
+    await emitMessage(socket, "wsContext", pcpMessageContext);
+    await wait();
+    const waitNotification1Promise = waitForEvent(socket, "notification1");
+    const result = await emitEvent(socket, "sendNotificationWithContext", pcpMessageWithContext);
+    expect(result).toBe(true);
+    const waitResult1 = await waitNotification1Promise;
+    expect(waitResult1).toEqual(pcpMessage1);
   });
 });

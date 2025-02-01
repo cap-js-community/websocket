@@ -77,4 +77,18 @@ module.exports = (srv) => {
     });
     return true;
   });
+
+  srv.on("sendCloudEventContext", async (req) => {
+    await srv.emit(
+      "cloudEvent1",
+      {
+        appinfoA: "abcd",
+        appinfoB: 1234,
+        appinfoC: false,
+      },
+      {
+        context: "context",
+      },
+    );
+  });
 };

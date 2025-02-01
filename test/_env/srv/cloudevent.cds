@@ -11,6 +11,9 @@ service CloudEventService {
         appinfoD : String;
     };
 
+    @ws.cloudevent.name: 'com.example.ws.context'
+    action wsContext(context: String, exit: Boolean, reset: Boolean);
+
     @ws.cloudevent.name: 'com.example.someevent.model'
     action sendCloudEventModel( specversion : String, type : String, source : String, subject : String, id : String, time : String, comexampleextension1 : String, comexampleothervalue : Integer, datacontenttype : String, data: CloudEventDataType) returns Boolean;
 
@@ -30,6 +33,9 @@ service CloudEventService {
                           appinfoB : Integer,
                           appinfoC : Boolean,
                           @ws.ignore appinfoD : String) returns Boolean;
+
+    @ws.cloudevent.name: 'com.example.someevent.context'
+    action sendCloudEventContext() returns Boolean;
 
     event cloudEvent1 {
         appinfoA : String;

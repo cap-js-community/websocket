@@ -19,12 +19,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Clean websocket context from internal read-only attributes
 - Normalize client identifier on upgrade request `request.id`
 - Return 404 when url cannot be associated with a service in upgrade request
+- Parse string values according to operation parameter type in custom formats (e.g. `pcp`)
 
 ### Added
 
 - `reset` all contexts via `wsContext` flag `reset: true`
 - Support multiple contexts in `wsContext` with array value for `context`
 - Document usage of `srv.tx(req).emit` for tenant and user propagation in WS broadcasting
+- Document usage of `wsContext` for format `pcp` and `cloudevents`
 
 ## Version 1.5.2 - 2025-01-10
 

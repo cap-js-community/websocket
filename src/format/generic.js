@@ -36,7 +36,7 @@ class GenericFormat extends BaseFormat {
         data: result,
       };
     }
-    this.LOG?.error(`Operation could not be determined`, data);
+    this.LOG?.error(`Operation could not be determined from name`, data);
     return {
       event: undefined,
       data: {},
@@ -282,6 +282,52 @@ class GenericFormat extends BaseFormat {
    */
   serialize(data) {
     return this.origin === "json" ? data : JSON.stringify(data);
+  }
+
+  /**
+   * Serialize value to string
+   * @param value Value
+   * @returns {string} String value
+   */
+  stringValue(value) {
+    if (value instanceof Date) {
+      return value.toISOString();
+    } else if (value instanceof Object) {
+      return JSON.stringify(value);
+    }
+    return String(value);
+  }
+
+  /**
+   * Parse string value based on type
+   * @param value Value
+   * @param type Type
+   * @returns {string|boolean|number|Date} Parsed value
+   */
+  parseStringValue(value, type) {
+    if (value === undefined || value === null) {
+      return value;
+    }
+    if (type === "cds.Boolean" && ["false", "true"].includes(value)) {
+      return value === "true";
+    }
+    if (
+      (type.startsWith("cds.Int") ||
+        type.startsWith("cds.UInt") ||
+        type.startsWith("cds.Decimal") ||
+        type.startsWith("cds.Double")) &&
+      !isNaN(value)
+    ) {
+      return parseFloat(value);
+    }
+    if (
+      ["cds.Date", "cds.DateTime", "cds.Timestamp"].includes(type) &&
+      new Date(value) instanceof Date &&
+      !isNaN(new Date(value))
+    ) {
+      return new Date(value);
+    }
+    return value;
   }
 }
 

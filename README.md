@@ -1010,6 +1010,30 @@ To configure the PCP message format the following annotations are available:
   - `@websocket.pcp.action, @ws.pcp.action: Boolean`: Expose the string value of the annotated event element as
     `pcp-action` field in the PCP message. Default `MESSAGE`.
 
+##### Manage Contexts
+
+To manage contexts in format `pcp`, `wsContext` event can be emitted in the following way:
+
+- Model `wsContext` CDS service operation as follows:
+  ```
+  @ws.pcp.action: 'wsContext'
+  action wsContext(context: String, exit: Boolean, reset: Boolean);
+  ```
+- Call `wsContext` message in `pcp` format like this:
+
+  ```
+  pcp-action:wsContext
+  pcp-body-type:text
+  context:context
+  exit:false
+  reset:true
+
+  wsContext
+  ```
+
+The PCP action needs to match an operation with annotation `@websocket.pcp.action` or `@ws.pcp.action`.
+Modeled action parameters `context`, `exit` and `reset` are mapped from `pcp` message fields.
+
 #### Cloud Events
 
 CDS WebSocket module supports the [Cloud Events](https://cloudevents.io) specification out-of-the-box according to
@@ -1236,6 +1260,32 @@ action sendCloudEventMap(
 
 Unmapped operation parameters are consumed as cloud event data section and can be skipped for cloud event data section
 via `@ws.ignore`, if not necessary.
+
+##### Manage Contexts
+
+To manage contexts in format `cloudevent`, `wsContext` event can be emitted in the following way:
+
+- Model `wsContext` CDS service operation as follows:
+  ```
+  @ws.cloudevent.name: 'event.ws.context'
+  action wsContext(context: String, exit: Boolean, reset: Boolean);
+  ```
+- Call `wsContext` message in `cloudevents` format like this:
+  ```
+  {
+    specversion: "1.0",
+    type: "event.ws.context",
+    source: "CloudEventService",
+    data: {
+      context: "context",
+      exit: false,
+      reset: true,
+    }
+  }
+  ```
+
+The cloud event type needs to match an operation with annotation `@websocket.cloudevent.name` or `@ws.cloudevent.name`.
+Modeled action parameters `context`, `exit` and `reset` are mapped from `cloudevent` message data section.
 
 ##### Cloud Event Format Alternative
 

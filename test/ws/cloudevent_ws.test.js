@@ -3,6 +3,7 @@
 const cds = require("@sap/cds");
 
 const { connect, disconnect, emitMessage, waitForMessage } = require("../_env/util/ws");
+const { wait } = require("../_env/util/common");
 
 cds.test(__dirname + "/../_env");
 
@@ -76,6 +77,22 @@ const cloudEvent5 = {
   type: "com.example.someevent.cloudEvent5",
 };
 
+const cloudEventWSContext = {
+  specversion: "1.0",
+  type: "com.example.ws.context",
+  source: "CloudEventService",
+  data: {
+    context: "context",
+    exit: false,
+    reset: true,
+  },
+};
+
+const cloudEventWithContext = {
+  ...cloudEvent,
+  type: "com.example.someevent.context",
+};
+
 describe("CloudEvent", () => {
   let socket;
 
@@ -141,5 +158,15 @@ describe("CloudEvent", () => {
   test("Cloud event format error", async () => {
     const result = await emitMessage(socket, "This is not a Cloud Event message!");
     expect(result).toEqual(null);
+  });
+
+  test("Cloud event with context", async () => {
+    await emitMessage(socket, JSON.stringify(cloudEventWSContext));
+    await wait();
+    const waitCloudEvent1Promise = waitForMessage(socket, "cloudEvent1", null, true);
+    const result = await emitMessage(socket, JSON.stringify(cloudEventWithContext));
+    expect(result).toBeNull();
+    const waitResult1 = await waitCloudEvent1Promise;
+    expect(waitResult1).toEqual(cloudEvent1);
   });
 });

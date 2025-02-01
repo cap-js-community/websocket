@@ -6,6 +6,12 @@ service PCPService {
     @ws.pcp.action: 'MESSAGE'
     action sendNotification(@ws.pcp.message message: String, field1: String, field2: String, @ws.ignore field3: String, ![pcp-action]: String) returns Boolean;
 
+    @ws.pcp.action: 'MESSAGE_CONTEXT'
+    action sendNotificationWithContext() returns Boolean;
+
+    @ws.pcp.action: 'wsContext'
+    action wsContext(context: String, exit: Boolean, reset: Boolean);
+
     @ws.pcp.event
     @ws.pcp.message: 'this is the body!'
     event notification1 {

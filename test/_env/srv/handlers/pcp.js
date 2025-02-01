@@ -35,4 +35,18 @@ module.exports = (srv) => {
     );
     return true;
   });
+
+  srv.on("sendNotificationWithContext", async (req) => {
+    await srv.emit(
+      "notification1",
+      {
+        field1: req.data.field1 || "value1",
+        field2: req.data.field2 || "value2",
+      },
+      {
+        context: "context",
+      },
+    );
+    return true;
+  });
 };
