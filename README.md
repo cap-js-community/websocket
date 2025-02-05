@@ -1337,8 +1337,10 @@ and headers from subsections `websocket.generic.<header>` or `ws.generic.<header
 Every time a server socket is connected via websocket client, the CDS service is notified by calling the corresponding
 service operation:
 
-- `Connect`: Invoke service operation `wsConnect`, if available
-- `Disconnect`: Invoke service operation `wsDisconnect`, if available
+- `Connect`: Invoke service operation `wsConnect()`, if available
+- `Disconnect`: Invoke service operation `wsDisconnect()`, if available
+  - `wsDisconnect()`: No parameters are passed
+  - `wsDisconnect(reason: String)`: Disconnect reason is passed as parameter
 
 ### Approuter
 
