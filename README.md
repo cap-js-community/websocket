@@ -1,11 +1,11 @@
-# @cap-js-community/websocket
+# WebSocket Adapter for CDS
 
 [![npm version](https://img.shields.io/npm/v/@cap-js-community/websocket)](https://www.npmjs.com/package/@cap-js-community/websocket)
 [![monthly downloads](https://img.shields.io/npm/dm/@cap-js-community/websocket)](https://www.npmjs.com/package/@cap-js-community/websocket)
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js-community/websocket)](https://api.reuse.software/info/github.com/cap-js-community/websocket)
 [![Main CI](https://github.com/cap-js-community/websocket/actions/workflows/main-ci.yml/badge.svg)](https://github.com/cap-js-community/websocket/commits/main)
 
-### [WebSocket Adapter for CDS](https://www.npmjs.com/package/@cap-js-community/websocket)
+## About this Project
 
 > Exposes a WebSocket protocol via WebSocket standard or Socket.IO for CDS services.
 > Runs in context of the [SAP Cloud Application Programming Model (CAP)](https://cap.cloud.sap/docs/)
@@ -13,7 +13,7 @@
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
+- [Requirements and Setup](#requirements-and-setup)
 - [Usage](#usage)
   - [Server](#server)
   - [Client](#client)
@@ -66,7 +66,7 @@
 - [Code of Conduct](#code-of-conduct)
 - [Licensing](#licensing)
 
-## Getting Started
+## Requirements and Setup
 
 - Run `npm add @cap-js-community/websocket` in `@sap/cds` project
 - Add a WebSocket enabled CDS service:
