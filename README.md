@@ -13,7 +13,7 @@
 
 ## Table of Contents
 
-- [Requirements and Setup](#requirements-and-setup)
+- [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Server](#server)
   - [Client](#client)
@@ -66,7 +66,7 @@
 - [Code of Conduct](#code-of-conduct)
 - [Licensing](#licensing)
 
-## Requirements and Setup
+## Getting Started
 
 - Run `npm add @cap-js-community/websocket` in `@sap/cds` project
 - Add a WebSocket enabled CDS service:
@@ -1749,6 +1749,6 @@ times.
 
 ## Licensing
 
-Copyright 2024 SAP SE or an SAP affiliate company and websocket contributors. Please see our [LICENSE](LICENSE) for
+Copyright 2025 SAP SE or an SAP affiliate company and websocket contributors. Please see our [LICENSE](LICENSE) for
 copyright and license information. Detailed information including third-party components and their licensing/copyright
 information is available [via the REUSE tool](https://api.reuse.software/info/github.com/cap-js-community/websocket).
