@@ -7,8 +7,8 @@
 
 ## About this Project
 
-Exposes a WebSocket protocol via WebSocket standard or Socket.IO for CDS services.
-Runs in context of the [SAP Cloud Application Programming Model (CAP)](https://cap.cloud.sap/docs/)
+Exposes a WebSocket protocol via [WebSocket standard](https://developer.mozilla.org/de/docs/Web/API/WebSockets_API)
+or [Socket.IO](https://socket.io) for CDS services. Runs in context of the [SAP Cloud Application Programming Model (CAP)](https://cap.cloud.sap)
 using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
 
 ## Table of Contents
