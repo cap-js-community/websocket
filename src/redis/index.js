@@ -153,7 +153,7 @@ const connectionCheck = async (options) => {
       })
       .catch(reject);
   }).catch((err) => {
-    LOG?.error("Redis connection check failed! Falling back to no redis mode", err);
+    LOG?.warn("Falling back to no redis mode. Redis connection could not be established: ", err.message);
     return false;
   });
 };
