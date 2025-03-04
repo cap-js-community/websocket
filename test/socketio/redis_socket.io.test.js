@@ -38,6 +38,7 @@ describe("Redis", () => {
   let socket;
 
   beforeAll(async () => {
+    cds.env.requires.auth.users.alice.tenant = "t1";
     socket = await connect("/ws/chat");
   });
 

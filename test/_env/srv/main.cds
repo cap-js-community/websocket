@@ -177,12 +177,9 @@ service MainService {
         stock: Integer;
     }
 
-    @open
-    type Context {}; // String or array of String
-
     action wsConnect();
     action wsDisconnect(reason: String);
-    action wsContext(context: Context, exit: Boolean, reset: Boolean);
+    action wsContext(context: String, contexts: array of String, exit: Boolean, reset: Boolean);
 }
 
 @websocket

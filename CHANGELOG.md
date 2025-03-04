@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Split variadic parameter `context` of `wsContext` into `context` for single and `contexts` for multiple contexts
+- Register `ws` protocols in CDS env instead of `cds-plugin.js`
+- Fix `wsDisconnect` operation without reason parameter
 - Document `wsDisconnect` with reason parameter
 - Improve Redis connection check logging
 

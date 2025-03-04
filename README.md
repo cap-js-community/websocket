@@ -711,11 +711,19 @@ To manage event contexts the following options exist:
       socket.emit("wsContext", { reset: true });
       ```
 
-Multiple contexts can be entered for the same server socket at the same time. The `context` parameter can be a single `string` value or an array of `string` values.
-Reset and enter context can be used within a single `wsContext` call. First all contexts are reset and then the new contexts are entered.
+Single context can be entered/exited via `context: String` parameter. Multiple contexts can be entered/exited 
+for the same server socket at the same time via `contexts: String[]` parameter.
+Parameter `reset: Boolean` can be used to reset all entered contexts for a server socket.
+Reset and enter context can be used within a single `wsContext` call. 
+First all contexts are reset and then the new contexts are entered.
 
-Furthermore, a service operation named `wsContext` is invoked, if existing on the websocket enabled CDS service. Event context isolation is also ensured
-over remote distribution via Redis.
+Furthermore, a service operation named `wsContext` is invoked, if existing on the websocket enabled CDS service:
+
+```cds
+action wsContext(context: String, contexts: array of String, exit: Boolean, reset: Boolean);
+```
+
+Event context isolation is also ensured over remote distribution via Redis.
 
 For Socket.IO (`kind: socket.io`) contexts are implemented leveraging [Socket.IO rooms](https://socket.io/docs/v4/rooms/).
 

@@ -13,6 +13,7 @@ describe("Facade", () => {
   let socketOther;
 
   beforeAll(async () => {
+    cds.env.requires.auth.users.alice.tenant = "t1";
     socket = await connect("/ws/chat");
     socketOther = await connect("/ws/chat");
   });

@@ -71,11 +71,18 @@ async function waitForNoEvent(socket, event, timeout = 100) {
 }
 
 async function enterContext(socket, context) {
-  return await emitEvent(socket, "wsContext", { context });
+  return await emitEvent(socket, "wsContext", {
+    context: !Array.isArray(context) ? context : undefined,
+    contexts: Array.isArray(context) ? context : undefined,
+  });
 }
 
 async function exitContext(socket, context) {
-  return await emitEvent(socket, "wsContext", { context, exit: true });
+  return await emitEvent(socket, "wsContext", {
+    context: !Array.isArray(context) ? context : undefined,
+    contexts: Array.isArray(context) ? context : undefined,
+    exit: true,
+  });
 }
 
 async function resetContexts(socket) {

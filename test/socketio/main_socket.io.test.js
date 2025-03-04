@@ -21,6 +21,7 @@ describe("Main", () => {
   let disconnectReason = false;
 
   beforeAll(async () => {
+    cds.env.requires.auth.users.alice.tenant = "t1";
     const mainService = await cds.connect.to("MainService");
     mainService.after("wsConnect", async (req) => {
       connected = true;

@@ -40,6 +40,7 @@ describe("Redis", () => {
   let socketOtherTenant;
 
   beforeAll(async () => {
+    cds.env.requires.auth.users.alice.tenant = "t1";
     socket = await connect("/ws/chat");
     socketOtherTenant = await connect("/ws/chat", {
       authorization: auth.bob,

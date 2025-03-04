@@ -210,24 +210,26 @@ function bindServiceDefaults(socket, service) {
       await socket.reset();
     }
     if (!data?.exit) {
-      if (Array.isArray(data?.context)) {
-        for (const context of data.context) {
+      if (data?.contexts) {
+        for (const context of data.contexts) {
           if (context) {
             await socket.enter(context);
           }
         }
-      } else if (data?.context) {
-        await socket.enter(data?.context);
+      }
+      if (data?.context) {
+        await socket.enter(data.context);
       }
     } else {
-      if (Array.isArray(data?.context)) {
-        for (const context of data.context) {
+      if (data?.contexts) {
+        for (const context of data.contexts) {
           if (context) {
             await socket.exit(context);
           }
         }
-      } else if (data?.context) {
-        await socket.exit(data?.context);
+      }
+      if (data?.context) {
+        await socket.exit(data.context);
       }
     }
     if (service.operations[WebSocketAction.Context]) {
