@@ -711,10 +711,10 @@ To manage event contexts the following options exist:
       socket.emit("wsContext", { reset: true });
       ```
 
-Single context can be entered/exited via `context: String` parameter. Multiple contexts can be entered/exited 
+Single context can be entered/exited via `context: String` parameter. Multiple contexts can be entered/exited
 for the same server socket at the same time via `contexts: String[]` parameter.
 Parameter `reset: Boolean` can be used to reset all entered contexts for a server socket.
-Reset and enter context can be used within a single `wsContext` call. 
+Reset and enter context can be used within a single `wsContext` call.
 First all contexts are reset and then the new contexts are entered.
 
 Furthermore, a service operation named `wsContext` is invoked, if existing on the websocket enabled CDS service:
