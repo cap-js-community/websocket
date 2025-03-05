@@ -209,6 +209,10 @@ function bindServiceDefaults(socket, service) {
     if (data?.reset) {
       await socket.reset();
     }
+    if (Array.isArray(data?.context)) {
+      data.contexts = data?.context;
+      delete data.context;
+    }
     if (!data?.exit) {
       if (data?.contexts) {
         for (const context of data.contexts) {
@@ -216,8 +220,7 @@ function bindServiceDefaults(socket, service) {
             await socket.enter(context);
           }
         }
-      }
-      if (data?.context) {
+      } else if (data?.context) {
         await socket.enter(data.context);
       }
     } else {
@@ -227,8 +230,7 @@ function bindServiceDefaults(socket, service) {
             await socket.exit(context);
           }
         }
-      }
-      if (data?.context) {
+      } else if (data?.context) {
         await socket.exit(data.context);
       }
     }

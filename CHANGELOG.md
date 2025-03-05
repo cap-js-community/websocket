@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Compatibility for `wsContext` to map array value of `context` to `contexts`
 
 ## Version 1.6.1 - 2025-03-04
 
