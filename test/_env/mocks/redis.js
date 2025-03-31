@@ -8,6 +8,7 @@ const onReconnecting = [];
 let createClientError = false;
 let connectError = false;
 let subscribeError = false;
+let counter = {};
 
 const client = {
   connect: jest.fn(() => {
@@ -37,12 +38,28 @@ const client = {
     return Promise.resolve();
   }),
   off: jest.fn(),
+  get: jest.fn((key) => {
+    return counter[key];
+  }),
+  set: jest.fn((key, value) => {
+    counter[key] = value;
+    return "OK";
+  }),
+  incr: jest.fn((key) => {
+    counter[key]++;
+    return counter[key];
+  }),
+  decr: jest.fn((key) => {
+    counter[key]--;
+    return counter[key];
+  }),
   subscribe: jest.fn((channel, cb) => {
     if (subscribeError) {
       subscribeError = false;
       throw new Error("subscribe error");
     }
     onSubscribe.push(cb);
+    return Promise.resolve();
   }),
   sSubscribe: jest.fn(),
   pSubscribe: jest.fn(),
@@ -55,6 +72,7 @@ const client = {
     for (const on of onSubscribe) {
       on(message, channel);
     }
+    return Promise.resolve();
   }),
   error: jest.fn((err) => {
     for (const on of onError) {
