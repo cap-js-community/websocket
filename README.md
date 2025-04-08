@@ -181,7 +181,7 @@ The CDS websocket modules can be configured with the following options:
 
 ### Architecture Overview
 
-![WebSocket Overview](./docs/assets/overview.png)
+![WebSocket Overview](./docs/assets/overview.svg)
 
 The CDS Websocket module supports the following use-cases:
 
@@ -450,7 +450,7 @@ can be combined arbitrarily to filter the websocket clients to be notified.
 
 The client filtering options are depicted in the following diagram:
 
-![Client Determination Overview](./docs/assets/client_determination.png)
+![Client Determination Overview](./docs/assets/client_determination.svg)
 
 The diagram shows the mandatory filtering layer `tenant` and `service` and the optional filtering layers `user`,
 `context` and `client identifier`.
