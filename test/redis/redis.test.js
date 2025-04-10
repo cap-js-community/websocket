@@ -79,6 +79,15 @@ describe("Redis", () => {
     main.reconnect();
   });
 
+  test("Connection Check", async () => {
+    expect(await redis.connectionCheck({ active: true, local: false })).toBe(true);
+    expect(await redis.connectionCheck({ active: true, local: true })).toBe(true);
+    expect(await redis.connectionCheck({ active: false, local: false })).toBe(false);
+    expect(await redis.connectionCheck({ active: false, local: true })).toBe(false);
+    expect(await redis.connectionCheck({ local: false })).toBe(false);
+    expect(await redis.connectionCheck({ local: true })).toBe(true);
+  });
+
   test("Adapter", async () => {
     expect(cds.ws.adapter).toBeDefined();
   });
