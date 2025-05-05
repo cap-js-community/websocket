@@ -13,7 +13,7 @@ class SocketWSServer extends SocketServer {
   constructor(server, path, config) {
     super(server, path, config);
     this.wss = new WebSocket.Server({ ...config?.options, noServer: true });
-    this.services = {};
+    this.services = new Map();
     cds.ws = this;
     cds.wss = this.wss;
   }
@@ -39,7 +39,7 @@ class SocketWSServer extends SocketServer {
         request.queryOptions = urlObj?.query || {};
         request.id ??= request.queryOptions.id;
         request.url = urlObj?.pathname;
-        if (!(typeof this.services[request.url] === "function")) {
+        if (!(typeof this.services.get(request.url) === "function")) {
           socket.write(`HTTP/1.1 404 Not Found\r\n\r\n`);
           socket.destroy();
           return;
@@ -54,8 +54,8 @@ class SocketWSServer extends SocketServer {
     });
 
     this.wss.on("connection", async (ws, request) => {
-      if (this.services[request.url]) {
-        this.services[request.url](ws, request);
+      if (typeof this.services.get(request.url) === "function") {
+        this.services.get(request.url)(ws, request);
       } else {
         DEBUG?.("No websocket service for url", request.url);
       }
@@ -65,7 +65,7 @@ class SocketWSServer extends SocketServer {
   service(service, path, connected) {
     this.adapter?.on(service, path);
     const format = this.format(service);
-    this.services[this.servicePath(path)] = (ws, request) => {
+    this.services.set(this.servicePath(path), (ws, request) => {
       DEBUG?.("Initialized");
       ws.on("close", () => {
         this.onDisconnect(ws);
@@ -162,7 +162,7 @@ class SocketWSServer extends SocketServer {
       } catch (err) {
         LOG?.error(err);
       }
-    };
+    });
   }
 
   async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket, local }) {

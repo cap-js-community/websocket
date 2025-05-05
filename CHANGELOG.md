@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Dependencies
+- Security: Dynamic method call
 
 ## Version 1.6.3 - 2025-04-10
 
