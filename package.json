@@ -1,6 +1,6 @@
 {
   "name": "@cap-js-community/websocket",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "description": "WebSocket adapter for CDS",
   "homepage": "https://cap.cloud.sap/",
   "engines": {
