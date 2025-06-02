@@ -51,7 +51,7 @@
     "@cap-js/sqlite": "^1.11.0",
     "@eslint/js": "^9.26.0",
     "@sap/cds": "^8.9.3",
-    "@sap/cds-dk": "^8.9.3",
+    "@sap/cds-dk": "^9.0.0",
     "@sap/xssec": "^4.7.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-streams-adapter": "^0.2.2",
