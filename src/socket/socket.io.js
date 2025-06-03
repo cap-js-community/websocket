@@ -257,7 +257,8 @@ class SocketIOServer extends SocketServer {
     }
   }
 
-  onInit(socket) {
+  onInit(socket, request) {
+    super.onInit(socket, request);
     socket.contexts = new Set(); // Set<context>
   }
 

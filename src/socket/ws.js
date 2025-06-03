@@ -245,7 +245,7 @@ class SocketWSServer extends SocketServer {
   }
 
   onInit(ws, request) {
-    ws.request = request;
+    super.onInit(ws, request);
     ws.events = new Map(); // Map<event, Set<callback>>
     ws.contexts = new Set(); // Set<context>
   }

@@ -223,7 +223,10 @@ class SocketServer {
    * @param socket Server socket
    * @param request Request
    */
-  onInit(socket, request) {}
+  onInit(socket, request) {
+    socket.request ??= request;
+    request.query ??= {};
+  }
 
   /**
    * Handle connect event
