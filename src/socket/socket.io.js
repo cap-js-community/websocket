@@ -273,19 +273,18 @@ class SocketIOServer extends SocketServer {
       const config = { ...this.config?.adapter };
       if (config.impl) {
         let client;
-        let subClient;
         const options = { ...config?.options };
         const adapterFactory = SocketServer.require(config.impl, "adapter");
         if (adapterFactory) {
           switch (config.impl) {
             case "@socket.io/redis-adapter":
               if (await redis.connectionCheck(config)) {
-                client = await redis.createPrimaryClientAndConnect(config);
-                if (client) {
-                  subClient = await redis.createSecondaryClientAndConnect(config);
-                  if (subClient) {
-                    this.adapter = adapterFactory.createAdapter(client, subClient, options);
-                  }
+                client = await Promise.all([
+                  redis.createPrimaryClientAndConnect(config),
+                  redis.createSecondaryClientAndConnect(config),
+                ]);
+                if (client?.length === 2) {
+                  this.adapter = adapterFactory.createAdapter(...client, options);
                 }
               }
               break;

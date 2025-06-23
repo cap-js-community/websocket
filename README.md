@@ -484,7 +484,6 @@ Valid annotation values are:
 Furthermore, also additional equivalent annotations alternatives are available:
 
 - Include current user:
-
   - `@websocket.currentUser.include: Boolean` (shorthand: `@websocket.currentUser: Boolean`)
   - `@ws.currentUser.include: Boolean` (shorthand: `@ws.currentUser: Boolean`)
   - `@websocket.broadcast.currentUser.include: Boolean` (shorthand: `@websocket.broadcast.currentUser: Boolean`)
@@ -530,7 +529,6 @@ Events are broadcast to all websocket clients. To influence event broadcasting b
 the following annotations to include or exclude defined users are available:
 
 - Include user(s):
-
   - `@websocket.user.include` (shorthand: `@websocket.user`)
   - `@ws.user.include` (shorthand: `@ws.user`)
   - `@websocket.broadcast.user.include` (shorthand: `@websocket.broadcast.user`)
@@ -593,7 +591,6 @@ To influence event broadcasting based on event contexts, the following annotatio
 available:
 
 - Include context(s):
-
   - `@websocket.context.include` (shorthand: `@websocket.context`)
   - `@ws.context.include` (shorthand: `@ws.context`)
   - `@websocket.broadcast.context.include` (shorthand: `@websocket.broadcast.context`)
@@ -756,7 +753,6 @@ identifier (alternatives include `@websocket.broadcast.identifier.exclude` or `@
 The full list of annotations is:
 
 - Include client identifier(s):
-
   - `@websocket.identifier.include` (shorthand: `@websocket.identifier`)
   - `@ws.identifier.include` (shorthand: `@ws.identifier`)
   - `@websocket.broadcast.identifier.include` (shorthand: `@websocket.broadcast.identifier`)
@@ -1623,7 +1619,6 @@ To use the Redis Adapter (basic publish/subscribe), the following steps have to 
 - Redis channel key can be specified via `cds.websocket.adapter.options.key`. Default value is `websocket`.
 - Redis client connection configuration can be passed via `cds.websocket.adapter.config`
 - Redis lookup is performed via `cds.env`.
-
   - Default lookup is done via VCAP `label: "redis-cache"`
   - Custom Redis lookup can be specified via `cds.requires.redis-websocket`.
 

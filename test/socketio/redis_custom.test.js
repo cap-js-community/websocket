@@ -25,7 +25,7 @@ describe("Redis", () => {
   });
 
   afterAll(async () => {
-    disconnect(socket);
+    await disconnect(socket);
   });
 
   test("Redis Custom Adapter", async () => {
