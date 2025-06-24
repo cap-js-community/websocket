@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@cap-js-community/websocket": "./",
-    "@cap-js/cds-test": "^0.3.0",
+    "@cap-js/cds-test": "^0.4.0",
     "@cap-js/sqlite": "^2.0.1",
     "@eslint/js": "^9.29.0",
     "@sap/cds": "^9.0.4",
