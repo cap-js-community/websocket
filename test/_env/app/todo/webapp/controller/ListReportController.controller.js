@@ -7,8 +7,7 @@ sap.ui.define(
       override: {
         onInit: function () {
           this.base.onInit();
-          socket.attachMessage("message", (event) => {
-            const message = JSON.parse(event.getParameter("data"));
+          window.websockets?.message((message) => {
             if (message.event === "refresh") {
               this.base.getExtensionAPI().refresh();
               const router = this.base.getAppComponent().getRouter();
