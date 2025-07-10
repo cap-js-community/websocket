@@ -89,9 +89,10 @@ class SocketServer {
        * Emit websocket event with data
        * @param {String} event Event
        * @param {Object} data Data
+       * @param {Object} headers Headers
        * @returns {Promise<void>} Promise when emitting completed
        */
-      emit: async (event, data) => {
+      emit: async (event, data, headers) => {
         return Promise.resolve();
       },
       /**

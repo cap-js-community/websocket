@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 "use strict";
 
 /**
@@ -11,9 +10,9 @@ class BaseFormat {
   }
 
   /**
-   * Parse the event data into internal data (JSON), i.e. `{ event, data }`
+   * Parse the event data into internal data (JSON), i.e. `{ event, data, headers }`
    * @param {String|Object} data Event data
-   * @returns [{event: String, data: Object}] Parsed data
+   * @returns [{event: String, data: Object, headers: Object}] Parsed data
    */
   parse(data) {}
 

@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Propagate headers to all places
+
+### Added
+
+- Server websocket client CDS service
 
 ## Version 1.7.1 - 2025-07-03
 

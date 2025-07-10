@@ -390,7 +390,7 @@ async function broadcastEvent(socket, service, event, entity, data) {
     context = deriveContext(eventDefinition, data, {});
     identifier = deriveIdentifier(eventDefinition, data, {});
   }
-  const contentData = broadcastData(entity, data, eventDefinition);
+  const contentData = broadcastData(entity, data, {}, eventDefinition);
   if (contentData) {
     if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
       await socket.broadcastAll(event, contentData, user, context, identifier);
@@ -400,9 +400,9 @@ async function broadcastEvent(socket, service, event, entity, data) {
   }
 }
 
-function broadcastData(entity, data, event) {
+function broadcastData(entity, data, headers, event) {
   if (event) {
-    return deriveElements(event, data);
+    return deriveElements(event, data, headers);
   }
   const content =
     entity["@websocket.broadcast.content"] ||
@@ -412,7 +412,7 @@ function broadcastData(entity, data, event) {
   switch (content) {
     case "key":
     default:
-      return deriveKey(entity, data);
+      return deriveKey(entity, data, headers);
     case "data":
       return data;
     case "none":
@@ -430,14 +430,14 @@ function deriveFormat(service, event) {
   );
 }
 
-function deriveKey(entity, data) {
+function deriveKey(entity, data, headers) {
   return Object.keys(entity.keys).reduce((result, key) => {
     result[key] = data[key];
     return result;
   }, {});
 }
 
-function deriveElements(event, data) {
+function deriveElements(event, data, headers) {
   return Object.keys(event.elements).reduce((result, element) => {
     result[element] = data[element];
     return result;

@@ -93,6 +93,9 @@ describe("Redis", () => {
           text: "test",
           user: "alice",
         },
+        headers: {
+          header: "value",
+        },
         event: "received",
       },
       {

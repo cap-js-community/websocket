@@ -5,10 +5,10 @@ const WebSocket = require("ws");
 
 const auth = require("./auth");
 
-async function connect(service, options = {}, headers = {}, protoocls) {
+async function connect(service, options = {}, headers = {}, protocols) {
   const port = cds.app.server.address().port;
-  protoocls ??= [];
-  const socket = new WebSocket(`ws://localhost:${port}` + service, protoocls, {
+  protocols ??= [];
+  const socket = new WebSocket(`ws://localhost:${port}` + service, protocols, {
     headers: {
       authorization: options?.authorization ?? auth.alice,
       ...headers,
@@ -33,12 +33,13 @@ async function disconnect(socket) {
   socket._listeners = [];
 }
 
-async function emitEvent(socket, event, data) {
+async function emitEvent(socket, event, data, headers) {
   return new Promise((resolve) => {
     socket.send(
       JSON.stringify({
         event,
         data,
+        headers,
       }),
       (result) => {
         resolve(result || null);

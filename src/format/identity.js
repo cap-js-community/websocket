@@ -14,7 +14,7 @@ class IdentityFormat extends BaseFormat {
     };
   }
 
-  compose(event, data) {
+  compose(event, data, headers) {
     return data;
   }
 }

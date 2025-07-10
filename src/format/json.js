@@ -20,6 +20,7 @@ class JSONFormat extends BaseFormat {
       return {
         event: undefined,
         data: {},
+        headers: {},
       };
     }
     if (payload?.event && payload?.data) {
@@ -28,13 +29,15 @@ class JSONFormat extends BaseFormat {
     return {
       event: "message",
       data: payload,
+      headers: {},
     };
   }
 
-  compose(event, data) {
+  compose(event, data, headers) {
     return JSON.stringify({
       event,
       data,
+      headers,
     });
   }
 }

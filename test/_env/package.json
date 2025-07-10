@@ -72,6 +72,12 @@
             "database": "test.sqlite"
           }
         }
+      },
+      "ws-client": {
+        "kind": "websocket-client-ws"
+      },
+      "socket.io-client": {
+        "kind": "websocket-client-socket.io"
       }
     }
   }

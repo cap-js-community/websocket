@@ -97,9 +97,9 @@ class SocketWSServer extends SocketServer {
           on: (event, callback) => {
             this.addToSetOfMap(ws.events, event, callback);
           },
-          emit: async (event, data) => {
+          emit: async (event, data, headers) => {
             try {
-              await ws.send(format.compose(event, data));
+              await ws.send(format.compose(event, data, headers));
             } catch (err) {
               LOG?.error(err);
               throw err;

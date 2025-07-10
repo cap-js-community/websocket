@@ -28,6 +28,8 @@
     "start:uaa": "npm run start:uaa --prefix=./test/_env",
     "start:socketio:uaa": "npm run start:socketio:uaa --prefix=./test/_env",
     "start:approuter": "npm start --prefix=./test/_env/approuter",
+    "start:redis": "CDS_ENV=ws npm start --prefix=./test/_env",
+    "start:socketio:redis": "CDS_ENV=socketio npm run start:socketio --prefix=./test/_env",
     "test": "jest",
     "test:update": "npm test -- -u",
     "lint": "npm run eslint && npm run prettier",
@@ -41,8 +43,9 @@
     "audit": "npm audit --only=prod"
   },
   "dependencies": {
-    "@cap-js-community/common": "^0.2.4",
+    "@cap-js-community/common": "^0.2.5",
     "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "ws": "^8.18.3"
   },
   "devDependencies": {
@@ -63,8 +66,7 @@
     "globals": "^16.3.0",
     "jest": "^30.0.4",
     "passport": "^0.7.0",
-    "prettier": "^3.6.2",
-    "socket.io-client": "^4.8.1"
+    "prettier": "^3.6.2"
   },
   "license": "Apache-2.0",
   "repository": {
@@ -89,6 +91,20 @@
         },
         "websocket-socket.io": {
           "impl": "@cap-js-community/websocket/src/socket/socket.io.js"
+        },
+        "websocket-client-ws": {
+          "impl": "@cap-js-community/websocket/src/client/ws.js",
+          "format": "json",
+          "url": "",
+          "headers": {},
+          "protocols": []
+        },
+        "websocket-client-socket.io": {
+          "impl": "@cap-js-community/websocket/src/client/socket.io.js",
+          "format": "json",
+          "url": "",
+          "headers": {},
+          "protocols": []
         }
       },
       "redis-websocket": {

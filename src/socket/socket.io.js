@@ -71,9 +71,9 @@ class SocketIOServer extends SocketServer {
               }
             });
           },
-          emit: async (event, data) => {
+          emit: async (event, data, headers) => {
             try {
-              await socket.emit(event, format.compose(event, data));
+              await socket.emit(event, format.compose(event, data, headers));
             } catch (err) {
               LOG?.error(err);
               throw err;
