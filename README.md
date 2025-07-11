@@ -47,6 +47,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
     - [Custom Format](#custom-format)
     - [Generic Format](#generic-format)
   - [Connect & Disconnect](#connect--disconnect)
+  - [Server Client Service](#server-client-service)
   - [Approuter](#approuter)
   - [Operations](#operations)
     - [Operation Results](#operation-results)
@@ -327,87 +328,6 @@ It abstracts from the concrete websocket implementation by exposing the followin
 - `async exit(context: String)`: Exit a context
 - `async disconnect()`: Disconnect server socket
 - `onDisconnect(callback: Function)`: Register callback function called on disconnect of server socket
-
-### Server Client Service
-
-A server-side websocket client can be accessed via CDS service architecture. To connect to a websocket exposed
-CDS service as client, a service can be defined as follows in CDS environment (`cds.env`) specifying `kind` property.
-
-#### WebSocket Standard (`kind: websocket-client-ws`)
-
-```json
-{
-  "cds": {
-    "requires": {
-      "chat-ws": {
-        "kind": "websocket-client-ws",
-        "format": "json",
-        "url": "ws://localhost:4004/ws/chat",
-        "headers": {
-          "Authorization": "Basic ..."
-        }
-      }
-    }
-  }
-}
-```
-
-During runtime, access to the websocket service client can be established, events emitted and received as follows:
-
-```js
-const client = await cds.connect.to("chat-ws");
-client.on("received", (message) => {});
-client.emit("message", { text: "test" });
-```
-
-Custom service runtime options can be provided via:
-
-```js
-const client = await cds.connect.to("chat-ws", {
-  url: `ws://localhost:4005/ws/chat`,
-  headers: {
-    authorization: "...",
-  },
-});
-```
-
-#### Socket.IO (`kind: websocket-client-socket.io`)
-
-```json
-{
-  "cds": {
-    "requires": {
-      "chat-socket.io": {
-        "kind": "websocket-client-socket.io",
-        "format": "json",
-        "url": "http://localhost:4004/ws/chat",
-        "headers": {
-          "Authorization": "Basic ..."
-        }
-      }
-    }
-  }
-}
-```
-
-During runtime, access to the websocket service client can be established, events emitted and received as follows:
-
-```js
-const client = await cds.connect.to("chat-socket.io");
-client.on("received", (message) => {});
-client.emit("message", { text: "test" });
-```
-
-Custom runtime options can be provided via:
-
-```js
-const client = await cds.connect.to("chat-socket.io", {
-  url: `ws://localhost:4005/ws/chat`,
-  headers: {
-    authorization: "...",
-  },
-});
-```
 
 ### Middlewares
 
@@ -1426,6 +1346,87 @@ service operation:
 - `Disconnect`: Invoke service operation `wsDisconnect()`, if available
   - `wsDisconnect()`: No parameters are passed
   - `wsDisconnect(reason: String)`: Disconnect reason is passed as parameter
+
+### Server Client Service
+
+A server-side websocket client can be accessed via CDS service architecture. To connect to a websocket exposed
+CDS service as client, a service can be defined as follows in CDS environment (`cds.env`) specifying `kind` property.
+
+#### WebSocket Standard (`kind: websocket-client-ws`)
+
+```json
+{
+  "cds": {
+    "requires": {
+      "chat-ws": {
+        "kind": "websocket-client-ws",
+        "format": "json",
+        "url": "ws://localhost:4004/ws/chat",
+        "headers": {
+          "Authorization": "Basic ..."
+        }
+      }
+    }
+  }
+}
+```
+
+During runtime, access to the websocket service client can be established, events emitted and received as follows:
+
+```js
+const client = await cds.connect.to("chat-ws");
+client.on("received", (message) => {});
+client.emit("message", { text: "test" });
+```
+
+Custom service runtime options can be provided via:
+
+```js
+const client = await cds.connect.to("chat-ws", {
+  url: `ws://localhost:4005/ws/chat`,
+  headers: {
+    authorization: "...",
+  },
+});
+```
+
+#### Socket.IO (`kind: websocket-client-socket.io`)
+
+```json
+{
+  "cds": {
+    "requires": {
+      "chat-socket.io": {
+        "kind": "websocket-client-socket.io",
+        "format": "json",
+        "url": "http://localhost:4004/ws/chat",
+        "headers": {
+          "Authorization": "Basic ..."
+        }
+      }
+    }
+  }
+}
+```
+
+During runtime, access to the websocket service client can be established, events emitted and received as follows:
+
+```js
+const client = await cds.connect.to("chat-socket.io");
+client.on("received", (message) => {});
+client.emit("message", { text: "test" });
+```
+
+Custom runtime options can be provided via:
+
+```js
+const client = await cds.connect.to("chat-socket.io", {
+  url: `ws://localhost:4005/ws/chat`,
+  headers: {
+    authorization: "...",
+  },
+});
+```
 
 ### Approuter
 
