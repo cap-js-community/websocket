@@ -64,6 +64,10 @@ class SocketIOServer extends SocketServer {
           on: (event, callback) => {
             socket.on(event, async (data, headers, fn) => {
               try {
+                if (typeof headers === "function") {
+                  fn = headers;
+                  headers = undefined;
+                }
                 await callback(format.parse(data).data, headers, fn);
               } catch (err) {
                 LOG?.error(err);
