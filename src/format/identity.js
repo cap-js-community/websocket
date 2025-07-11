@@ -11,6 +11,7 @@ class IdentityFormat extends BaseFormat {
     return {
       event: undefined,
       data,
+      headers: {},
     };
   }
 

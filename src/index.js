@@ -208,7 +208,7 @@ function bindServiceDefaults(socket, service) {
       await processEvent(socket, service, WebSocketAction.Disconnect, data);
     });
   }
-  socket.on(WebSocketAction.Context, async (data, callback) => {
+  socket.on(WebSocketAction.Context, async (data, headers, callback) => {
     if (data?.reset) {
       await socket.reset();
     }
@@ -238,7 +238,7 @@ function bindServiceDefaults(socket, service) {
       }
     }
     if (service.operations[WebSocketAction.Context]) {
-      await processEvent(socket, service, WebSocketAction.Context, data, callback);
+      await processEvent(socket, service, WebSocketAction.Context, data, headers, callback);
     } else {
       callback && (await callback());
     }
@@ -251,8 +251,8 @@ function bindServiceOperations(socket, service) {
     if (Object.values(WebSocketAction).includes(event)) {
       continue;
     }
-    socket.on(event, async (data, callback) => {
-      await processEvent(socket, service, event, data, callback);
+    socket.on(event, async (data, headers, callback) => {
+      await processEvent(socket, service, event, data, headers, callback);
     });
   }
 }
@@ -260,37 +260,37 @@ function bindServiceOperations(socket, service) {
 function bindServiceEntities(socket, service) {
   for (const entity of service.entities()) {
     const localEntityName = serviceLocalName(service, entity.name);
-    socket.on(`${localEntityName}:create`, async (data, callback) => {
-      await processCRUD(socket, service, entity, "create", data, async (response) => {
+    socket.on(`${localEntityName}:create`, async (data, headers, callback) => {
+      await processCRUD(socket, service, entity, "create", data, headers, async (response) => {
         callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:created`, entity, response);
       });
     });
-    socket.on(`${localEntityName}:read`, async (data, callback) => {
-      await processCRUD(socket, service, entity, "read", data, callback);
+    socket.on(`${localEntityName}:read`, async (data, headers, callback) => {
+      await processCRUD(socket, service, entity, "read", data, headers, callback);
     });
-    socket.on(`${localEntityName}:readDeep`, async (data, callback) => {
-      await processCRUD(socket, service, entity, "readDeep", data, callback);
+    socket.on(`${localEntityName}:readDeep`, async (data, headers, callback) => {
+      await processCRUD(socket, service, entity, "readDeep", data, headers, callback);
     });
-    socket.on(`${localEntityName}:update`, async (data, callback) => {
-      await processCRUD(socket, service, entity, "update", data, async (response) => {
+    socket.on(`${localEntityName}:update`, async (data, headers, callback) => {
+      await processCRUD(socket, service, entity, "update", data, headers, async (response) => {
         callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:updated`, entity, response);
       });
     });
-    socket.on(`${localEntityName}:delete`, async (data, callback) => {
-      await processCRUD(socket, service, entity, "delete", data, async (response) => {
+    socket.on(`${localEntityName}:delete`, async (data, headers, callback) => {
+      await processCRUD(socket, service, entity, "delete", data, headers, async (response) => {
         callback && (await callback(response));
         await broadcastEvent(socket, service, `${localEntityName}:deleted`, entity, { ...response, ...data });
       });
     });
-    socket.on(`${localEntityName}:list`, async (data, callback) => {
-      await processCRUD(socket, service, entity, "list", data, callback);
+    socket.on(`${localEntityName}:list`, async (data, headers, callback) => {
+      await processCRUD(socket, service, entity, "list", data, headers, callback);
     });
     for (const actionName in entity.actions) {
       const action = entity.actions[actionName];
-      socket.on(`${localEntityName}:${action.name}`, async (data, callback) => {
-        await processCRUD(socket, service, entity, action.name, data, callback);
+      socket.on(`${localEntityName}:${action.name}`, async (data, headers, callback) => {
+        await processCRUD(socket, service, entity, action.name, data, headers, callback);
       });
     }
   }
@@ -302,9 +302,9 @@ async function emitConnect(socket, service) {
   }
 }
 
-async function processEvent(socket, service, event, data, callback) {
+async function processEvent(socket, service, event, data, headers, callback) {
   try {
-    const response = await callEvent(socket, service, event, data);
+    const response = await callEvent(socket, service, event, data, headers);
     callback && (await callback(response));
   } catch (err) {
     LOG?.error(err);
@@ -322,19 +322,20 @@ async function processEvent(socket, service, event, data, callback) {
   }
 }
 
-async function callEvent(socket, service, event, data) {
+async function callEvent(socket, service, event, data, headers) {
   data = data || {};
   return await service.tx(socket.context, async (srv) => {
     return await srv.send({
       event,
       data,
+      headers,
     });
   });
 }
 
-async function processCRUD(socket, service, entity, event, data, callback) {
+async function processCRUD(socket, service, entity, event, data, headers, callback) {
   try {
-    const response = await callCRUD(socket, service, entity, event, data);
+    const response = await callCRUD(socket, service, entity, event, data, headers);
     callback && (await callback(response));
   } catch (err) {
     LOG?.error(err);
@@ -352,7 +353,7 @@ async function processCRUD(socket, service, entity, event, data, callback) {
   }
 }
 
-async function callCRUD(socket, service, entity, event, data) {
+async function callCRUD(socket, service, entity, event, data, headers) {
   data = data || {};
   return await service.tx(socket.context, async (srv) => {
     const key = deriveKey(entity, data);
@@ -374,28 +375,29 @@ async function callCRUD(socket, service, entity, event, data) {
           event,
           entity: entity.name,
           data,
+          headers,
         });
     }
   });
 }
 
-async function broadcastEvent(socket, service, event, entity, data) {
+async function broadcastEvent(socket, service, event, entity, data, headers) {
   let user;
   let context;
   let identifier;
   const events = service.events();
   const eventDefinition = events[event] || events[event.replaceAll(/:/g, ".")];
   if (eventDefinition) {
-    user = deriveUser(eventDefinition, data, {}, socket);
-    context = deriveContext(eventDefinition, data, {});
-    identifier = deriveIdentifier(eventDefinition, data, {});
+    user = deriveUser(eventDefinition, data, headers, socket);
+    context = deriveContext(eventDefinition, data, headers);
+    identifier = deriveIdentifier(eventDefinition, data, headers);
   }
-  const contentData = broadcastData(entity, data, {}, eventDefinition);
+  const contentData = broadcastData(entity, data, headers, eventDefinition);
   if (contentData) {
     if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
-      await socket.broadcastAll(event, contentData, user, context, identifier);
+      await socket.broadcastAll(event, contentData, user, context, identifier, headers);
     } else {
-      await socket.broadcast(event, contentData, user, context, identifier);
+      await socket.broadcast(event, contentData, user, context, identifier, headers);
     }
   }
 }

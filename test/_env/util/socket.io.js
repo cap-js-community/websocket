@@ -33,9 +33,9 @@ async function disconnect(socket) {
   socket.disconnect();
 }
 
-async function emitEvent(socket, event, data) {
+async function emitEvent(socket, event, data, headers) {
   return new Promise((resolve, reject) => {
-    socket.emit(event, data, (result) => {
+    socket.emit(event, data, headers, (result) => {
       if (result?.error) {
         reject(result?.error);
       } else {

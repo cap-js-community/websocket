@@ -62,9 +62,9 @@ class SocketIOServer extends SocketServer {
             return socket.context;
           },
           on: (event, callback) => {
-            socket.on(event, async (data, fn) => {
+            socket.on(event, async (data, headers, fn) => {
               try {
-                await callback(format.parse(data).data, fn);
+                await callback(format.parse(data).data, headers, fn);
               } catch (err) {
                 LOG?.error(err);
                 throw err;

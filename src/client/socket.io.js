@@ -35,7 +35,7 @@ module.exports = class SocketIOClientService extends BaseClientService {
   async send(event, data, headers) {
     if (this.options.format === "json") {
       return new Promise((resolve, reject) => {
-        this.socket.emit(event, data, (result) => {
+        this.socket.emit(event, data, headers, (result) => {
           if (result?.error) {
             reject(result?.error);
           } else {

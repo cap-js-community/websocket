@@ -47,8 +47,9 @@ module.exports = class WSClientService extends BaseClientService {
           },
         );
       } else {
+        const message = data;
         return new Promise((resolve) => {
-          this.socket.send(data, (result) => {
+          this.socket.send(message, (result) => {
             resolve(result || null);
           });
         });

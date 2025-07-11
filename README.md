@@ -318,7 +318,7 @@ It abstracts from the concrete websocket implementation by exposing the followin
 - `socket: Object`: Server socket
 - `context: Object`: CDS context object for the websocket server socket
 - `on(event: String, callback: Function)`: Register websocket event
-- `async emit(event: String, data: Object)`: Emit websocket event with data
+- `async emit(event: String, data: Object, headers: Object)`: Emit websocket event with data and headers
 - `async broadcast(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?, headers: Object?)`:
   Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers and optionally providing headers
 - `async broadcastAll(event: String, data: Object, user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}?, headers: Object?)`:
@@ -1384,7 +1384,7 @@ in `@websocket.format` resp. `@ws.format` annotation (e.g. `@ws.format: './forma
 
 The custom format class needs to implement the following functions:
 
-- **parse(data)**: Parse the event data into internal data (JSON), i.e. `{ event, data }`
+- **parse(data)**: Parse the event data into internal data (JSON), i.e. `{ event, data, headers }`
 - **compose(event, data, headers)**: Compose the internal event data (JSON) and event headers into a formatted string.
   For kind `socket.io`, it can also be a JSON object.
 
@@ -1472,6 +1472,15 @@ Operations are exposed as part of the websocket protocol as described below.
 Operation results will be provided via optional websocket acknowledgement callback.
 
 > Operation results are only supported with Socket.IO (`kind: socket.io`) using acknowledgement callbacks.
+
+Please make sure, when passing an acknowledgement callback in `emit` function, that all parameters (event, data, headers)
+are provided before passing the callback function as last parameter:
+
+```js
+socket.emit(event, data, headers, (result) => {
+  // ...
+});
+```
 
 #### Unbound Operations
 

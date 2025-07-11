@@ -47,6 +47,7 @@ class PCPFormat extends GenericFormat {
         return {
           event: this.localName(operation.name),
           data: result,
+          headers: {},
         };
       }
       this.LOG?.error(`Operation could not be determined from action`, data);
@@ -55,6 +56,7 @@ class PCPFormat extends GenericFormat {
     return {
       event: undefined,
       data: {},
+      headers: {},
     };
   }
 

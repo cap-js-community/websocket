@@ -78,7 +78,7 @@ class SocketWSServer extends SocketServer {
         try {
           const payload = format.parse(message);
           for (const callback of this.getFromMap(ws.events, payload?.event, new Set())) {
-            await callback(payload.data);
+            await callback(payload.data, payload.headers);
           }
         } catch (err) {
           LOG?.error(err);

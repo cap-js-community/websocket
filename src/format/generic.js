@@ -34,12 +34,14 @@ class GenericFormat extends BaseFormat {
       return {
         event: this.localName(operation.name),
         data: result,
+        headers: {},
       };
     }
     this.LOG?.error(`Operation could not be determined from name`, data);
     return {
       event: undefined,
       data: {},
+      headers: {},
     };
   }
 
