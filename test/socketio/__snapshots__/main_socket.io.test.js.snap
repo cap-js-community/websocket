@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Main CRUD entity 1`] = `
 {
@@ -12,7 +12,7 @@ exports[`Main CRUD entity 1`] = `
   ],
   "country": "de",
   "currency": "EUR",
-  "description": "Test description",
+  "description": "Test description- header",
   "name": "Test",
   "price": 44.44,
   "stock": 11,
@@ -30,7 +30,7 @@ exports[`Main CRUD entity 3`] = `
   "country": "de",
   "createdBy": "alice",
   "currency": "EUR",
-  "description": "Test description",
+  "description": "Test description- header",
   "modifiedBy": "alice",
   "name": "Test",
   "price": 44.44,
@@ -51,7 +51,7 @@ exports[`Main CRUD entity 4`] = `
   "country": "de",
   "createdBy": "alice",
   "currency": "EUR",
-  "description": "Test description",
+  "description": "Test description- header",
   "modifiedBy": "alice",
   "name": "Test",
   "price": 44.44,
@@ -71,7 +71,7 @@ exports[`Main CRUD entity 5`] = `
   ],
   "country": "de",
   "currency": "EUR",
-  "description": "Test description - updated",
+  "description": "Test description- header - updated",
   "name": "Test",
   "price": 44.44,
   "stock": 11,

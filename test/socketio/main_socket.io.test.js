@@ -71,7 +71,7 @@ describe("Main", () => {
       ],
     };
     const createdResultPromise = waitForEvent(socketOther, "Header:created");
-    const createResult = await emitEvent(socket, "Header:create", header);
+    const createResult = await emitEvent(socket, "Header:create", header, { test: "header" });
     expect(cleanData(createResult)).toMatchSnapshot();
     const ID = createResult.ID;
     const createdResult = await createdResultPromise;

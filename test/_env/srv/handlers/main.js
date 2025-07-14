@@ -3,6 +3,10 @@
 module.exports = (srv) => {
   const { Header } = srv.entities();
 
+  srv.before("CREATE", Header, async (req) => {
+    req.data.description += `- ${req.headers.test}`;
+  });
+
   srv.on("unboundFunction", async (req) => {
     return req.data.text + req.data.num;
   });

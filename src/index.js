@@ -359,17 +359,20 @@ async function callCRUD(socket, service, entity, event, data, headers) {
     const key = deriveKey(entity, data);
     switch (event) {
       case "create":
-        return await srv.create(entity).entries(data);
+        return await srv.send({ query: srv.create(entity).entries(data), headers });
       case "read":
-        return await srv.run(SELECT.one.from(entity).where(key));
+        return await srv.send({ query: SELECT.one.from(entity).where(key), headers });
       case "readDeep":
-        return await srv.run(SELECT.one.from(entity).columns(getDeepEntityColumns(entity)).where(key));
+        return await srv.send({
+          query: SELECT.one.from(entity).columns(getDeepEntityColumns(entity)).where(key),
+          headers,
+        });
       case "update":
-        return await srv.update(entity).set(data).where(key);
+        return await srv.send({ query: srv.update(entity).set(data).where(key), headers });
       case "delete":
-        return await srv.delete(entity).where(key);
+        return await srv.send({ query: srv.delete(entity).where(key), headers });
       case "list":
-        return await srv.read(entity).where(data);
+        return await srv.send({ query: srv.read(entity).where(data), headers });
       default:
         return await srv.send({
           event,
