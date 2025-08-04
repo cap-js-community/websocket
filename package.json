@@ -43,7 +43,7 @@
     "audit": "npm audit --only=prod"
   },
   "dependencies": {
-    "@cap-js-community/common": "^0.2.5",
+    "@cap-js-community/common": "^0.2.6",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "ws": "^8.18.3"
