@@ -289,6 +289,8 @@ class SocketServer {
         middlewares.push(wrapMiddleware(middleware));
       }
     }
+    // host property is mandatory for ias auth middleware at @sap/cds/lib/srv/middlewares/auth/ias-auth.js:71
+    socket.request.host = socket.request.headers.host;
     return middlewares.concat(this.afterMiddlewares());
   }
 
