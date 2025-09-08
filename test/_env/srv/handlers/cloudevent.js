@@ -1,6 +1,8 @@
 "use strict";
 
 module.exports = (srv) => {
+  srv.on("wsContext", async () => {});
+
   srv.on(["sendCloudEventModel", "sendCloudEventMap"], async (req) => {
     const appinfoA = (req.data.appinfoA ?? req.data.data?.appinfoA ?? "abc") + "d";
     const appinfoB = (req.data.appinfoB ?? req.data.data?.appinfoB ?? 123) + 1111;

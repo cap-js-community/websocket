@@ -3,6 +3,8 @@
 module.exports = (srv) => {
   const { Header } = srv.entities();
 
+  srv.on("wsContext", async () => {});
+
   srv.before("CREATE", Header, async (req) => {
     req.data.description += `- ${req.headers.test}`;
   });

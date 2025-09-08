@@ -246,7 +246,7 @@ class SocketServer {
    * @returns {[function]} Returns a list of middleware functions
    */
   beforeMiddlewares() {
-    return [this.mockResponse.bind(this), this.applyAuthCookie.bind(this)];
+    return [this.enhanceRequest.bind(this), this.applyAuthCookie.bind(this)];
   }
 
   /**
@@ -310,14 +310,16 @@ class SocketServer {
   }
 
   /**
-   * Mock the HTTP response object and make available at req.res
+   * Enhance the request object. Mock the HTTP response object and make available at req.res
    * @param {Object} socket Server socket
    * @param {Function} next Call next
    */
-  mockResponse(socket, next) {
+  enhanceRequest(socket, next) {
     const req = socket.request;
     req.baseUrl ??= req.url;
     req.originalUrl ??= req.url;
+    req.hostname ??= req.headers?.["x-forwarded-host"] ?? req.headers?.host ?? "";
+    req.host = req.hostname;
     let error;
     try {
       // Mock response (not available in websocket, CDS middlewares need it)

@@ -70,11 +70,29 @@ describe("Base", () => {
     expect(baseFormat.compose("test", {})).toBeUndefined();
   });
 
-  test("Mock Response", async () => {
+  test("Enhance Request - Host", async () => {
+    const next = jest.fn();
+    const socketServer = new SocketServer();
+    let req = { headers: { host: "localhost:4711" } };
+    socketServer.enhanceRequest({ request: req }, next);
+    expect(req.baseUrl).toBe(req.url);
+    expect(req.originalUrl).toBe(req.url);
+    expect(req.hostname).toBe("localhost:4711");
+    expect(req.host).toBe("localhost:4711");
+
+    req = { headers: { host: "localhost:4711", "x-forwarded-host": "localhost:4712" } };
+    socketServer.enhanceRequest({ request: req }, next);
+    expect(req.baseUrl).toBe(req.url);
+    expect(req.originalUrl).toBe(req.url);
+    expect(req.hostname).toBe("localhost:4712");
+    expect(req.host).toBe("localhost:4712");
+  });
+
+  test("Enhance Request - Mock Response", async () => {
     const socketServer = new SocketServer();
     const req = {};
     const next = jest.fn();
-    socketServer.mockResponse({ request: req }, next);
+    socketServer.enhanceRequest({ request: req }, next);
     expect(req.res).toBeDefined();
     expect(req.res.headers).toEqual({});
     expect(req.res.set("A", "B")).toBe(req.res);
