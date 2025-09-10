@@ -5,7 +5,7 @@ const cds = require("@sap/cds");
 const BaseAdapter = require("./base");
 const redis = require("../redis");
 
-const LOG = cds.log("/websocket/redis");
+const LOG = cds.log("websocket/redis");
 
 class RedisAdapter extends BaseAdapter {
   constructor(server, config) {

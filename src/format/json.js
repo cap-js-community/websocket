@@ -4,7 +4,7 @@ const cds = require("@sap/cds");
 
 const BaseFormat = require("./base");
 
-const LOG = cds.log("/websocket/json");
+const LOG = cds.log("websocket/json");
 
 class JSONFormat extends BaseFormat {
   constructor(service, origin) {

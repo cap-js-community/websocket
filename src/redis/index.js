@@ -3,7 +3,7 @@
 const cds = require("@sap/cds");
 const { RedisClient } = require("@cap-js-community/common");
 
-const LOG = cds.log("/websocket/redis");
+const LOG = cds.log("websocket/redis");
 const IS_ON_CF = process.env.USER === "vcap";
 
 const redisClient = RedisClient.default("websocket");

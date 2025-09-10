@@ -8,7 +8,7 @@ const DESERIALIZE_REGEX = /((?:[^:\\]|(?:\\.))+):((?:[^:\\\n]|(?:\\.))*)/;
 const MESSAGE = "MESSAGE";
 const SEPARATOR = "\n\n";
 
-const LOG = cds.log("/websocket/pcp");
+const LOG = cds.log("websocket/pcp");
 
 class PCPFormat extends GenericFormat {
   constructor(service, origin) {

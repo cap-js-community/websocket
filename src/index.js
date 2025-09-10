@@ -5,7 +5,7 @@ const cds = require("@sap/cds");
 const SocketServer = require("./socket/base");
 const redis = require("./redis");
 
-const LOG = cds.log("/websocket");
+const LOG = cds.log("websocket");
 const TIMEOUT_SHUTDOWN = 2500;
 
 const WebSocketAction = {

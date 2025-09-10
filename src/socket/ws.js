@@ -6,7 +6,7 @@ const WebSocket = require("ws");
 
 const SocketServer = require("./base");
 
-const LOG = cds.log("/websocket/ws");
+const LOG = cds.log("websocket/ws");
 const DEBUG = cds.debug("websocket");
 
 class SocketWSServer extends SocketServer {

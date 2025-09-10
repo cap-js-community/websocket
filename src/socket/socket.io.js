@@ -6,7 +6,7 @@ const { Server } = require("socket.io");
 const SocketServer = require("./base");
 const redis = require("../redis");
 
-const LOG = cds.log("/websocket/socket.io");
+const LOG = cds.log("websocket/socket.io");
 const DEBUG = cds.debug("websocket");
 
 class SocketIOServer extends SocketServer {
