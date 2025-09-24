@@ -176,6 +176,13 @@
                       "default": false
                     }
                   }
+                },
+                "roles": {
+                  "type": "array",
+                  "description": "Roles filterable for websockets",
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             },

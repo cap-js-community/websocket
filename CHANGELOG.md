@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 1.7.4 - 2025-10-xx
 
+### Added
+
+- Client determination via user roles
+
 ### Fixed
 
 - Adjust logging component name
+- Room handling for Socket.IO
 
 ## Version 1.7.3 - 2025-09-08
 

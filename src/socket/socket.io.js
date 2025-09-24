@@ -33,23 +33,6 @@ class SocketIOServer extends SocketServer {
         this.onInit(socket, socket.request);
         socket.context = this.initContext();
         socket.request.id ??= socket.request._query?.id;
-        socket.join(room({ tenant: socket.context.tenant }));
-        if (socket.context.user?.id) {
-          socket.join(room({ tenant: socket.context.tenant, user: socket.context.user?.id }));
-        }
-        if (socket.request.id) {
-          socket.join(room({ tenant: socket.context.tenant, identifier: socket.request.id }));
-          if (socket.context.user?.id) {
-            socket.join(
-              room({
-                tenant: socket.context.tenant,
-                user: socket.context.user?.id,
-                identifier: socket.request.id,
-              }),
-            );
-          }
-        }
-        DEBUG?.("Connected", socket.id);
         socket.on("disconnect", () => {
           this.onDisconnect(socket);
           DEBUG?.("Disconnected", socket.id);
@@ -83,85 +66,37 @@ class SocketIOServer extends SocketServer {
               throw err;
             }
           },
-          broadcast: async (event, data, user, context, identifier, headers) => {
+          broadcast: async (event, data, headers, filter) => {
             await this.broadcast({
+              tenant: socket.context.tenant,
               service,
               path,
               event,
               data,
-              tenant: socket.context.tenant,
-              user,
-              context,
-              identifier,
               headers,
+              filter,
               socket,
             });
           },
-          broadcastAll: async (event, data, user, context, identifier, headers) => {
+          broadcastAll: async (event, data, headers, filter) => {
             await this.broadcast({
+              tenant: socket.context.tenant,
               service,
               path,
               event,
               data,
-              tenant: socket.context.tenant,
-              user,
-              context,
-              identifier,
               headers,
+              filter,
               socket: null,
             });
           },
           enter: async (context) => {
             socket.contexts.add(context);
             await socket.join(room({ tenant: socket.context.tenant, context }));
-            if (socket.context.user?.id) {
-              await socket.join(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
-            }
-            if (socket.request.id) {
-              await socket.join(
-                room({
-                  tenant: socket.context.tenant,
-                  context,
-                  identifier: socket.request.id,
-                }),
-              );
-              if (socket.context.user?.id) {
-                await socket.join(
-                  room({
-                    tenant: socket.context.tenant,
-                    user: socket.context.user?.id,
-                    context,
-                    identifier: socket.request.id,
-                  }),
-                );
-              }
-            }
           },
           exit: async (context) => {
             socket.contexts.delete(context);
             await socket.leave(room({ tenant: socket.context.tenant, context }));
-            if (socket.context.user?.id) {
-              await socket.leave(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
-            }
-            if (socket.request.id) {
-              await socket.leave(
-                room({
-                  tenant: socket.context.tenant,
-                  context,
-                  identifier: socket.request.id,
-                }),
-              );
-              if (socket.context.user?.id) {
-                await socket.leave(
-                  room({
-                    tenant: socket.context.tenant,
-                    user: socket.context.user.id,
-                    context,
-                    identifier: socket.request.id,
-                  }),
-                );
-              }
-            }
           },
           reset: async () => {
             for (const context of socket.contexts) {
@@ -176,63 +111,66 @@ class SocketIOServer extends SocketServer {
           },
         };
         socket.context.ws = { service: socket.facade, socket: socket, io };
-        this.onConnect(socket, socket.request);
+        this.onConnect(socket);
         connected && connected(socket.facade);
+        DEBUG?.("Connected", socket.id);
       } catch (err) {
         LOG?.error(err);
       }
     });
   }
 
-  async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket }) {
+  async broadcast({
+    tenant,
+    service,
+    path,
+    event,
+    data,
+    headers,
+    filter: { user, role, context, identifier } = {},
+    socket,
+  }) {
     try {
       path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
       let to = socket?.broadcast || this.io.of(this.servicePath(path));
-      if (context?.include?.length && identifier?.include?.length) {
-        for (const contextInclude of context.include) {
-          for (const identifierInclude of identifier.include) {
-            if (user?.include?.length) {
-              for (const userInclude of user.include) {
-                to = to.to(room({ tenant, user: userInclude, context: contextInclude, identifier: identifierInclude }));
-              }
-            } else {
-              to = to.to(room({ tenant, context: contextInclude, identifier: identifierInclude }));
-            }
-          }
-        }
-      } else if (context?.include?.length) {
-        for (const contextInclude of context.include) {
-          if (user?.include?.length) {
-            for (const userInclude of user.include) {
-              to = to.to(room({ tenant, user: userInclude, context: contextInclude }));
-            }
-          } else {
-            to = to.to(room({ tenant, context: contextInclude }));
-          }
-        }
-      } else if (identifier?.include?.length) {
-        for (const identifierInclude of identifier.include) {
-          if (user?.include?.length) {
-            for (const userInclude of user.include) {
-              to = to.to(room({ tenant, user: userInclude, identifier: identifierInclude }));
-            }
-          } else {
-            to = to.to(room({ tenant, identifier: identifierInclude }));
-          }
-        }
-      } else {
+      if (
+        user?.include?.length > 0 ||
+        role?.include?.length > 0 ||
+        context?.include?.length > 0 ||
+        identifier?.include?.length > 0
+      ) {
         if (user?.include?.length) {
           for (const userInclude of user.include) {
             to = to.to(room({ tenant, user: userInclude }));
           }
-        } else {
-          to = to.to(room({ tenant }));
         }
+        if (role?.include?.length) {
+          for (const roleInclude of role.include) {
+            to = to.to(room({ tenant, role: roleInclude }));
+          }
+        }
+        if (context?.include?.length) {
+          for (const contextInclude of context.include) {
+            to = to.to(room({ tenant, context: contextInclude }));
+          }
+        }
+        if (identifier?.include?.length) {
+          for (const identifierInclude of identifier.include) {
+            to = to.to(room({ tenant, identifier: identifierInclude }));
+          }
+        }
+      } else {
+        to = to.to(room({ tenant }));
       }
       if (user?.exclude?.length) {
         for (const userExclude of user.exclude) {
           to = to.except(room({ tenant, user: userExclude }));
+        }
+      }
+      if (role?.exclude?.length) {
+        for (const roleExclude of role.exclude) {
+          to = to.except(room({ tenant, role: roleExclude }));
         }
       }
       if (context?.exclude?.length) {
@@ -266,7 +204,22 @@ class SocketIOServer extends SocketServer {
     socket.contexts = new Set(); // Set<context>
   }
 
-  onConnect() {}
+  onConnect(socket) {
+    socket.join(room({ tenant: socket.context.tenant }));
+    if (socket.context.user?.id) {
+      socket.join(room({ tenant: socket.context.tenant, user: socket.context.user?.id }));
+    }
+    if (this.config?.roles && socket.context.user?.is) {
+      for (const role of this.config.roles) {
+        if (socket.context.user.is(role)) {
+          socket.join(room({ tenant: socket.context.tenant, role }));
+        }
+      }
+    }
+    if (socket.request.id) {
+      socket.join(room({ tenant: socket.context.tenant, identifier: socket.request.id }));
+    }
+  }
 
   onDisconnect(socket) {
     socket.contexts.clear();
@@ -324,8 +277,8 @@ class SocketIOServer extends SocketServer {
   }
 }
 
-function room({ tenant, user, context, identifier }) {
-  return `${tenant ? `/tenant:${tenant}#` : ""}${user ? `/user:${user}#` : ""}${context ? `/context:${context}#` : ""}${identifier ? `/identifier:${identifier}#` : ""}`;
+function room({ tenant, user, role, context, identifier }) {
+  return `${tenant ? `/tenant:${tenant}#` : ""}${user ? `/user:${user}#` : ""}${role ? `/role:${role}#` : ""}${context ? `/context:${context}#` : ""}${identifier ? `/identifier:${identifier}#` : ""}`;
 }
 
 module.exports = SocketIOServer;

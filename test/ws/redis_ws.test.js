@@ -83,7 +83,7 @@ describe("Redis", () => {
     expect(redis.client.subscribe).toHaveBeenNthCalledWith(5, "websocket/main", expect.any(Function));
     expect(redis.client.publish).toHaveBeenCalledWith(
       "websocket/chat",
-      '{"event":"received","data":{"text":"test","user":"alice"},"tenant":"t1","headers":{"header":"value"}}',
+      '{"tenant":"t1","event":"received","data":{"text":"test","user":"alice"},"headers":{"header":"value"}}',
     );
 
     // Duplicated because Redis mock publishes to same client (not done for real Redis)
@@ -93,10 +93,10 @@ describe("Redis", () => {
           text: "test",
           user: "alice",
         },
+        event: "received",
         headers: {
           header: "value",
         },
-        event: "received",
       },
       {
         data: {
@@ -104,6 +104,9 @@ describe("Redis", () => {
           user: "alice",
         },
         event: "received",
+        headers: {
+          header: "value",
+        },
       },
     ]);
   });
