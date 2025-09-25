@@ -189,18 +189,22 @@ class SocketWSServer extends SocketServer {
       path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
       const serviceClients = this.fetchClients(tenant, this.servicePath(path));
-      const clients = new Set(serviceClients.all);
-      if (user?.include?.length) {
-        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));
-      }
-      if (role?.include?.length) {
-        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.roles, role?.include));
-      }
-      if (context?.include?.length) {
-        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context?.include));
-      }
-      if (identifier?.include?.length) {
-        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier?.include));
+      let clients = new Set();
+      if (user?.include?.length || role?.include?.length || context?.include?.length || identifier?.include?.length) {
+        if (user?.include?.length) {
+          clients = clients.union(this.collectFromMap(serviceClients.users, user?.include));
+        }
+        if (role?.include?.length) {
+          clients = clients.union(this.collectFromMap(serviceClients.roles, role?.include));
+        }
+        if (context?.include?.length) {
+          clients = clients.union(this.collectFromMap(serviceClients.contexts, context?.include));
+        }
+        if (identifier?.include?.length) {
+          clients = clients.union(this.collectFromMap(serviceClients.identifiers, identifier?.include));
+        }
+      } else {
+        clients = new Set(serviceClients.all);
       }
       if (user?.exclude?.length) {
         this.keepEntriesFromSet(

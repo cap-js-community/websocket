@@ -436,28 +436,30 @@ In case of execution errors, the event broadcast is retried automatically, while
 
 ### Client Determination
 
-The client determination during WebSocket event broadcasting/emitting is based on the following filtering options of
-the event:
+The client determination during WebSocket event broadcasting/emitting is based on the
+following filtering options of the event:
 
 - **Tenant**: Only websocket clients connected to the same event tenant are notified.
 - **Service**: Only websocket clients connected to the same event service are notified.
 - **User**: Only websocket clients connected to the current or defined event users are notified.
+- **Role**: Only websocket clients connected to the users with specific roles are notified.
 - **Context**: Only websocket clients in the part of the defined event contexts are notified.
 - **Client Identifier**: Only websocket clients with the defined event client identifier are notified.
 
 Tenant and service are determined automatically based on the CDS context and are applied per default to ensure tenant
-and service isolation.
-User, context and client identifiers are optional and are determined based on the event data or event emit headers. They
-can be combined arbitrarily to filter the websocket clients to be notified.
+and service isolation. User, role, context and client identifiers are optional and are determined based on the event data or event emit headers.
+They can be combined arbitrarily to filter the websocket clients to be notified.
 
 The client filtering options are depicted in the following diagram:
 
 ![Client Determination Overview](./docs/assets/client_determination.svg)
 
-The diagram shows the mandatory filtering layer `tenant` and `service` and the optional filtering layers `user`,
-`context` and `client identifier`.
-The `+` and `-` symbols on the optional filter layers indicating the possibility to include (`+`) or exclude (`-`)
-filtering conditions as described in the upcoming sections.
+The diagram shows the mandatory filtering layer `tenant` and `service` and the optional filtering layers `user`, `role`
+`context` and `client identifier`. The `+` and `-` symbols on the optional filter layers indicating the possibility to
+include (`+`) or exclude (`-`) filtering conditions as described in the upcoming sections:
+
+- `+`: Include filtering condition. Inclusion is additive (`or` operator).
+- `-`: Exclude filtering condition. Exclusion is subtractive (`and not` operator) has precedence over inclusion.
 
 #### Event Users
 
@@ -465,8 +467,7 @@ filtering conditions as described in the upcoming sections.
 
 Events are broadcast to all websocket clients, including clients established in the context of the current context user.
 To influence event broadcasting based on current context user, the annotation `@websocket.user` or `@ws.user` is
-available on
-event level and event element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
+available on event level and event element level (alternatives include `@websocket.broadcast.user` or `@ws.broadcast.user`):
 
 Valid annotation values are:
 

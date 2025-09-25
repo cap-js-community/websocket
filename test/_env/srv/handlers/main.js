@@ -113,7 +113,7 @@ module.exports = (srv) => {
     const ID = req.data.ID;
     const text = req.data.text + req.data.num;
     await srv.emit("customRoleIncludeEvent", { ID, text, user: req.context.user.id, role: "admin" });
-    await srv.emit("customRoleExcludeEvent", { ID, text, user: req.context.user.id, role: "abc" });
+    await srv.emit("customRoleExcludeEvent", { ID, text, user: req.context.user.id, role: "admin" });
     return text + "-" + req.context.user.id;
   });
 
@@ -125,14 +125,14 @@ module.exports = (srv) => {
       text,
       user: req.context.user.id,
       role: "admin",
-      flag: ["admin", req.context.user.id],
+      flag: ["admin"],
     });
     await srv.emit("customRoleExcludeDynamicEvent", {
       ID,
       text,
       user: req.context.user.id,
       role: "abc",
-      flag: [req.context.user.id],
+      flag: ["abc"],
     });
     return text + "-" + req.context.user.id;
   });

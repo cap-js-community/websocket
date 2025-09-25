@@ -134,12 +134,7 @@ class SocketIOServer extends SocketServer {
       path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
       let to = socket?.broadcast || this.io.of(this.servicePath(path));
-      if (
-        user?.include?.length > 0 ||
-        role?.include?.length > 0 ||
-        context?.include?.length > 0 ||
-        identifier?.include?.length > 0
-      ) {
+      if (user?.include?.length || role?.include?.length || context?.include?.length || identifier?.include?.length) {
         if (user?.include?.length) {
           for (const userInclude of user.include) {
             to = to.to(room({ tenant, user: userInclude }));
