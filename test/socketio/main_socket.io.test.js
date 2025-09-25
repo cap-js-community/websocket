@@ -43,6 +43,11 @@ describe("Main", () => {
     await disconnect(socketOtherTenant);
   });
 
+  test("Server", async () => {
+    expect(cds.ws).toBeDefined();
+    expect(cds.io).toBeDefined();
+  });
+
   test("Unbound function", async () => {
     const result = await emitEvent(socket, "unboundFunction", { num: 1, text: "test" });
     expect(result).toBe("test1");

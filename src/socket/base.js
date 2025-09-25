@@ -99,38 +99,46 @@ class SocketServer {
        * Broadcast websocket event to all sockets except to sender with options
        * @param {String} event Event
        * @param {Object} data Event data
-       * @param {Object} [user] Users to be included/excluded, undefined: no restriction
-       * @param {[String]} [user.include] Users to be included, undefined: no restriction
-       * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
-       * @param {Object} [context] Contexts to be included/excluded, undefined: no restriction
-       * @param {[String]} [context.include] Contexts to be included, undefined: no restriction
-       * @param {[String]} [context.exclude] Contexts to be excluded, undefined: no restriction
-       * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-       * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
-       * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
        * @param {Object} [headers] Event headers
+       * @param {Object} [filter] Filters
+       * @param {Object} [filter.user] Users to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.user.include] Users to be included, undefined: no restriction
+       * @param {[String]} [filter.user.exclude] Users to be excluded, undefined: no restriction
+       * @param {Object} [filter.role] Roles to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.role.include] Roles to be included, undefined: no restriction
+       * @param {[String]} [filter.role.exclude] Roles to be excluded, undefined: no restriction
+       * @param {Object} [filter.context] Contexts to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.context.include] Contexts to be included, undefined: no restriction
+       * @param {[String]} [filter.context.exclude] Contexts to be excluded, undefined: no restriction
+       * @param {Object} [filter.identifier] Client identifiers to be included to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.identifier.include] Client identifiers to be included, undefined: no restriction
+       * @param {[String]} [filter.identifier.exclude] Client identifiers to be excluded, undefined: no restriction
        * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcast: async (event, data, user, context, identifier, headers) => {
+      broadcast: async (event, data, headers, { user, role, context, identifier } = {}) => {
         return Promise.resolve();
       },
       /**
        * Broadcast websocket event to all sockets with options
        * @param {String} event Event
        * @param {Object} data Event data
-       * @param {Object} [user] Users to be included/excluded, undefined: no restriction
-       * @param {[String]} [user.include] Users to be included, undefined: no restriction
-       * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
-       * @param {Object} [context] Contexts to be included/excluded, undefined: no restriction
-       * @param {[String]} [context.include] Contexts to be included, undefined: no restriction
-       * @param {[String]} [context.exclude] Contexts to be excluded, undefined: no restriction
-       * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-       * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
-       * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
        * @param {Object} [headers] Event headers
+       * @param {Object} [filter] Filters
+       * @param {Object} [filter.user] Users to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.user.include] Users to be included, undefined: no restriction
+       * @param {[String]} [filter.user.exclude] Users to be excluded, undefined: no restriction
+       * @param {Object} [filter.role] Roles to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.role.include] Roles to be included, undefined: no restriction
+       * @param {[String]} [filter.role.exclude] Roles to be excluded, undefined: no restriction
+       * @param {Object} [filter.context] Contexts to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.context.include] Contexts to be included, undefined: no restriction
+       * @param {[String]} [filter.context.exclude] Contexts to be excluded, undefined: no restriction
+       * @param {Object} [filter.identifier] Client identifiers to be included to be included/excluded, undefined: no restriction
+       * @param {[String]} [filter.identifier.include] Client identifiers to be included, undefined: no restriction
+       * @param {[String]} [filter.identifier.exclude] Client identifiers to be excluded, undefined: no restriction
        * @returns {Promise<void>} Promise when broadcasting completed
        */
-      broadcastAll: async (event, data, user, context, identifier, headers) => {
+      broadcastAll: async (event, data, headers, { user, role, context, identifier } = {}) => {
         return Promise.resolve();
       },
       /**
@@ -168,29 +176,43 @@ class SocketServer {
     };
     connected && connected(facade);
   }
-
   /**
    * Broadcast event to all websocket clients for a service with options (independent of a socket connection)
+   * @param {String} tenant Tenant for isolation
    * @param {String} service Service definition
    * @param {String} [path] Service path, e.g. "/path" (relative to websocket server path), undefined: default service path
    * @param {String} event Event name or event message JSON content (no additional parameters provided (incl. 'data', except 'local'))
-   * @param {Object} [data] Event data
-   * @param {String} [tenant] Tenant for isolation
-   * @param {Object} [user] Users to be included/excluded, undefined: no restriction
-   * @param {[String]} [user.include] Users to be included, undefined: no restriction
-   * @param {[String]} [user.exclude] Users to be excluded, undefined: no restriction
-   * @param {Object} [context] Contexts to be included/excluded, undefined: no restriction
-   * @param {[String]} [context.include] Contexts to be included, undefined: no restriction
-   * @param {[String]} [context.exclude] Contexts to be excluded, undefined: no restriction
-   * @param {Object} [identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
-   * @param {[String]} [identifier.include] Client identifiers to be included, undefined: no restriction
-   * @param {[String]} [identifier.exclude] Client identifiers to be excluded, undefined: no restriction
+   * @param {Object} [data] Event data, undefined: event contains all info incl. data
    * @param {Object} [headers] Event headers
+   * @param {Object} [filter] Filters
+   * @param {Object} [filter.user] Users to be included/excluded, undefined: no restriction
+   * @param {[String]} [filter.user.include] Users to be included, undefined: no restriction
+   * @param {[String]} [filter.user.exclude] Users to be excluded, undefined: no restriction
+   * @param {Object} [filter.role] Roles to be included/excluded, undefined: no restriction
+   * @param {[String]} [filter.role.include] Roles to be included, undefined: no restriction
+   * @param {[String]} [filter.role.exclude] Roles to be excluded, undefined: no restriction
+   * @param {Object} [filter.context] Contexts to be included/excluded, undefined: no restriction
+   * @param {[String]} [filter.context.include] Contexts to be included, undefined: no restriction
+   * @param {[String]} [filter.context.exclude] Contexts to be excluded, undefined: no restriction
+   * @param {Object} [filter.identifier] Unique consumer-provided socket client identifiers to be included/excluded, undefined: no restriction
+   * @param {[String]} [filter.identifier.include] Client identifiers to be included, undefined: no restriction
+   * @param {[String]} [filter.identifier.exclude] Client identifiers to be excluded, undefined: no restriction
    * @param {Object} [socket] Broadcast client socket to be excluded, undefined: no exclusion
    * @param {boolean} [local] Broadcast only locally (i.e. not via adapter), default: falsy
    * @returns {Promise<void>} Promise when broadcasting completed
    */
-  async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket, local }) {}
+
+  async broadcast({
+    tenant,
+    service,
+    path,
+    event,
+    data,
+    headers,
+    filter: { user, role, context, identifier } = {},
+    socket,
+    local,
+  }) {}
 
   /**
    * Handle HTTP request response

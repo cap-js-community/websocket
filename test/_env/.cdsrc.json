@@ -7,7 +7,7 @@
           "id": "alice",
           "tenant": "t1",
           "password": "alice",
-          "roles": ["WS_Chat", "WS_Todo"]
+          "roles": ["WS_Chat", "WS_Todo", "admin"]
         },
         "bob": {
           "id": "bob",
