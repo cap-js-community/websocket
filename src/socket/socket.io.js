@@ -131,8 +131,8 @@ class SocketIOServer extends SocketServer {
     socket,
   }) {
     try {
-      path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
+      path = path || this.defaultPath(service);
       let to = socket?.broadcast || this.io.of(this.servicePath(path));
       if (user?.include?.length || role?.include?.length || context?.include?.length || identifier?.include?.length) {
         if (user?.include?.length) {
