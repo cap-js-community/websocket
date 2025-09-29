@@ -321,9 +321,9 @@ It abstracts from the concrete websocket implementation by exposing the followin
 - `context: Object`: CDS context object for the websocket server socket
 - `on(event: String, callback: Function)`: Register websocket event
 - `async emit(event: String, data: Object, headers: Object)`: Emit websocket event with data and headers
-- `async broadcast(event: String, data: Object, headers: Object?, filter: { user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}? }?)`:
+- `async broadcast(event: String, data: Object, headers: Object?, filter: { user: {include: String[], exclude: String[]}?, role: {include: String[], exclude: String[]}?, context: {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}? }?)`:
   Broadcast websocket event (except to sender) by optionally restrict to users, contexts or identifiers and optionally providing headers
-- `async broadcastAll(event: String, data: Object, headers: Object?, filter: { user: {include: String[], exclude: String[]}?, context: : {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}? }?)`:
+- `async broadcastAll(event: String, data: Object, headers: Object?, filter: { user: {include: String[], exclude: String[]}?, role: {include: String[], exclude: String[]}?, context: {include: String[], exclude: String[]}?, identifier: {include: String[], exclude: String[]}? }?)`:
   Broadcast websocket event (including to sender) by optionally restrict to users, contexts or identifiers and optionally providing headers
 - `async enter(context: String)`: Enter a context
 - `async exit(context: String)`: Exit a context
@@ -436,8 +436,7 @@ In case of execution errors, the event broadcast is retried automatically, while
 
 ### Client Determination
 
-The client determination during WebSocket event broadcasting/emitting is based on the
-following filtering options of the event:
+The client determination during WebSocket event broadcasting/emitting is based on the following filtering layers of the event:
 
 - **Tenant**: Only websocket clients connected to the same event tenant are notified.
 - **Service**: Only websocket clients connected to the same event service are notified.
@@ -458,8 +457,46 @@ The diagram shows the mandatory filtering layer `tenant` and `service` and the o
 `context` and `client identifier`. The `+` and `-` symbols on the optional filter layers indicating the possibility to
 include (`+`) or exclude (`-`) filtering conditions as described in the upcoming sections:
 
-- `+`: Include filtering condition. Inclusion is additive (`or` operator).
-- `-`: Exclude filtering condition. Exclusion is subtractive (`and not` operator) has precedence over inclusion.
+- `+`: Include filtering condition. Inclusion is additive by default.
+- `-`: Exclude filtering condition. Exclusion is subtractive and has precedence over inclusion.
+- `or`: Include/Exclude filtering layers are combined via `or` operator by default.
+- `and`: Include/Exclude filtering layers can be combined via `and` operator.
+
+#### Filtering Operators
+
+> Following non-default filtering operators are only supported with WebSocket Standard (`kind: ws`).
+
+The default filtering operator is additive (`or` operator). This means, if multiple filtering layers are defined
+the filtering conditions are combined via `or` operator. Filtering values within the same layer are always combined with`or` operator.
+Include filters and exclude filters are always combined via `and not` operator.
+
+**Example:**
+
+```
+(userA or contextA) and !(roleA or contextB)
+```
+
+The filtering operators can be changed to be restrictive (`and` operator) with regard to filtering layers via the following options:
+
+**Include Filters:**
+
+- Project config via env `cds.websocket.operator.include: 'and'`
+- Service level via annotation `@websocket.operator.include: 'and'` or `@ws.operator.include: 'and'`
+- Event level via annotation `@websocket.operator.include: 'and'` or `@ws.operator.include: 'and'`
+- Header level via emit header `operatorInclude: 'and'` or `includeOperator: 'and'`
+
+**Exclude Filters:**
+
+- Project config via env `cds.websocket.operator.exclude: 'and'`
+- Service level via annotation `@websocket.operator.exclude: 'and'` or `@ws.operator.exclude: 'and'`
+- Event level via annotation `@websocket.operator.exclude: 'and'` or `@ws.operator.exclude: 'and'`
+- Header level via emit header `operatorExclude: 'and'` or `excludeOperator: 'and'`
+
+**Example:**
+
+```
+(userA and contextA) and !(roleA and contextB)
+```
 
 #### Event Users
 
@@ -988,6 +1025,7 @@ await srv.emit("customEvent", { ... }, {
     include: "...",
     exclude: ["..."],
   },
+  roles: ["..."],
   identifier: {
     include: ["..."],
     exclude: "...",

@@ -480,7 +480,33 @@ class SocketServer {
   }
 
   /**
-   * Return format instance for service
+   * Get service operator (or, and) for service event, service, project or default
+   * @param {Object} service Service definition
+   * @param {String} [event] Event name
+   * @param {String} type Operator type (include, exclude), default: include
+   */
+  serviceOperator(service, event, type = "include") {
+    let operator = undefined;
+    if (event) {
+      const eventDefinition = service.definition.events?.[event];
+      if (eventDefinition) {
+        operator = eventDefinition[`@websocket.operator.${type}`] || eventDefinition[`@ws.operator.${type}`];
+      }
+    }
+    if (!operator) {
+      operator = service.definition[`@websocket.operator.${type}`] || service.definition[`@ws.operator.${type}`];
+    }
+    if (!operator) {
+      operator = this.config.operator?.[type];
+    }
+    if (!operator) {
+      operator = "or";
+    }
+    return operator;
+  }
+
+  /**
+   * Return format (json, etc.) instance for service event, service, project or default
    * @param {Object} service Service definition
    * @param {String} [event] Event name
    * @param {String} [origin] Origin format, e.g. 'json'
@@ -495,7 +521,13 @@ class SocketServer {
       }
     }
     if (!format) {
-      format = service.definition["@websocket.format"] || service.definition["@ws.format"] || "json";
+      format = service.definition["@websocket.format"] || service.definition["@ws.format"];
+    }
+    if (!format) {
+      format = this.config.format;
+    }
+    if (!format) {
+      format = "json";
     }
     if (format === origin) {
       return new (SocketServer.require("identity", "format"))(service, origin);

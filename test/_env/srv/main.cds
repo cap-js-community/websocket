@@ -119,6 +119,16 @@ service MainService {
         user: String;
     }
 
+    @websocket.user: 'excludeCurrent'
+    @websocket.currentUser.exclude
+    event customContextUserExcludeAllEvent {
+        @websocket.context.exclude
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+    }
+
     event customContextUserExcludeDynamicEvent {
         @websocket.context
         ID: UUID;

@@ -62,6 +62,7 @@ module.exports = (srv) => {
     const text = req.data.text + req.data.num;
     await srv.emit("customContextUserIncludeEvent", { ID, text, user: req.context.user.id });
     await srv.emit("customContextUserExcludeEvent", { ID, text, user: req.context.user.id });
+    await srv.emit("customContextUserExcludeAllEvent", { ID, text, user: req.context.user.id });
     return text + "-" + req.context.user.id;
   });
 

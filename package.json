@@ -177,6 +177,43 @@
                     }
                   }
                 },
+                "format": {
+                  "type": "string",
+                  "default": "json",
+                  "description": "Websocket format",
+                  "enum": [
+                    "json",
+                    "pcp",
+                    "cloudevent",
+                    "cloudevents"
+                  ]
+                },
+                "operator": {
+                  "type": "object",
+                  "properties": {
+                    "include": {
+                      "type": "string",
+                      "default": "or",
+                      "enum": [
+                        "and",
+                        "or"
+                      ]
+                    },
+                    "exclude": {
+                      "type": "string",
+                      "default": "or",
+                      "enum": [
+                        "and",
+                        "or"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "include",
+                    "exclude"
+                  ],
+                  "additionalProperties": false
+                },
                 "roles": {
                   "type": "array",
                   "description": "Roles filterable for websockets",

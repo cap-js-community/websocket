@@ -107,6 +107,7 @@ describe("User", () => {
     expect(eventResult.text).toBe("test1");
     expect(eventResult.user).toBe("carol");
     await exitContext(socketOtherUser, ID);
+    await wait();
   });
 
   test("Event Context User Exclude - Static", async () => {
@@ -147,6 +148,7 @@ describe("User", () => {
     await enterContext(socket, ID);
     await enterContext(socketOther, ID);
     await exitContext(socketOtherUser, ID);
+    await wait();
     let eventResultPromise = waitForEvent(socket, "customContextUserExcludeDynamicEvent");
     let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserExcludeDynamicEvent");
     let eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customContextUserExcludeDynamicEvent");
@@ -262,6 +264,7 @@ describe("User", () => {
     await enterContext(socket, ID);
     await enterContext(socketOther, ID);
     await exitContext(socketOtherUser, ID);
+    await wait();
     let eventResultPromise = waitForEvent(socket, "customDefinedUserExcludeDynamicEvent");
     let eventResultOtherPromise = waitForEvent(socketOther, "customDefinedUserExcludeDynamicEvent");
     const eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customDefinedUserExcludeDynamicEvent");

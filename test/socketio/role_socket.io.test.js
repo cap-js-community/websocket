@@ -155,6 +155,7 @@ describe("Role", () => {
     await enterContext(socket, ID);
     await enterContext(socketOther, ID);
     await exitContext(socketOtherUser, ID);
+    await wait();
     let eventResultPromise = waitForEvent(socket, "customRoleExcludeDynamicEvent");
     let eventResultOtherPromise = waitForEvent(socketOther, "customRoleExcludeDynamicEvent");
     const eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customRoleExcludeDynamicEvent");
