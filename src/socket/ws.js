@@ -203,13 +203,14 @@ class SocketWSServer extends SocketServer {
             break;
           case "and":
             user?.include?.length &&
-              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user.include));
             role?.include?.length &&
-              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.roles, role?.include));
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.roles, role.include));
             context?.include?.length &&
-              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context?.include));
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context.include));
             identifier?.include?.length &&
-              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier?.include));
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier.include));
+            break;
         }
       }
       if (user?.exclude?.length || role?.exclude?.length || context?.exclude?.length || identifier?.exclude?.length) {

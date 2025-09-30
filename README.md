@@ -464,8 +464,6 @@ include (`+`) or exclude (`-`) filtering conditions as described in the upcoming
 
 #### Filtering Operators
 
-> Following non-default filtering operators are only supported with WebSocket Standard (`kind: ws`).
-
 The default filtering operator is additive (`or` operator). This means, if multiple filtering layers are defined
 the filtering conditions are combined via `or` operator. Filtering values within the same layer are always combined with`or` operator.
 Include filters and exclude filters are always combined via `and not` operator.

@@ -377,6 +377,7 @@ async function callCRUD(socket, service, entity, event, data, headers) {
           event,
           entity: entity.name,
           data,
+          params: [key],
           headers,
         });
     }

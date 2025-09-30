@@ -4,6 +4,7 @@ const cds = require("@sap/cds");
 
 cds.test(__dirname + "/../_env");
 
+cds.env.websocket.kind = "socket.io";
 cds.env.websocket.operator = {
   include: "and",
   exclude: "and",
@@ -11,7 +12,6 @@ cds.env.websocket.operator = {
 
 const auth = require("../_env/util/auth");
 const { wait } = require("../_env/util/common");
-
 const {
   connect,
   disconnect,
@@ -20,12 +20,12 @@ const {
   waitForNoEvent,
   enterContext,
   exitContext,
-} = require("../_env/util/ws");
+} = require("../_env/util/socket.io");
 
 const ID = "f67af09e-71bc-4293-80f9-cf1ed7fba973";
 const ID2 = "e67af09e-71bc-4293-80f9-cf1ed7fba973";
 
-describe("User", () => {
+describe("And", () => {
   let socket;
   let socketOther;
   let socketOtherUser;
@@ -60,7 +60,7 @@ describe("User", () => {
     let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserIncludeEvent");
     let eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customContextUserIncludeEvent");
     let result = await emitEvent(socket, "triggerCustomContextUserEvent", { ID, num: 1, text: "test" });
-    expect(result).toBeNull();
+    expect(result).toBe("test1-alice");
     let eventResult = await eventResultPromise;
     expect(eventResult.ID).toBe(ID);
     expect(eventResult.text).toBe("test1");
@@ -77,7 +77,7 @@ describe("User", () => {
     let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserIncludeEvent");
     eventNoResultOtherUserPromise = waitForNoEvent(socketOtherUser, "customContextUserIncludeEvent");
     result = await emitEvent(socket, "triggerCustomContextUserEvent", { ID, num: 1, text: "test" });
-    expect(result).toBeNull();
+    expect(result).toBe("test1-alice");
     eventResult = await eventResultPromise;
     expect(eventResult.ID).toBe(ID);
     expect(eventResult.text).toBe("test1");
@@ -95,7 +95,7 @@ describe("User", () => {
     let eventNoResultOtherPromise = waitForNoEvent(socketOther, "customContextUserExcludeAllEvent");
     let eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserExcludeAllEvent");
     let result = await emitEvent(socket, "triggerCustomContextUserEvent", { ID, num: 1, text: "test" });
-    expect(result).toBeNull();
+    expect(result).toBe("test1-alice");
     await eventNoResultPromise;
     await eventNoResultOtherPromise;
     let eventResult = await eventResultOtherUserPromise;
@@ -111,7 +111,7 @@ describe("User", () => {
     let eventResultOtherPromise = waitForEvent(socketOther, "customContextUserExcludeAllEvent");
     eventResultOtherUserPromise = waitForEvent(socketOtherUser, "customContextUserExcludeAllEvent");
     result = await emitEvent(socket, "triggerCustomContextUserEvent", { ID, num: 1, text: "test" });
-    expect(result).toBeNull();
+    expect(result).toBe("test1-alice");
     eventResult = await eventResultPromise;
     expect(eventResult.ID).toBe(ID);
     expect(eventResult.text).toBe("test1");
