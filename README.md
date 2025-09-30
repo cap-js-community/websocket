@@ -34,6 +34,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
   - [Transactional Safety](#transactional-safety)
     - [CDS Persistent Outbox](#cds-persistent-outbox)
   - [Client Determination](#client-determination)
+    - [Filtering Operators](#filtering-operators)
     - [Event Users](#event-users)
     - [Event Roles](#event-roles)
     - [Event Contexts](#event-contexts)
