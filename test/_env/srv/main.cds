@@ -26,6 +26,8 @@ service MainService {
     function triggerCustomContextUserDynamicEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomDefinedUserEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomDefinedUserDynamicEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomRoleEvent(ID: UUID, num: Integer, text: String) returns String;
+    function triggerCustomRoleDynamicEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextHeaderEvent(ID: UUID, num: Integer, text: String) returns String;
 
     function eventException() returns String;
@@ -117,6 +119,16 @@ service MainService {
         user: String;
     }
 
+    @websocket.user: 'excludeCurrent'
+    @websocket.currentUser.exclude
+    event customContextUserExcludeAllEvent {
+        @websocket.context.exclude
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+    }
+
     event customContextUserExcludeDynamicEvent {
         @websocket.context
         ID: UUID;
@@ -164,6 +176,50 @@ service MainService {
         text: String;
         user: String;
         @websocket.user.exclude
+        flag: array of String;
+    }
+
+    @websocket.role: ['xxx']
+    @websocket.role.include: ['admin']
+    event customRoleIncludeEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        role: String;
+    }
+
+    event customRoleIncludeDynamicEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        role: String;
+        @websocket.role
+        @websocket.role.include
+        flag: String;
+    }
+
+    @websocket.role.exclude: 'admin'
+    event customRoleExcludeEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        role: String;
+    }
+
+    event customRoleExcludeDynamicEvent {
+        @websocket.context
+        ID: UUID;
+        num: Integer;
+        text: String;
+        user: String;
+        role: String;
+        @websocket.role.exclude
         flag: array of String;
     }
 

@@ -174,20 +174,19 @@ function bindServiceEvents(socketServer, service, path) {
         const format = deriveFormat(service, event);
         const headers = deriveHeaders(req.headers, format);
         const user = deriveUser(event, req.data, headers, req);
+        const role = deriveRole(event, req.data, headers, req);
         const context = deriveContext(event, req.data, headers);
         const identifier = deriveIdentifier(event, req.data, headers);
         const eventHeaders = deriveEventHeaders(headers);
         const eventPath = derivePath(event, path);
         await socketServer.broadcast({
+          tenant: req.tenant,
           service,
           path: eventPath,
           event: localEventName,
           data: req.data,
-          tenant: req.tenant,
-          user,
-          context,
-          identifier,
           headers: eventHeaders,
+          filter: { user, role, context, identifier },
           socket: null,
         });
       } catch (err) {
@@ -378,6 +377,7 @@ async function callCRUD(socket, service, entity, event, data, headers) {
           event,
           entity: entity.name,
           data,
+          params: [key],
           headers,
         });
     }
@@ -386,21 +386,23 @@ async function callCRUD(socket, service, entity, event, data, headers) {
 
 async function broadcastEvent(socket, service, event, entity, data, headers) {
   let user;
+  let role;
   let context;
   let identifier;
   const events = service.events();
   const eventDefinition = events[event] || events[event.replaceAll(/:/g, ".")];
   if (eventDefinition) {
     user = deriveUser(eventDefinition, data, headers, socket);
+    role = deriveRole(eventDefinition, data, headers, socket);
     context = deriveContext(eventDefinition, data, headers);
     identifier = deriveIdentifier(eventDefinition, data, headers);
   }
   const contentData = broadcastData(entity, data, headers, eventDefinition);
   if (contentData) {
     if (entity["@websocket.broadcast.all"] || entity["@ws.broadcast.all"]) {
-      await socket.broadcastAll(event, contentData, user, context, identifier, headers);
+      await socket.broadcastAll(event, contentData, headers, { user, role, context, identifier });
     } else {
-      await socket.broadcast(event, contentData, user, context, identifier, headers);
+      await socket.broadcast(event, contentData, headers, { user, role, context, identifier });
     }
   }
 }
@@ -531,6 +533,36 @@ function deriveDefinedUser(event, data, headers) {
       "@ws.user.exclude",
       "@websocket.broadcast.user.exclude",
       "@ws.broadcast.user.exclude",
+    ],
+  });
+  if (include || exclude) {
+    return { include, exclude };
+  }
+}
+
+function deriveRole(event, data, headers) {
+  const include = combineValues(
+    deriveValues(event, data, headers, {
+      headerNames: ["wsRoles", "wsRole", "roles", "role"],
+      annotationNames: ["@websocket.role", "@ws.role", "@websocket.broadcast.role", "@ws.broadcast.role"],
+    }),
+    deriveValues(event, data, headers, {
+      headerNames: ["wsRole.include", "wsRoleInclude", "role.include", "roleInclude"],
+      annotationNames: [
+        "@websocket.role.include",
+        "@ws.role.include",
+        "@websocket.broadcast.role.include",
+        "@ws.broadcast.role.include",
+      ],
+    }),
+  );
+  const exclude = deriveValues(event, data, headers, {
+    headerNames: ["wsRole.exclude", "wsRoleExclude", "role.exclude", "roleExclude"],
+    annotationNames: [
+      "@websocket.role.exclude",
+      "@ws.role.exclude",
+      "@websocket.broadcast.role.exclude",
+      "@ws.broadcast.role.exclude",
     ],
   });
   if (include || exclude) {

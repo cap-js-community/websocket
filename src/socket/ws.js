@@ -105,31 +105,27 @@ class SocketWSServer extends SocketServer {
               throw err;
             }
           },
-          broadcast: async (event, data, user, context, identifier, headers) => {
+          broadcast: async (event, data, headers, filter) => {
             await this.broadcast({
+              tenant: ws.context.tenant,
               service,
               path,
               event,
               data,
-              tenant: ws.context.tenant,
-              user,
-              context,
-              identifier,
               headers,
+              filter,
               socket: ws,
             });
           },
-          broadcastAll: async (event, data, user, context, identifier, headers) => {
+          broadcastAll: async (event, data, headers, filter) => {
             await this.broadcast({
+              tenant: ws.context.tenant,
               service,
               path,
               event,
               data,
-              tenant: ws.context.tenant,
-              user,
-              context,
-              identifier,
               headers,
+              filter,
               socket: null,
             });
           },
@@ -165,55 +161,88 @@ class SocketWSServer extends SocketServer {
     });
   }
 
-  async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket, local }) {
+  async broadcast({
+    tenant,
+    service,
+    path,
+    event,
+    data,
+    headers,
+    filter: { user, role, context, identifier } = {},
+    socket,
+    local,
+  }) {
     try {
       const eventMessage = event;
       const isEventMessage = !data;
       if (isEventMessage) {
         const message = JSON.parse(eventMessage);
+        tenant = message.tenant;
         event = message.event;
         data = message.data;
-        tenant = message.tenant;
+        headers = message.headers;
         user = message.user;
+        role = message.role;
         context = message.context;
         identifier = message.identifier;
       }
-      path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
+      path = path || this.defaultPath(service);
       const serviceClients = this.fetchClients(tenant, this.servicePath(path));
-      const clients = new Set(serviceClients.all);
-      if (user?.include?.length) {
-        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user?.include));
+      let clients = new Set(serviceClients.all);
+      if (user?.include?.length || role?.include?.length || context?.include?.length || identifier?.include?.length) {
+        switch (this.serviceOperator(service, event, "include")) {
+          case "or":
+          default:
+            clients = new Set([
+              ...this.collectFromMap(serviceClients.users, user?.include),
+              ...this.collectFromMap(serviceClients.roles, role?.include),
+              ...this.collectFromMap(serviceClients.contexts, context?.include),
+              ...this.collectFromMap(serviceClients.identifiers, identifier?.include),
+            ]);
+            break;
+          case "and":
+            user?.include?.length &&
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.users, user.include));
+            role?.include?.length &&
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.roles, role.include));
+            context?.include?.length &&
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context.include));
+            identifier?.include?.length &&
+              this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier.include));
+            break;
+        }
       }
-      if (context?.include?.length) {
-        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.contexts, context?.include));
-      }
-      if (identifier?.include?.length) {
-        this.keepEntriesFromSet(clients, this.collectFromMap(serviceClients.identifiers, identifier?.include));
-      }
-      if (user?.exclude?.length) {
-        this.keepEntriesFromSet(
-          clients,
-          this.collectFromSet(clients, (client) => {
-            return !user?.exclude.includes(client.context.user?.id);
-          }),
-        );
-      }
-      if (context?.exclude?.length) {
-        this.keepEntriesFromSet(
-          clients,
-          this.collectFromSet(clients, (client) => {
-            return !context?.exclude.find((context) => client.contexts.has(context));
-          }),
-        );
-      }
-      if (identifier?.exclude?.length) {
-        this.keepEntriesFromSet(
-          clients,
-          this.collectFromSet(clients, (client) => {
-            return !identifier?.exclude.includes(client.request?.id);
-          }),
-        );
+      if (user?.exclude?.length || role?.exclude?.length || context?.exclude?.length || identifier?.exclude?.length) {
+        switch (this.serviceOperator(service, event, "exclude")) {
+          case "or":
+          default:
+            this.keepEntriesFromSet(
+              clients,
+              this.collectFromSet(clients, (client) => {
+                return !(
+                  user?.exclude?.includes(client.context.user?.id) ||
+                  role?.exclude?.find((role) => client.context.user?.is(role)) ||
+                  context?.exclude?.find((context) => client.contexts.has(context)) ||
+                  identifier?.exclude?.includes(client.request?.id)
+                );
+              }),
+            );
+            break;
+          case "and":
+            this.keepEntriesFromSet(
+              clients,
+              this.collectFromSet(clients, (client) => {
+                return !(
+                  (!user?.exclude?.length || user?.exclude.includes(client.context.user?.id)) &&
+                  (!role?.exclude?.length || role?.exclude.find((role) => client.context.user?.is(role))) &&
+                  (!context?.exclude?.length || context?.exclude.find((context) => client.contexts.has(context))) &&
+                  (!identifier?.exclude?.length || identifier?.exclude.includes(client.request?.id))
+                );
+              }),
+            );
+            break;
+        }
       }
       if (clients.size > 0) {
         const format = this.format(service, event);
@@ -227,7 +256,7 @@ class SocketWSServer extends SocketServer {
       if (!local) {
         const adapterMessage = isEventMessage
           ? eventMessage
-          : JSON.stringify({ event, data, tenant, user, context, identifier, headers });
+          : JSON.stringify({ tenant, event, data, headers, user, role, context, identifier });
         await this.adapter?.emit(service, path, adapterMessage);
       }
     } catch (err) {
@@ -256,6 +285,13 @@ class SocketWSServer extends SocketServer {
     if (ws.context.user?.id) {
       this.addToSetOfMap(clients.users, ws.context.user?.id, ws);
     }
+    if (this.config?.roles && ws.context.user?.is) {
+      for (const role of this.config.roles) {
+        if (ws.context.user.is(role)) {
+          this.addToSetOfMap(clients.roles, role, ws);
+        }
+      }
+    }
     if (ws.request?.id) {
       this.addToSetOfMap(clients.identifiers, ws.request?.id, ws);
     }
@@ -269,6 +305,9 @@ class SocketWSServer extends SocketServer {
     if (ws.context?.user?.id) {
       this.deleteFromSetOfMap(clients.users, ws.context?.user?.id, ws);
     }
+    for (const [key] of clients.roles) {
+      this.deleteFromSetOfMap(clients.roles, key, ws);
+    }
     for (const [key] of clients.contexts) {
       this.deleteFromSetOfMap(clients.contexts, key, ws);
     }
@@ -279,11 +318,12 @@ class SocketWSServer extends SocketServer {
 
   fetchClients(tenant, service) {
     this.wss.cdsClients ??= new Map(); // Map<tenant, Map<service,...>>
-    const initTenantClients = new Map(); // Map<service, {all,users,contexts,identifiers}>
+    const initTenantClients = new Map(); // Map<service, {all,users,roles,contexts,identifiers}>
     const serviceClients = this.getFromMap(this.wss.cdsClients, tenant, initTenantClients);
     return this.getFromMap(serviceClients, service, {
       all: new Set(), // Set<client>
       users: new Map(), // Map<user, Set<client>>
+      roles: new Map(), // Map<role, Set<client>>
       contexts: new Map(), // Map<context, Set<client>>
       identifiers: new Map(), // Map<identifier, Set<client>>
     });

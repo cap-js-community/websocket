@@ -31,6 +31,9 @@
     "websocket": {
       "kind": "ws",
       "impl": null,
+      "roles": [
+        "admin"
+      ],
       "[ws]": {
         "adapter": {
           "impl": "redis",

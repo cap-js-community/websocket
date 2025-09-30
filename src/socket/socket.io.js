@@ -33,23 +33,6 @@ class SocketIOServer extends SocketServer {
         this.onInit(socket, socket.request);
         socket.context = this.initContext();
         socket.request.id ??= socket.request._query?.id;
-        socket.join(room({ tenant: socket.context.tenant }));
-        if (socket.context.user?.id) {
-          socket.join(room({ tenant: socket.context.tenant, user: socket.context.user?.id }));
-        }
-        if (socket.request.id) {
-          socket.join(room({ tenant: socket.context.tenant, identifier: socket.request.id }));
-          if (socket.context.user?.id) {
-            socket.join(
-              room({
-                tenant: socket.context.tenant,
-                user: socket.context.user?.id,
-                identifier: socket.request.id,
-              }),
-            );
-          }
-        }
-        DEBUG?.("Connected", socket.id);
         socket.on("disconnect", () => {
           this.onDisconnect(socket);
           DEBUG?.("Disconnected", socket.id);
@@ -83,84 +66,40 @@ class SocketIOServer extends SocketServer {
               throw err;
             }
           },
-          broadcast: async (event, data, user, context, identifier, headers) => {
+          broadcast: async (event, data, headers, filter) => {
             await this.broadcast({
+              tenant: socket.context.tenant,
               service,
               path,
               event,
               data,
-              tenant: socket.context.tenant,
-              user,
-              context,
-              identifier,
               headers,
+              filter,
               socket,
             });
           },
-          broadcastAll: async (event, data, user, context, identifier, headers) => {
+          broadcastAll: async (event, data, headers, filter) => {
             await this.broadcast({
+              tenant: socket.context.tenant,
               service,
               path,
               event,
               data,
-              tenant: socket.context.tenant,
-              user,
-              context,
-              identifier,
               headers,
+              filter,
               socket: null,
             });
           },
           enter: async (context) => {
             socket.contexts.add(context);
-            await socket.join(room({ tenant: socket.context.tenant, context }));
-            if (socket.context.user?.id) {
-              await socket.join(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
-            }
-            if (socket.request.id) {
-              await socket.join(
-                room({
-                  tenant: socket.context.tenant,
-                  context,
-                  identifier: socket.request.id,
-                }),
-              );
-              if (socket.context.user?.id) {
-                await socket.join(
-                  room({
-                    tenant: socket.context.tenant,
-                    user: socket.context.user?.id,
-                    context,
-                    identifier: socket.request.id,
-                  }),
-                );
-              }
+            for (const entry of this.combineValues(socket, { context })) {
+              socket.join(room(entry));
             }
           },
           exit: async (context) => {
             socket.contexts.delete(context);
-            await socket.leave(room({ tenant: socket.context.tenant, context }));
-            if (socket.context.user?.id) {
-              await socket.leave(room({ tenant: socket.context.tenant, user: socket.context.user.id, context }));
-            }
-            if (socket.request.id) {
-              await socket.leave(
-                room({
-                  tenant: socket.context.tenant,
-                  context,
-                  identifier: socket.request.id,
-                }),
-              );
-              if (socket.context.user?.id) {
-                await socket.leave(
-                  room({
-                    tenant: socket.context.tenant,
-                    user: socket.context.user.id,
-                    context,
-                    identifier: socket.request.id,
-                  }),
-                );
-              }
+            for (const entry of this.combineValues(socket, { context })) {
+              socket.leave(room(entry));
             }
           },
           reset: async () => {
@@ -176,73 +115,89 @@ class SocketIOServer extends SocketServer {
           },
         };
         socket.context.ws = { service: socket.facade, socket: socket, io };
-        this.onConnect(socket, socket.request);
+        this.onConnect(socket);
         connected && connected(socket.facade);
+        DEBUG?.("Connected", socket.id);
       } catch (err) {
         LOG?.error(err);
       }
     });
   }
 
-  async broadcast({ service, path, event, data, tenant, user, context, identifier, headers, socket }) {
+  async broadcast({
+    tenant,
+    service,
+    path,
+    event,
+    data,
+    headers,
+    filter: { user, role, context, identifier } = {},
+    socket,
+  }) {
     try {
-      path = path || this.defaultPath(service);
       tenant = tenant || socket?.context.tenant;
+      path = path || this.defaultPath(service);
       let to = socket?.broadcast || this.io.of(this.servicePath(path));
-      if (context?.include?.length && identifier?.include?.length) {
-        for (const contextInclude of context.include) {
-          for (const identifierInclude of identifier.include) {
-            if (user?.include?.length) {
-              for (const userInclude of user.include) {
-                to = to.to(room({ tenant, user: userInclude, context: contextInclude, identifier: identifierInclude }));
-              }
-            } else {
-              to = to.to(room({ tenant, context: contextInclude, identifier: identifierInclude }));
+      if (user?.include?.length || role?.include?.length || context?.include?.length || identifier?.include?.length) {
+        switch (this.serviceOperator(service, event, "include")) {
+          case "or":
+          default:
+            for (const userInclude of user?.include || []) {
+              to = to.to(room({ tenant, user: userInclude }));
             }
-          }
-        }
-      } else if (context?.include?.length) {
-        for (const contextInclude of context.include) {
-          if (user?.include?.length) {
-            for (const userInclude of user.include) {
-              to = to.to(room({ tenant, user: userInclude, context: contextInclude }));
+            for (const roleInclude of role?.include || []) {
+              to = to.to(room({ tenant, role: roleInclude }));
             }
-          } else {
-            to = to.to(room({ tenant, context: contextInclude }));
-          }
-        }
-      } else if (identifier?.include?.length) {
-        for (const identifierInclude of identifier.include) {
-          if (user?.include?.length) {
-            for (const userInclude of user.include) {
-              to = to.to(room({ tenant, user: userInclude, identifier: identifierInclude }));
+            for (const contextInclude of context?.include || []) {
+              to = to.to(room({ tenant, context: contextInclude }));
             }
-          } else {
-            to = to.to(room({ tenant, identifier: identifierInclude }));
-          }
+            for (const identifierInclude of identifier?.include || []) {
+              to = to.to(room({ tenant, identifier: identifierInclude }));
+            }
+            break;
+          case "and":
+            for (const entry of this.combineValues(undefined, {
+              tenant,
+              user: user?.include?.length > 0 ? user.include : undefined,
+              role: role?.include?.length ? role.include : undefined,
+              context: context?.include?.length > 0 ? context.include : undefined,
+              identifier: identifier?.include?.length ? identifier.include : undefined,
+            })) {
+              to = to.to(room(entry));
+            }
+            break;
         }
       } else {
-        if (user?.include?.length) {
-          for (const userInclude of user.include) {
-            to = to.to(room({ tenant, user: userInclude }));
-          }
-        } else {
-          to = to.to(room({ tenant }));
-        }
+        to = to.to(room({ tenant }));
       }
-      if (user?.exclude?.length) {
-        for (const userExclude of user.exclude) {
-          to = to.except(room({ tenant, user: userExclude }));
-        }
-      }
-      if (context?.exclude?.length) {
-        for (const contextExclude of context.exclude) {
-          to = to.except(room({ tenant, context: contextExclude }));
-        }
-      }
-      if (identifier?.exclude?.length) {
-        for (const identifierExclude of identifier.exclude) {
-          to = to.except(room({ tenant, identifier: identifierExclude }));
+      if (user?.exclude?.length || role?.exclude?.length || context?.exclude?.length || identifier?.exclude?.length) {
+        switch (this.serviceOperator(service, event, "exclude")) {
+          case "or":
+          default:
+            for (const userExclude of user?.exclude || []) {
+              to = to.except(room({ tenant, user: userExclude }));
+            }
+            for (const roleExclude of role?.exclude || []) {
+              to = to.except(room({ tenant, role: roleExclude }));
+            }
+            for (const contextExclude of context?.exclude || []) {
+              to = to.except(room({ tenant, context: contextExclude }));
+            }
+            for (const identifierExclude of identifier?.exclude || []) {
+              to = to.except(room({ tenant, identifier: identifierExclude }));
+            }
+            break;
+          case "and":
+            for (const entry of this.combineValues(undefined, {
+              tenant,
+              user: user?.exclude?.length > 0 ? user.exclude : undefined,
+              role: role?.exclude?.length ? role.exclude : undefined,
+              context: context?.exclude?.length > 0 ? context.exclude : undefined,
+              identifier: identifier?.exclude?.length ? identifier.exclude : undefined,
+            })) {
+              to = to.except(room(entry));
+            }
+            break;
         }
       }
       const format = this.format(service, event, "json");
@@ -266,10 +221,52 @@ class SocketIOServer extends SocketServer {
     socket.contexts = new Set(); // Set<context>
   }
 
-  onConnect() {}
+  onConnect(socket) {
+    const combinations = this.combineValues(socket);
+    for (const combination of combinations) {
+      socket.join(room(combination));
+    }
+  }
 
   onDisconnect(socket) {
     socket.contexts.clear();
+  }
+
+  combineValues(socket, filter) {
+    const values = {
+      tenant: undefined,
+      user: undefined,
+      roles: [],
+      contexts: [],
+      identifier: undefined,
+    };
+    if (socket) {
+      values.tenant = socket.context.tenant;
+      values.user = socket.context.user?.id;
+      if (this.config?.roles && socket.context.user?.is) {
+        for (const role of this.config.roles) {
+          if (socket.context.user.is(role)) {
+            values.roles.push(role);
+          }
+        }
+      }
+      values.identifier = socket.request.id;
+    }
+    const combinations = [];
+    for (const tenant of unique(filter?.tenant ? [filter.tenant] : [undefined, values.tenant])) {
+      for (const user of unique(filter?.user ? [filter.user] : [undefined, values.user])) {
+        for (const role of unique(filter?.role ? [filter.role] : [undefined, ...values.roles])) {
+          for (const context of unique(filter?.context ? [filter.context] : [undefined, ...values.contexts])) {
+            for (const identifier of unique(
+              filter?.identifier ? [filter.identifier] : [undefined, values.identifier],
+            )) {
+              combinations.push({ tenant, user, role, context, identifier });
+            }
+          }
+        }
+      }
+    }
+    return combinations;
   }
 
   async applyAdapter() {
@@ -324,8 +321,12 @@ class SocketIOServer extends SocketServer {
   }
 }
 
-function room({ tenant, user, context, identifier }) {
-  return `${tenant ? `/tenant:${tenant}#` : ""}${user ? `/user:${user}#` : ""}${context ? `/context:${context}#` : ""}${identifier ? `/identifier:${identifier}#` : ""}`;
+function unique(array) {
+  return [...new Set(array)];
+}
+
+function room({ tenant, user, role, context, identifier }) {
+  return `${tenant ? `/tenant:${tenant}#` : ""}${user ? `/user:${user}#` : ""}${role ? `/role:${role}#` : ""}${context ? `/context:${context}#` : ""}${identifier ? `/identifier:${identifier}#` : ""}`;
 }
 
 module.exports = SocketIOServer;

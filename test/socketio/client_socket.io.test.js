@@ -2,6 +2,7 @@
 
 const cds = require("@sap/cds");
 const auth = require("../_env/util/auth");
+const { wait } = require("../_env/util/common");
 
 cds.test(__dirname + "/../_env");
 
@@ -34,7 +35,9 @@ describe("Client", () => {
     client.enterContext("chat");
     client.enterContext("test");
     client.exitContext("test");
+    await wait();
     client.resetContexts();
+    await wait();
     client.emit("message", { text: "test" });
     const result = await received;
     expect(result.data).toEqual({ text: "test", user: "alice" });

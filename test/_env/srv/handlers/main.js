@@ -62,6 +62,7 @@ module.exports = (srv) => {
     const text = req.data.text + req.data.num;
     await srv.emit("customContextUserIncludeEvent", { ID, text, user: req.context.user.id });
     await srv.emit("customContextUserExcludeEvent", { ID, text, user: req.context.user.id });
+    await srv.emit("customContextUserExcludeAllEvent", { ID, text, user: req.context.user.id });
     return text + "-" + req.context.user.id;
   });
 
@@ -109,6 +110,34 @@ module.exports = (srv) => {
     return text + "-" + req.context.user.id;
   });
 
+  srv.on("triggerCustomRoleEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customRoleIncludeEvent", { ID, text, user: req.context.user.id, role: "admin" });
+    await srv.emit("customRoleExcludeEvent", { ID, text, user: req.context.user.id, role: "admin" });
+    return text + "-" + req.context.user.id;
+  });
+
+  srv.on("triggerCustomRoleDynamicEvent", async (req) => {
+    const ID = req.data.ID;
+    const text = req.data.text + req.data.num;
+    await srv.emit("customRoleIncludeDynamicEvent", {
+      ID,
+      text,
+      user: req.context.user.id,
+      role: "admin",
+      flag: ["admin"],
+    });
+    await srv.emit("customRoleExcludeDynamicEvent", {
+      ID,
+      text,
+      user: req.context.user.id,
+      role: "abc",
+      flag: ["abc"],
+    });
+    return text + "-" + req.context.user.id;
+  });
+
   srv.on("triggerCustomContextHeaderEvent", async (req) => {
     const ID = req.data.ID;
     const text = req.data.text + req.data.num;
@@ -137,6 +166,18 @@ module.exports = (srv) => {
         wsUserInclude: [],
         userExclude: [],
         wsUserExclude: [],
+        role: {
+          include: [],
+          exclude: [],
+        },
+        wsRole: {
+          include: [],
+          exclude: [],
+        },
+        roleInclude: [],
+        wsRoleInclude: [],
+        roleExclude: [],
+        wsRoleExclude: [],
         currentUser: {
           include: req.data.num === 0,
           exclude: req.data.num === 1,
