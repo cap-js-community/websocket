@@ -92,13 +92,13 @@ class SocketIOServer extends SocketServer {
           },
           enter: async (context) => {
             socket.contexts.add(context);
-            for (const entry of this.combineValues(socket, { context })) {
+            for (const entry of this.combineValues(socket, { context: [context] })) {
               socket.join(room(entry));
             }
           },
           exit: async (context) => {
             socket.contexts.delete(context);
-            for (const entry of this.combineValues(socket, { context })) {
+            for (const entry of this.combineValues(socket, { context: [context] })) {
               socket.leave(room(entry));
             }
           },
@@ -157,11 +157,11 @@ class SocketIOServer extends SocketServer {
             break;
           case "and":
             for (const entry of this.combineValues(undefined, {
-              tenant,
+              tenant: [tenant],
               user: user?.include?.length > 0 ? user.include : undefined,
-              role: role?.include?.length ? role.include : undefined,
+              role: role?.include?.length > 0 ? role.include : undefined,
               context: context?.include?.length > 0 ? context.include : undefined,
-              identifier: identifier?.include?.length ? identifier.include : undefined,
+              identifier: identifier?.include?.length > 0 ? identifier.include : undefined,
             })) {
               to = to.to(room(entry));
             }
@@ -189,11 +189,11 @@ class SocketIOServer extends SocketServer {
             break;
           case "and":
             for (const entry of this.combineValues(undefined, {
-              tenant,
+              tenant: [tenant],
               user: user?.exclude?.length > 0 ? user.exclude : undefined,
-              role: role?.exclude?.length ? role.exclude : undefined,
+              role: role?.exclude?.length > 0 ? role.exclude : undefined,
               context: context?.exclude?.length > 0 ? context.exclude : undefined,
-              identifier: identifier?.exclude?.length ? identifier.exclude : undefined,
+              identifier: identifier?.exclude?.length > 0 ? identifier.exclude : undefined,
             })) {
               to = to.except(room(entry));
             }
@@ -234,15 +234,15 @@ class SocketIOServer extends SocketServer {
 
   combineValues(socket, filter) {
     const values = {
-      tenant: undefined,
-      user: undefined,
+      tenant: [],
+      user: [],
       roles: [],
       contexts: [],
-      identifier: undefined,
+      identifier: [],
     };
     if (socket) {
-      values.tenant = socket.context.tenant;
-      values.user = socket.context.user?.id;
+      values.tenant = [socket.context.tenant];
+      values.user = [socket.context.user?.id];
       if (this.config?.roles && socket.context.user?.is) {
         for (const role of this.config.roles) {
           if (socket.context.user.is(role)) {
@@ -250,16 +250,14 @@ class SocketIOServer extends SocketServer {
           }
         }
       }
-      values.identifier = socket.request.id;
+      values.identifier = [socket.request.id];
     }
     const combinations = [];
-    for (const tenant of unique(filter?.tenant ? [filter.tenant] : [undefined, values.tenant])) {
-      for (const user of unique(filter?.user ? [filter.user] : [undefined, values.user])) {
-        for (const role of unique(filter?.role ? [filter.role] : [undefined, ...values.roles])) {
-          for (const context of unique(filter?.context ? [filter.context] : [undefined, ...values.contexts])) {
-            for (const identifier of unique(
-              filter?.identifier ? [filter.identifier] : [undefined, values.identifier],
-            )) {
+    for (const tenant of unique(filter?.tenant ?? values.tenant)) {
+      for (const user of unique(filter?.user ?? [undefined, ...values.user])) {
+        for (const role of unique(filter?.role ?? [undefined, ...values.roles])) {
+          for (const context of unique(filter?.context ?? [undefined, ...values.contexts])) {
+            for (const identifier of unique(filter?.identifier ?? [undefined, ...values.identifier])) {
               combinations.push({ tenant, user, role, context, identifier });
             }
           }
