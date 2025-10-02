@@ -560,7 +560,7 @@ event received {
 ```
 
 Event is published only to websocket clients not established in context to the current context user, if the event data of
-`flag` is falsy.
+`flag` is truthy.
 
 #### Defined Users
 
