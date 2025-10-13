@@ -285,8 +285,9 @@ class SocketWSServer extends SocketServer {
     if (ws.context.user?.id) {
       this.addToSetOfMap(clients.users, ws.context.user?.id, ws);
     }
-    if (this.config?.roles && ws.context.user?.is) {
-      for (const role of this.config.roles) {
+    const roles = this.serviceRoles(ws.facade.service);
+    if (roles?.length && ws.context.user?.is) {
+      for (const role of roles) {
         if (ws.context.user.is(role)) {
           this.addToSetOfMap(clients.roles, role, ws);
         }

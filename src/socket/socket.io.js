@@ -243,8 +243,9 @@ class SocketIOServer extends SocketServer {
     if (socket) {
       values.tenant = [socket.context.tenant];
       values.user = [socket.context.user?.id];
-      if (this.config?.roles && socket.context.user?.is) {
-        for (const role of this.config.roles) {
+      const roles = this.serviceRoles(socket.facade.service);
+      if (roles?.length && socket.context.user?.is) {
+        for (const role of roles) {
           if (socket.context.user.is(role)) {
             values.roles.push(role);
           }

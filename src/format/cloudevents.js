@@ -8,7 +8,7 @@ class CloudEventsFormat extends CloudEventFormat {
     super(service, origin);
     this.name = "cloudevents";
     this.identifier = "type";
-    this.LOG = cds.log(`/websocket/${this.name}`);
+    this.LOG = cds.log(`websocket/${this.name}`);
   }
 }
 

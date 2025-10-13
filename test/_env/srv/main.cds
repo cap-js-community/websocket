@@ -1,6 +1,7 @@
 using test from '../db/model';
 
 @protocol: 'websocket'
+@requires: ['admin', 'user']
 service MainService {
 
     @websocket.broadcast: 'key'

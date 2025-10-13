@@ -13,13 +13,13 @@
           "id": "bob",
           "tenant": "t2",
           "password": "bob",
-          "roles": ["WS_Chat", "WS_Todo"]
+          "roles": ["WS_Chat", "WS_Todo", "admin"]
         },
         "carol": {
           "id": "carol",
           "tenant": "t1",
           "password": "carol",
-          "roles": ["WS_Chat", "WS_Todo"]
+          "roles": ["WS_Chat", "WS_Todo", "user"]
         },
         "*": false
       }

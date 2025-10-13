@@ -9,7 +9,7 @@ class GenericFormat extends BaseFormat {
     super(service, origin);
     this.name = name || "generic";
     this.identifier = identifier || "name";
-    this.LOG = cds.log(`/websocket/${this.name}`);
+    this.LOG = cds.log(`websocket/${this.name}`);
   }
 
   parse(data) {

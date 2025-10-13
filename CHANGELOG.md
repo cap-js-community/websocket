@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Respect service `@requires` roles in addition to `cds.websocket.roles`
+- Adjust logging component
 
 ## Version 1.8.0 - 2025-10-09
 

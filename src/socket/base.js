@@ -480,6 +480,22 @@ class SocketServer {
   }
 
   /**
+   * Get roles including project and service roles
+   * @param service Service definition
+   * @returns {[String]} Project and service roles
+   */
+  serviceRoles(service) {
+    let roles = [...(this.config?.roles ?? [])];
+    if (service?.definition["@requires"]) {
+      const serviceRoles = Array.isArray(service.definition["@requires"])
+        ? service.definition["@requires"]
+        : [service?.definition["@requires"]];
+      roles = roles.concat(serviceRoles);
+    }
+    return [...new Set(roles)];
+  }
+
+  /**
    * Get service operator (or, and) for service event, service, project or default
    * @param {Object} service Service definition
    * @param {String} [event] Event name
