@@ -3,6 +3,7 @@ using test from '../db';
 @requires: 'WS_Todo'
 @path    : 'todo'
 @sap.message.scope.supported
+@ws.path : 'fns-websocket'
 service TodoService {
 
     @odata.draft.enabled
@@ -19,6 +20,7 @@ service TodoService {
     entity Status.texts as projection on test.Status.texts;
 
     @ws
+    @ws.path       : 'todo'
     event refresh {
         ID : String;
     };

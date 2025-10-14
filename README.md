@@ -284,7 +284,7 @@ Although the service is exposed as an OData protocol at `/odata/v4/chat`, the se
 or `@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
 are not exposed, as the service itself is not marked as websocket protocol.
 
-The service path can be overruled on event level via `@websocket.path` or `@ws.path` annotation as follows:
+The service path can be overruled on service or event level via `@websocket.path` or `@ws.path` annotation as follows:
 
 ```cds
 @ws.path: 'fns-websocket'
@@ -295,7 +295,7 @@ event notify {
 ```
 
 The specified event path must match the service path of another websocket-enabled CDS service, otherwise the event is
-not processed. In addition, the websocket format can be specified on event level via `@websocket.format` or `@ws.format`
+not processed. In addition, the websocket format can be specified on service or event level via `@websocket.format` or `@ws.format`
 annotation for websocket events of non-websocket services.
 
 **Hint:**

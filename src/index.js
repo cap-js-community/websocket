@@ -178,7 +178,7 @@ function bindServiceEvents(socketServer, service, path) {
         const context = deriveContext(event, req.data, headers);
         const identifier = deriveIdentifier(event, req.data, headers);
         const eventHeaders = deriveEventHeaders(headers);
-        const eventPath = derivePath(event, path);
+        const eventPath = derivePath(service, event, path);
         await socketServer.broadcast({
           tenant: req.tenant,
           service,
@@ -795,8 +795,14 @@ function deriveEventHeaders(headers) {
   return headers?.websocket || headers?.ws ? { ...headers?.websocket, ...headers?.ws } : undefined;
 }
 
-function derivePath(event, path) {
-  return event["@websocket.path"] || event["@ws.path"] || path;
+function derivePath(service, event, path) {
+  return (
+    event["@websocket.path"] ||
+    event["@ws.path"] ||
+    service.definition["@websocket.path"] ||
+    service.definition["@ws.path"] ||
+    path
+  );
 }
 
 function getDeepEntityColumns(entity) {
