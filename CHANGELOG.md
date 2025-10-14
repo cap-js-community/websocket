@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Allow `@ws.path`, `@websocket.path` on service level (evaluated before service path)
+- Allow `@ws.path` and `@websocket.path` on service level
 
 ## Version 1.8.1 - 2025-10-13
 
