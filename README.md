@@ -32,7 +32,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
   - [Authentication & Authorization](#authentication--authorization)
   - [Invocation Context](#invocation-context)
   - [Transactional Safety](#transactional-safety)
-    - [CDS Persistent Outbox](#cds-persistent-outbox)
+    - [CDS Persistent Queue](#cds-persistent-queue)
   - [Client Determination](#client-determination)
     - [Filtering Operators](#filtering-operators)
     - [Event Users](#event-users)
@@ -404,36 +404,36 @@ req.on("succeeded", async () => {
 });
 ```
 
-Alternatively you can leverage the CAP in-memory outbox via `cds.outboxed` as follows:
+Alternatively you can leverage the CAP in-memory queue via `cds.queued` as follows:
 
 ```js
-const chatService = cds.outboxed(await cds.connect.to("ChatService"));
+const chatService = cds.queued(await cds.connect.to("ChatService"));
 await chatService.tx(req).emit("received", req.data);
 ```
 
 This has the benefit that the event emitting is coupled with the success of the primary transaction.
 Still, the asynchronous event processing could fail and would not be retried anymore.
-That's where the CDS persistent outbox comes into play.
+That's where the CDS persistent queue comes into play.
 
-#### CDS Persistent Outbox
+#### CDS Persistent Queue
 
-Websocket events can also be sent via the CDS persistent outbox. That means the CDS events triggering the websocket
+Websocket events can also be sent via the CDS persistent queue. That means the CDS events triggering the websocket
 broadcast
-are added to the CDS persistent outbox when the primary transaction succeeded. The events are processed asynchronously
-and transactional safe in a separate transaction. It is ensured that the event is processed in any case, as outbox
-keeps the outbox entry open until the event processing succeeds.
+are added to the CDS persistent queue when the primary transaction succeeded. The events are processed asynchronously
+and transactional safe in a separate transaction. It is ensured that the event is processed in any case, as queue
+keeps the queue entry open until the event processing succeeds.
 
-The transactional safety can be achieved using `cds.outboxed` with kind `persistent-outbox` as follows:
+The transactional safety can be achieved using `cds.queued` with kind `persistent-queue` as follows:
 
 ```js
-const chatService = cds.outboxed(await cds.connect.to("ChatService"), {
-  kind: "persistent-outbox",
+const chatService = cds.queued(await cds.connect.to("ChatService"), {
+  kind: "persistent-queue",
 });
 await chatService.tx(req).emit("received", req.data);
 ```
 
 In that case, the websocket event is broadcast to websocket clients exactly once, when the primary transaction succeeds.
-In case of execution errors, the event broadcast is retried automatically, while processing the persistent outbox.
+In case of execution errors, the event broadcast is retried automatically, while processing the persistent queue.
 
 ### Client Determination
 
@@ -620,7 +620,8 @@ Event is only published to all users listed in the event data of `users`.
 #### Event Roles
 
 Events are broadcast to all websocket clients. To influence event broadcasting based on user roles,
-the roles to be considered for event broadcasting can be defined via `cds.websocket.roles`:
+the roles to be considered for event broadcasting can be defined via service annotation `@requires`
+or in addition via CDS env configuration `cds.websocket.roles`:
 
 ```json
 {
@@ -1125,7 +1126,7 @@ To configure the PCP message format, the following annotations are available:
   - `@websocket.pcp.message, @ws.pcp.message: Boolean`: Correlate the PCP message body to the operation parameter
     representing the message.
 - **Event level**:
-  - `@websocket.pcp.event, @ws.pcp.event: Boolean`: Expose the CDS event as `pcp-event` field in the PCP message.
+  - `@websocket.pcp.event, @ws.pcp.event: Boolean | String`: Expose the CDS event (Boolean) or the passed value (String) as `pcp-event` field in the PCP message.
   - `@websocket.pcp.message, @ws.pcp.message: String`: Expose a static message text as PCP message body.
   - `@websocket.pcp.action, @ws.pcp.action: String`: Exposes a static action as `pcp-action` field in the PCP message.
     Default `MESSAGE`.
@@ -1134,6 +1135,47 @@ To configure the PCP message format, the following annotations are available:
     message body.
   - `@websocket.pcp.action, @ws.pcp.action: Boolean`: Expose the string value of the annotated event element as
     `pcp-action` field in the PCP message. Default `MESSAGE`.
+
+##### Fiori Side Effects
+
+PCP format can be used to emit Fiori side effects via WebSocket events.
+To configure Fiori side effects in PCP format enabled service, the following annotations are available:
+
+- **Event level**:
+  - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose Fiori side effects in the PCP message
+  - `@websocket.pcp.channel, @ws.pcp.channel: String`: Specify the PCP side effects channel in the PCP message
+
+Example:
+
+```cds
+@ws.pcp.sideEffect
+@ws.pcp.channel: 'amc\://notification/notify'
+event sideEffect {
+    sideEffectsSource: String;
+}
+```
+
+Emitting the event `sideEffect` via CDS emit, as follows:
+
+```js
+await srv.emit("sideEffect", {
+  sideEffectsSource: "/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')",
+});
+```
+
+It results in the following PCP message sent via websocket protocol:
+
+```
+pcp-action:MESSAGE
+pcp-channel:amc:\:notification/notify
+sideEffectsSource:/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')
+sideEffectsEventName:sideEffect
+serverAction:RaiseSideEffect
+
+
+```
+
+Fiori Elements V4 applications listening on channel will process the side effects, and update the UI accordingly.
 
 ##### Manage Contexts
 

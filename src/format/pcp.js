@@ -67,7 +67,7 @@ class PCPFormat extends GenericFormat {
       headerNames: ["pcp-message", "pcp_message", "pcp.message", "pcpmessage"],
       data,
       annotationNames: ["@websocket.pcp.message", "@ws.pcp.message"],
-      fallback: event,
+      fallback: "",
     });
     const pcpAction = this.deriveValue(event, {
       headers,
@@ -76,42 +76,69 @@ class PCPFormat extends GenericFormat {
       annotationNames: ["@websocket.pcp.action", "@ws.pcp.action"],
       fallback: MESSAGE,
     });
+    const pcpEventAnnotationValue = eventDefinition?.["@websocket.pcp.event"] || eventDefinition?.["@ws.pcp.event"];
     const pcpEvent =
-      eventDefinition?.["@websocket.pcp.event"] || eventDefinition?.["@ws.pcp.event"] ? event : undefined;
-    const pcpFields = this.serializePcpFields(data, typeof pcpMessage, pcpAction, pcpEvent, eventDefinition?.elements);
-    return pcpFields + pcpMessage;
+      typeof pcpEventAnnotationValue === "string"
+        ? pcpEventAnnotationValue
+        : pcpEventAnnotationValue
+          ? event
+          : undefined;
+    const pcpChannel = eventDefinition?.["@websocket.pcp.channel"] || eventDefinition?.["@ws.pcp.channel"];
+    const pcpSideEffect = !!(eventDefinition?.["@websocket.pcp.sideEffect"] || eventDefinition?.["@ws.pcp.sideEffect"]);
+    return this.serializePcpEvent({
+      pcpFields: data,
+      pcpMessage,
+      pcpAction,
+      pcpEvent,
+      pcpChannel,
+      pcpSideEffect,
+      elements: eventDefinition?.elements,
+    });
   }
 
-  serializePcpFields(pcpFields, messageType, pcpAction, pcpEvent, elements) {
+  serializePcpEvent({ pcpFields, pcpMessage, pcpAction, pcpEvent, pcpChannel, pcpSideEffect, elements }) {
+    let messageType = typeof pcpMessage;
     let pcpBodyType = "";
     if (messageType === "string") {
       pcpBodyType = "text";
     } else if (messageType === "blob" || messageType === "arraybuffer") {
       pcpBodyType = "binary";
     }
-    let serialized = "";
+    let pcpFieldsFiltered = {};
     if (pcpFields && typeof pcpFields === "object") {
       for (const fieldName in pcpFields) {
-        const fieldValue = this.stringValue(pcpFields[fieldName]);
         const element = elements?.[fieldName];
-        if (element) {
-          if (element["@websocket.ignore"] || element["@ws.ignore"]) {
-            continue;
-          }
-          if (fieldValue && fieldName.indexOf("pcp-") !== 0) {
-            serialized += this.escape(fieldName) + ":" + this.escape(fieldValue) + "\n";
-          }
+        if (!element || element["@websocket.ignore"] || element["@ws.ignore"]) {
+          continue;
         }
+        pcpFieldsFiltered[fieldName] = pcpFields[fieldName];
+      }
+    }
+    if (pcpSideEffect) {
+      pcpFieldsFiltered = {
+        sideEffectsSource: "",
+        sideEffectsEventName: pcpEvent,
+        serverAction: "RaiseSideEffect",
+        ...pcpFieldsFiltered,
+      };
+      pcpEvent = undefined;
+      pcpBodyType = undefined;
+      pcpMessage = "";
+    }
+    let serializedFields = "";
+    for (const fieldName in pcpFieldsFiltered) {
+      const fieldValue = this.stringValue(pcpFieldsFiltered[fieldName]);
+      if (fieldValue && fieldName.indexOf("pcp-") !== 0) {
+        serializedFields += this.escape(fieldName) + ":" + this.escape(fieldValue) + "\n";
       }
     }
     return (
-      (pcpAction ? "pcp-action:" + pcpAction + "\n" : "") +
-      (pcpEvent ? "pcp-event:" + pcpEvent + "\n" : "") +
-      "pcp-body-type:" +
-      pcpBodyType +
-      "\n" +
-      serialized +
-      "\n"
+      (pcpAction ? `pcp-action:${pcpAction}\n` : "") +
+      (pcpEvent ? `pcp-event:${pcpEvent}\n` : "") +
+      (pcpChannel ? `pcp-channel:${pcpChannel}\n` : "") +
+      (pcpBodyType ? `pcp-body-type:${pcpBodyType}\n` : "") +
+      `${serializedFields}\n` +
+      pcpMessage
     );
   }
 

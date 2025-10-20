@@ -1,6 +1,8 @@
 "use strict";
 
 module.exports = (srv) => {
+  srv.on("wsContext", async () => {});
+
   srv.on("sendNotification", async (req) => {
     await srv.emit("notification1", {
       field1: req.data.field1 || "value1",
@@ -47,6 +49,13 @@ module.exports = (srv) => {
         context: "context",
       },
     );
+    return true;
+  });
+
+  srv.on("triggerSideEffects", async () => {
+    await srv.emit("sideEffect1", {
+      sideEffectsSource: "/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')",
+    });
     return true;
   });
 };

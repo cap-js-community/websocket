@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 1.8.2 - 2025-11-xx
 
+### Added
+
+- Add Fiori side effects based on `pcp` format via annotation `@websocket.pcp.sideEffect` or `@ws.pcp.sideEffect`
+
 ### Fixed
 
 - Allow `@ws.path` and `@websocket.path` on service level
+- PCP message default is empty string instead of event
+- Allow to overwrite `pcp` event value via `@websocket.pcp.event: <string>` or `@ws.pcp.sideEffect: <string>`
+- Document `cds.queued` instead of `cds.outboxed`
 
 ## Version 1.8.1 - 2025-10-13
 
@@ -249,7 +256,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Describe the usage of CDS persistent outbox for websocket events
+- Describe the usage of CDS persistent queue for websocket events
 
 ## Version 0.8.0 - 2024-02-15
 

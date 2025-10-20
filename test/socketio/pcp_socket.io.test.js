@@ -65,6 +65,18 @@ field2:value2
 
 this is the body!`;
 
+const pcpTriggerSideEffects = `pcp-action:triggerSideEffects
+
+`;
+
+const pcpSideEffect1 = `pcp-action:MESSAGE
+pcp-channel:amc\\://notification/notify
+sideEffectsSource:/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')
+sideEffectsEventName:sideEffect1
+serverAction:RaiseSideEffect
+
+`;
+
 describe("PCP", () => {
   let socket;
 
@@ -106,5 +118,13 @@ describe("PCP", () => {
     expect(result).toBe(true);
     const waitResult1 = await waitNotification1Promise;
     expect(waitResult1).toEqual(pcpMessage1);
+  });
+
+  test("PCP fiori side effects", async () => {
+    const waitSideEffect1Promise = waitForEvent(socket, "sideEffect1");
+    const result = await emitEvent(socket, "triggerSideEffects", pcpTriggerSideEffects);
+    expect(result).toBe(true);
+    const waitResult1 = await waitSideEffect1Promise;
+    expect(waitResult1).toEqual(pcpSideEffect1);
   });
 });
