@@ -25,6 +25,11 @@ const cloudEvent = {
   },
 };
 
+const cloudEvent2 = {
+  ...cloudEvent,
+  type: "CloudEventsService.sendCloudEvent",
+};
+
 describe("CloudEvents", () => {
   let socket;
 
@@ -71,5 +76,26 @@ describe("CloudEvents", () => {
   test("Cloud event format error", async () => {
     const result = await emitMessage(socket, "This is not a Cloud Event message!");
     expect(result).toEqual(null);
+  });
+
+  test("Cloud event operation name", async () => {
+    const waitCloudEventPromise = waitForEvent(socket, "cloudEvent", null, true);
+    const result = await emitMessage(socket, "sendCloudEvent", JSON.stringify(cloudEvent2));
+    expect(result).toBeNull();
+    const waitResult = await waitCloudEventPromise;
+    expect(waitResult).toEqual({
+      specversion: "1.0",
+      type: "CloudEventsService.cloudEvent",
+      source: "CloudEventsService",
+      subject: null,
+      id: expect.any(String),
+      data: {
+        appinfoA: "abc",
+        appinfoB: 123,
+        appinfoC: true,
+      },
+      datacontenttype: "application/json",
+      time: expect.any(String),
+    });
   });
 });
