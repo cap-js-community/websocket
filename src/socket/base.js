@@ -566,7 +566,7 @@ class SocketServer {
    * Gets key value from Map and initializes key with init value if not found
    * @param {Map} map Map
    * @param {String} key Key to get
-   * @param {*)} init Initial value
+   * @param {*} init Initial value
    * @returns {*} Value
    */
   getFromMap(map, key, init) {
@@ -582,7 +582,7 @@ class SocketServer {
    * Add value to a Set for key of Map
    * @param {Map<String,Set>} map Map
    * @param {String} key Key to get
-   * @param {*)} value Add value
+   * @param {*} value Add value
    */
   addToSetOfMap(map, key, value) {
     return this.getFromMap(map, key, new Set()).add(value);
@@ -592,7 +592,7 @@ class SocketServer {
    * Delete value from a Set for key of Map
    * @param {Map<String,Set>} map Map
    * @param {String} key Key to get
-   * @param {*)} value Delete value
+   * @param {*} value Delete value
    */
   deleteFromSetOfMap(map, key, value) {
     let set = map.get(key);

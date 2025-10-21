@@ -30,6 +30,11 @@ const cloudEvent2 = {
   type: "CloudEventsService.sendCloudEvent",
 };
 
+const cloudEvent3 = {
+  ...cloudEvent,
+  type: "CloudEventsService.send",
+};
+
 describe("CloudEvents", () => {
   let socket;
 
@@ -81,6 +86,27 @@ describe("CloudEvents", () => {
   test("Cloud event operation name", async () => {
     const waitCloudEventPromise = waitForEvent(socket, "cloudEvent", null, true);
     const result = await emitMessage(socket, "sendCloudEvent", JSON.stringify(cloudEvent2));
+    expect(result).toBeNull();
+    const waitResult = await waitCloudEventPromise;
+    expect(waitResult).toEqual({
+      specversion: "1.0",
+      type: "CloudEventsService.cloudEvent",
+      source: "CloudEventsService",
+      subject: null,
+      id: expect.any(String),
+      data: {
+        appinfoA: "abc",
+        appinfoB: 123,
+        appinfoC: true,
+      },
+      datacontenttype: "application/json",
+      time: expect.any(String),
+    });
+  });
+
+  test("Cloud event operation name 'send'", async () => {
+    const waitCloudEventPromise = waitForEvent(socket, "cloudEvent", null, true);
+    const result = await emitMessage(socket, "send", JSON.stringify(cloudEvent3));
     expect(result).toBeNull();
     const waitResult = await waitCloudEventPromise;
     expect(waitResult).toEqual({
