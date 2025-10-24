@@ -17,6 +17,9 @@ const WebSocketAction = {
 let socketServer;
 
 let services;
+let mixinServices = {};
+let sockets = {};
+
 const collectServicesAndMountAdapter = (srv, options) => {
   if (!services) {
     services = {};
@@ -48,14 +51,16 @@ async function bootstrapWebSocketServer(server, options) {
         serveWebSocketService(socketServer, service, options);
       }
     }
-    // Websockets events
-    const eventServices = {};
+    // Mixin Services (non-ws service events and operations)
     for (const name in cds.model.definitions) {
       const definition = cds.model.definitions[name];
-      if (definition.kind === "event" && (definition["@websocket"] || definition["@ws"])) {
+      if (
+        ["event", "action", "function"].includes(definition.kind) &&
+        (definition["@websocket"] || definition["@ws"])
+      ) {
         const service = cds.services[definition._service?.name];
         if (service && !isServedViaWebsocket(service)) {
-          eventServices[service.name] ??= eventServices[service.name] || {
+          mixinServices[service.name] ??= mixinServices[service.name] || {
             name: service.name,
             definition: service.definition,
             endpoints: service.endpoints.map((endpoint) => {
@@ -67,27 +72,33 @@ async function bootstrapWebSocketServer(server, options) {
               }
               return { kind: "websocket", path };
             }),
-            operations: () => {
-              return interableObject();
+            _operations: interableObject(),
+            get operations() {
+              return this._operations;
             },
-            entities: () => {
-              return interableObject();
+            _entities: interableObject(),
+            get entities() {
+              return this._entities;
             },
             _events: interableObject(),
-            events: function () {
+            get events() {
               return this._events;
             },
             on: service.on.bind(service),
             tx: service.tx.bind(service),
           };
-          eventServices[service.name]._events[serviceLocalName(service, definition.name)] = definition;
+          if (["event"].includes(definition.kind)) {
+            mixinServices[service.name]._events[localName(definition)] = definition;
+          } else if (["action", "function"].includes(definition.kind)) {
+            mixinServices[service.name]._operations[localName(definition)] = definition;
+          }
         }
       }
     }
-    for (const name in eventServices) {
-      const eventService = eventServices[name];
-      if (Object.keys(eventService.events()).length > 0) {
-        serveWebSocketService(socketServer, eventService, options);
+    for (const name in mixinServices) {
+      const mixinService = mixinServices[name];
+      if (Object.keys(mixinService.events).length > 0 || Object.keys(mixinService.operations).length > 0) {
+        serveWebSocketService(socketServer, mixinService, options);
       }
     }
     LOG?.info("using websocket", {
@@ -148,12 +159,14 @@ function serveWebSocketService(socketServer, service, options) {
       const path = normalizeServicePath(endpoint.path, options.path);
       try {
         bindServiceEvents(socketServer, service, path);
-        socketServer.service(service, path, (socket) => {
+        socketServer.service(service, path, async (socket) => {
+          sockets[path] = socket;
           try {
             bindServiceDefaults(socket, service);
             bindServiceOperations(socket, service);
+            bindServiceMixins(socket, service);
             bindServiceEntities(socket, service);
-            emitConnect(socket, service);
+            await emitConnect(socket, service);
           } catch (err) {
             LOG?.error(err);
             socket.disconnect();
@@ -167,10 +180,10 @@ function serveWebSocketService(socketServer, service, options) {
 }
 
 function bindServiceEvents(socketServer, service, path) {
-  for (const event of service.events()) {
+  for (const event of service.events) {
     service.on(event, async (req) => {
       try {
-        const localEventName = serviceLocalName(service, event.name);
+        const localEvent = localName(event);
         const format = deriveFormat(service, event);
         const headers = deriveHeaders(req.headers, format);
         const user = deriveUser(event, req.data, headers, req);
@@ -183,7 +196,7 @@ function bindServiceEvents(socketServer, service, path) {
           tenant: req.tenant,
           service,
           path: eventPath,
-          event: localEventName,
+          event: localEvent,
           data: req.data,
           headers: eventHeaders,
           filter: { user, role, context, identifier },
@@ -245,8 +258,8 @@ function bindServiceDefaults(socket, service) {
 }
 
 function bindServiceOperations(socket, service) {
-  for (const operation of service.operations()) {
-    const event = serviceLocalName(service, operation.name);
+  for (const operation of service.operations) {
+    const event = localName(operation);
     if (Object.values(WebSocketAction).includes(event)) {
       continue;
     }
@@ -256,39 +269,59 @@ function bindServiceOperations(socket, service) {
   }
 }
 
+function bindServiceMixins(socket, service) {
+  for (const name in mixinServices) {
+    const mixinService = mixinServices[name];
+    for (const operation of mixinService.operations) {
+      const path = derivePath(mixinService, operation);
+      if (path && socket.path === path) {
+        const event = localName(operation);
+        if (Object.values(WebSocketAction).includes(event)) {
+          continue;
+        }
+        service.wsMixinOperations ??= interableObject();
+        service.wsMixinOperations[operation.name] = operation;
+        socket.on(event, async (data, headers, callback) => {
+          await processEvent(socket, mixinService, event, data, headers, callback);
+        });
+      }
+    }
+  }
+}
+
 function bindServiceEntities(socket, service) {
-  for (const entity of service.entities()) {
-    const localEntityName = serviceLocalName(service, entity.name);
-    socket.on(`${localEntityName}:create`, async (data, headers, callback) => {
+  for (const entity of service.entities) {
+    const localEntity = localName(entity);
+    socket.on(`${localEntity}:create`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "create", data, headers, async (response) => {
         callback && (await callback(response));
-        await broadcastEvent(socket, service, `${localEntityName}:created`, entity, response);
+        await broadcastEvent(socket, service, `${localEntity}:created`, entity, response);
       });
     });
-    socket.on(`${localEntityName}:read`, async (data, headers, callback) => {
+    socket.on(`${localEntity}:read`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "read", data, headers, callback);
     });
-    socket.on(`${localEntityName}:readDeep`, async (data, headers, callback) => {
+    socket.on(`${localEntity}:readDeep`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "readDeep", data, headers, callback);
     });
-    socket.on(`${localEntityName}:update`, async (data, headers, callback) => {
+    socket.on(`${localEntity}:update`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "update", data, headers, async (response) => {
         callback && (await callback(response));
-        await broadcastEvent(socket, service, `${localEntityName}:updated`, entity, response);
+        await broadcastEvent(socket, service, `${localEntity}:updated`, entity, response);
       });
     });
-    socket.on(`${localEntityName}:delete`, async (data, headers, callback) => {
+    socket.on(`${localEntity}:delete`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "delete", data, headers, async (response) => {
         callback && (await callback(response));
-        await broadcastEvent(socket, service, `${localEntityName}:deleted`, entity, { ...response, ...data });
+        await broadcastEvent(socket, service, `${localEntity}:deleted`, entity, { ...response, ...data });
       });
     });
-    socket.on(`${localEntityName}:list`, async (data, headers, callback) => {
+    socket.on(`${localEntity}:list`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "list", data, headers, callback);
     });
     for (const actionName in entity.actions) {
       const action = entity.actions[actionName];
-      socket.on(`${localEntityName}:${action.name}`, async (data, headers, callback) => {
+      socket.on(`${localEntity}:${action.name}`, async (data, headers, callback) => {
         await processCRUD(socket, service, entity, action.name, data, headers, callback);
       });
     }
@@ -389,8 +422,7 @@ async function broadcastEvent(socket, service, event, entity, data, headers) {
   let role;
   let context;
   let identifier;
-  const events = service.events();
-  const eventDefinition = events[event] || events[event.replaceAll(/:/g, ".")];
+  const eventDefinition = service.events[event] || service.events[event.replaceAll(/:/g, ".")];
   if (eventDefinition) {
     user = deriveUser(eventDefinition, data, headers, socket);
     role = deriveRole(eventDefinition, data, headers, socket);
@@ -795,10 +827,10 @@ function deriveEventHeaders(headers) {
   return headers?.websocket || headers?.ws ? { ...headers?.websocket, ...headers?.ws } : undefined;
 }
 
-function derivePath(service, event, path) {
+function derivePath(service, definition, path) {
   return (
-    event["@websocket.path"] ||
-    event["@ws.path"] ||
+    definition["@websocket.path"] ||
+    definition["@ws.path"] ||
     service.definition["@websocket.path"] ||
     service.definition["@ws.path"] ||
     path
@@ -822,12 +854,10 @@ function getDeepEntityColumns(entity) {
   return columns;
 }
 
-function serviceLocalName(service, name) {
-  const servicePrefix = `${service.name}.`;
-  if (name.startsWith(servicePrefix)) {
-    return name.substring(servicePrefix.length);
-  }
-  return name;
+function localName(definition) {
+  return definition.name.startsWith(`${definition._service.name}.`)
+    ? definition.name.substring(definition._service.name.length + 1)
+    : definition.name;
 }
 
 function toCamelCase(string) {

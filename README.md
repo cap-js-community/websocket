@@ -24,7 +24,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
   - [WebSocket Server](#websocket-server)
   - [WebSocket Implementation](#websocket-implementation)
     - [WebSocket Service](#websocket-service)
-    - [WebSocket Event](#websocket-event)
+    - [WebSocket Mixin](#websocket-mixin)
   - [Server Socket](#server-socket)
   - [Service Facade](#service-facade)
   - [Middlewares](#middlewares)
@@ -250,7 +250,12 @@ Websocket client connection happens as follows for exposed endpoints:
 - **WS**: `const socket = new WebSocket("ws://localhost:4004/ws/chat");`
 - **Socket.IO**: `const socket = io("ws/chat")`
 
-#### WebSocket Event
+#### WebSocket Mixin
+
+Non-websocket services can contain events and operations that are exposed or accessible as websocket events
+via the concept of mixin websocket services. Mixin event and operations need to be annotated with `@websocket` or `@ws`.
+
+##### Event Mixin
 
 Websocket services can contain events that are exposed as websocket events. Emitting an event on the service,
 broadcasts the event to all websocket clients.
@@ -281,12 +286,16 @@ In addition, also non-websocket services can contain events that are exposed as 
 ```
 
 Although the service is exposed as an OData protocol at `/odata/v4/chat`, the service events annotated with `@websocket`
-or `@ws` are exposed as websocket events under the websocket protocol path as follows: `/ws/chat`. Entities and operations
-are not exposed, as the service itself is not marked as websocket protocol.
+or `@ws` are exposed as websocket events under the websocket protocol path as follows:
+
+`/ws/chat` (as derived from `/odata/v4/chat`).
+
+Entities are not exposed, as the service itself is not marked as websocket protocol.
 
 The service path can be overruled on service or event level via `@websocket.path` or `@ws.path` annotation as follows:
 
 ```cds
+@ws
 @ws.path: 'fns-websocket'
 @ws.format: 'pcp'
 event notify {
@@ -300,8 +309,57 @@ annotation for websocket events of non-websocket services.
 
 **Hint:**
 
-> Non-websocket service events are only active when at least one websocket-enabled service is available (i.e., websocket
-> protocol adapter is active).
+> Non-websocket service events are only active when at least one websocket-enabled service is available
+> (i.e., websocket protocol adapter is active).
+
+##### Operation Mixin
+
+Websocket services can contain (unbound) operations (action, function) that are accessible via websocket events.
+Calling an operation via websocket event triggers the respective service operation.
+
+```cds
+  @protocol: 'ws'
+  @path: 'chat'
+  service ChatService {
+    action sendMessage(text: String);
+  }
+```
+
+In addition, also non-websocket services can contain (unbound) operations that are accessible via websocket events:
+
+```cds
+  @protocol: 'odata'
+  @path: 'chat'
+  service ChatService {
+    entity Chat as projection on chat.Chat;
+
+    @ws
+    action sendMessage(text: String);
+  }
+```
+
+Although the service is exposed as an OData protocol at `/odata/v4/chat`, the service operations annotated with `@websocket`
+or `@ws` are accessible via websocket event under the websocket protocol path as follows:
+
+`/ws/chat` (as derived from `/odata/v4/chat`).
+
+Entities (including their bound operations) are not exposed, as the service itself is not marked as websocket protocol.
+The service path can be overruled on service or operation level via `@websocket.path` or `@ws.path` annotation as follows:
+
+```cds
+@ws
+@ws.path: 'fns-websocket'
+action chat(text: String);
+```
+
+The specified operation path must match the service path of another websocket-enabled CDS service, otherwise the operation is
+not processed. In addition, the websocket format can be specified on service or operation level via `@websocket.format` or `@ws.format`
+annotation for websocket operations of non-websocket services.
+
+**Hint:**
+
+> Non-websocket service operations are only active when at least one websocket-enabled service is available
+> (i.e., websocket protocol adapter is active).
 
 ### Server Socket
 

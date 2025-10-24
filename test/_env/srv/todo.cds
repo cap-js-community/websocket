@@ -20,6 +20,10 @@ service TodoService {
     entity Status.texts as projection on test.Status.texts;
 
     @ws
+    @ws.pcp.action: 'MESSAGE'
+    action chat(text: String) returns String;
+
+    @ws
     @ws.path       : 'todo'
     event refresh {
         ID : String;
@@ -33,4 +37,9 @@ service TodoService {
     event notify {
         text : String;
     };
+
+    @ws
+    event notifyOp {
+        text : String;
+    }
 }

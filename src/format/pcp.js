@@ -25,12 +25,13 @@ class PCPFormat extends GenericFormat {
       const result = {};
       const message = data.substring(splitPos + SEPARATOR.length);
       const pcpFields = this.extractPcpFields(data.substring(0, splitPos));
-      const operation = Object.values(this.service.operations).find((operation) => {
+      const operation = Object.values(this.operations).find((operation) => {
         return (
           (operation["@websocket.pcp.action"] &&
             operation["@websocket.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE)) ||
           (operation["@ws.pcp.action"] && operation["@ws.pcp.action"] === (pcpFields["pcp-action"] || MESSAGE)) ||
-          operation.name === (pcpFields["pcp-action"] || MESSAGE)
+          operation.name === (pcpFields["pcp-action"] || MESSAGE) ||
+          this.localName(operation) === (pcpFields["pcp-action"] || MESSAGE)
         );
       });
       if (operation) {
@@ -45,7 +46,7 @@ class PCPFormat extends GenericFormat {
           }
         }
         return {
-          event: this.localName(operation.name),
+          event: this.localName(operation),
           data: result,
           headers: {},
         };
@@ -61,15 +62,15 @@ class PCPFormat extends GenericFormat {
   }
 
   compose(event, data, headers) {
-    const eventDefinition = this.service.events()[event];
-    const pcpMessage = this.deriveValue(event, {
+    const eventDefinition = this.events[event];
+    const pcpMessage = this.deriveValue(eventDefinition, {
       headers,
       headerNames: ["pcp-message", "pcp_message", "pcp.message", "pcpmessage"],
       data,
       annotationNames: ["@websocket.pcp.message", "@ws.pcp.message"],
       fallback: "",
     });
-    const pcpAction = this.deriveValue(event, {
+    const pcpAction = this.deriveValue(eventDefinition, {
       headers,
       headerNames: ["pcp-action", "pcp_action", "pcp.action", "pcpaction"],
       data,

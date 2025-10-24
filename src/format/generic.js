@@ -4,6 +4,9 @@ const cds = require("@sap/cds");
 
 const BaseFormat = require("./base");
 
+/**
+ * Generic class for a websocket format
+ */
 class GenericFormat extends BaseFormat {
   constructor(service, origin, name, identifier) {
     super(service, origin);
@@ -12,16 +15,21 @@ class GenericFormat extends BaseFormat {
     this.LOG = cds.log(`websocket/${this.name}`);
   }
 
+  /**
+   * Parse the event data into internal data (JSON), i.e. `{ event, data, headers }`
+   * @param {String|Object} data Event data
+   * @returns [{event: String, data: Object, headers: Object}] Parsed data
+   */
   parse(data) {
     data = this.deserialize(data);
     const operation = this.determineOperation(data);
     if (operation) {
-      const annotations = this.collectAnnotations(operation.name);
+      const annotations = this.collectAnnotations(operation);
       // Ignore name annotation corresponding to the identifier
       annotations.delete("name");
       let mappedData = {};
       if (annotations.size > 0) {
-        this.mapValues(operation.name, data, mappedData, annotations);
+        this.mapValues(operation, data, mappedData, annotations);
       } else {
         mappedData = data;
       }
@@ -32,7 +40,7 @@ class GenericFormat extends BaseFormat {
         }
       }
       return {
-        event: this.localName(operation.name),
+        event: this.localName(operation),
         data: result,
         headers: {},
       };
@@ -45,14 +53,22 @@ class GenericFormat extends BaseFormat {
     };
   }
 
+  /**
+   * Compose the event and internal data (JSON) into a formatted string
+   * @param {String} event Event name
+   * @param {Object} data Event internal data
+   * @param {Object} headers Event headers
+   * @returns {String|Object} Formatted string or a JSON object (for kind `socket.io` only)
+   */
   compose(event, data, headers) {
     const result = {};
-    const annotations = this.collectAnnotations(event);
+    const eventDefinition = this.events[event];
+    const annotations = this.collectAnnotations(eventDefinition);
     for (const header in headers) {
       if (header === this.name && typeof headers[header] === "object") {
         continue;
       }
-      const value = this.deriveValue(event, {
+      const value = this.deriveValue(eventDefinition, {
         headers,
         headerNames: [
           `${this.name}-${header}`,
@@ -68,7 +84,7 @@ class GenericFormat extends BaseFormat {
     }
     if (headers?.[this.name]) {
       for (const header in headers?.[this.name]) {
-        const value = this.deriveValue(event, {
+        const value = this.deriveValue(eventDefinition, {
           headers: headers?.[this.name],
           headerNames: [
             `${this.name}-${header}`,
@@ -84,7 +100,7 @@ class GenericFormat extends BaseFormat {
       }
     }
     for (const annotation of annotations) {
-      const value = this.deriveValue(event, {
+      const value = this.deriveValue(eventDefinition, {
         data,
         annotationNames: [`@websocket.${this.name}.${annotation}`, `@ws.${this.name}.${annotation}`],
       });
@@ -100,6 +116,25 @@ class GenericFormat extends BaseFormat {
   }
 
   /**
+   * Returns all operations
+   * @returns {Object} Operations
+   */
+  get operations() {
+    if (!Object.keys(this.service.wsMixinOperations ?? {}).length) {
+      return this.service.operations;
+    }
+    return { ...this.service.operations, ...this.service.wsMixinOperations };
+  }
+
+  /**
+   * Returns all events
+   * @returns {Object} Events
+   */
+  get events() {
+    return this.service.events;
+  }
+
+  /**
    * Determine operation based on event data
    * @param {Object} data Event data
    * @returns {Object} Service Operation
@@ -108,24 +143,24 @@ class GenericFormat extends BaseFormat {
     if (!data) {
       return;
     }
-    return Object.values(this.service.operations).find((operation) => {
+    return Object.values(this.operations).find((operation) => {
       return (
         (operation[`@websocket.${this.name}.name`] &&
           operation[`@websocket.${this.name}.name`] === data[this.identifier]) ||
         (operation[`@ws.${this.name}.name`] && operation[`@ws.${this.name}.name`] === data[this.identifier]) ||
-        operation.name === data[this.identifier]
+        operation.name === data[this.identifier] ||
+        this.localName(operation) === data[this.identifier]
       );
     });
   }
 
   /**
-   * Collect annotations for an CDS definition (event, operation) and CDS definition elements (elements, params)
-   * @param name Service definition name (event, operation)
+   * Collect annotations for a CDS definition (event, operation) and CDS definition elements (elements, params)
+   * @param {Object} definition Definition (event, operation)
    * @returns {Set<String>} Set of annotations
    */
-  collectAnnotations(name) {
+  collectAnnotations(definition) {
     const annotations = new Set();
-    const definition = this.service.events()[name] || this.service.operations()[this.localName(name)];
     for (const annotation in definition) {
       if (annotation.startsWith(`@websocket.${this.name}.`)) {
         annotations.add(annotation.substring(`@websocket.${this.name}.`.length));
@@ -152,7 +187,7 @@ class GenericFormat extends BaseFormat {
 
   /**
    * Derive value from data, headers and fallback using header names and annotation names
-   * @param {String} name Definition name (event, operation)
+   * @param {Object} definition Definition Definition (event, operation)
    * @param {Object} [headers] Header data
    * @param {[String]} [headerNames] Header names to derive value from
    * @param {Object} [data] Data
@@ -160,7 +195,7 @@ class GenericFormat extends BaseFormat {
    * @param {*} [fallback] Fallback value
    * @returns {*} Derived value
    */
-  deriveValue(name, { headers, headerNames, data, annotationNames, fallback }) {
+  deriveValue(definition, { headers, headerNames, data, annotationNames, fallback }) {
     if (headers && headerNames) {
       for (const header of headerNames) {
         if (headers[header] !== undefined) {
@@ -169,7 +204,6 @@ class GenericFormat extends BaseFormat {
       }
     }
     if (data && annotationNames) {
-      const definition = this.service.events()[name] || this.service.operations()[this.localName(name)];
       if (definition) {
         if (annotationNames) {
           for (const annotation of annotationNames) {
@@ -199,16 +233,15 @@ class GenericFormat extends BaseFormat {
   }
 
   /**
-   * Derive annotation value from datausing annotation names
-   * @param {String} name Definition name (event, operation)
+   * Derive annotation values from data using annotation names
+   * @param {Object} definition Definition (event, operation)
    * @param {Object} data Data
    * @param {Object} mappedData Data to be mapped into
    * @param {[String]} [localAnnotations] Local annotation names to be mapped
-   * @returns {*} Derived value
+   * @returns {*} Derived values
    */
-  mapValues(name, data, mappedData, localAnnotations) {
+  mapValues(definition, data, mappedData, localAnnotations) {
     data ??= {};
-    const definition = this.service.events()[name] || this.service.operations()[this.localName(name)];
     if (definition) {
       for (const localAnnotation of localAnnotations || []) {
         for (const annotation of [
@@ -252,12 +285,14 @@ class GenericFormat extends BaseFormat {
   }
 
   /**
-   * Get local name of a definition name (event, operation)
-   * @param {String} name Service definition name
+   * Get local name of a definition (event, operation)
+   * @param {Object} definition Service definition
    * @returns {String} Local name of the definition
    */
-  localName(name) {
-    return name.startsWith(`${this.service.name}.`) ? name.substring(this.service.name.length + 1) : name;
+  localName(definition) {
+    return definition.name.startsWith(`${definition._service.name}.`)
+      ? definition.name.substring(definition._service.name.length + 1)
+      : definition.name;
   }
 
   /**

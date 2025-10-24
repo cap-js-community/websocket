@@ -4,9 +4,14 @@ const cds = require("@sap/cds");
 
 const auth = require("../_env/util/auth");
 
-const { connect, disconnect, waitForEvent, waitForMessage } = require("../_env/util/ws");
+const { connect, disconnect, waitForEvent, waitForMessage, emitEvent, emitMessage } = require("../_env/util/ws");
 
 cds.test(__dirname + "/../_env");
+
+const pcpMessage = `pcp-action:MESSAGE
+text:test
+
+`;
 
 describe("Todo", () => {
   let socketOData;
@@ -59,5 +64,25 @@ text:4711
 `);
     const waitResult = await waitRefreshPromise;
     expect(waitResult).toMatchObject({ ID });
+  });
+
+  test("Todo operation", async () => {
+    const waitNotifyODataPromise = waitForEvent(socketFns, "notifyOp");
+    const result = await emitEvent(socketOData, "chat", { text: "test" });
+    expect(result).toBeNull();
+    const waitODataResult = await waitNotifyODataPromise;
+    expect(waitODataResult).toMatchObject({
+      text: "test",
+    });
+  });
+
+  test("Todo operation mixin path", async () => {
+    const waitNotifyODataPromise = waitForEvent(socketFns, "notifyOp");
+    const result = await emitMessage(socketFns, pcpMessage);
+    expect(result).toBeNull();
+    const waitODataResult = await waitNotifyODataPromise;
+    expect(waitODataResult).toMatchObject({
+      text: "test",
+    });
   });
 });

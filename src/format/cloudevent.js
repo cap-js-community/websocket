@@ -34,7 +34,7 @@ class CloudEventFormat extends GenericFormat {
       datacontenttype: "application/json",
       data: {},
     };
-    const eventDefinition = this.service.events()[event];
+    const eventDefinition = this.events[event];
     if (eventDefinition?.elements?.data && data.data) {
       cloudEvent = {
         ...data,

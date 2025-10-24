@@ -1,6 +1,6 @@
 {
   "name": "@cap-js-community/websocket",
-  "version": "1.8.2",
+  "version": "1.9.0",
   "description": "WebSocket adapter for CDS",
   "homepage": "https://cap.cloud.sap/",
   "engines": {
@@ -52,8 +52,8 @@
     "@cap-js-community/websocket": "./",
     "@cap-js/cds-test": "^0.4.0",
     "@eslint/js": "^9.38.0",
-    "@sap/cds": "^9.4.3",
-    "@sap/cds-dk": "^9.4.1",
+    "@sap/cds": "^9.4.4",
+    "@sap/cds-dk": "^9.4.2",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-streams-adapter": "^0.2.2",
     "eslint": "^9.38.0",

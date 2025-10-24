@@ -26,5 +26,9 @@ module.exports = class TodoService extends cds.ApplicationService {
         }
       });
     });
+
+    this.on("chat", async (req) => {
+      await this.emit("notifyOp", { text: req.data.text });
+    });
   }
 };
