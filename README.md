@@ -255,6 +255,11 @@ Websocket client connection happens as follows for exposed endpoints:
 Non-websocket services can contain events and operations that are exposed or accessible as websocket events
 via the concept of mixin websocket services. Mixin event and operations need to be annotated with `@websocket` or `@ws`.
 
+**Hint:**
+
+> Non-websocket service events and operations are only active when at least one websocket-enabled service is available
+> (i.e., websocket protocol adapter is active).
+
 ##### Event Mixin
 
 Websocket services can contain events that are exposed as websocket events. Emitting an event on the service,
@@ -307,11 +312,6 @@ The specified event path must match the service path of another websocket-enable
 not processed. In addition, the websocket format can be specified on service or event level via `@websocket.format` or `@ws.format`
 annotation for websocket events of non-websocket services.
 
-**Hint:**
-
-> Non-websocket service events are only active when at least one websocket-enabled service is available
-> (i.e., websocket protocol adapter is active).
-
 ##### Operation Mixin
 
 Websocket services can contain (unbound) operations (action, function) that are accessible via websocket events.
@@ -355,11 +355,6 @@ action chat(text: String);
 The specified operation path must match the service path of another websocket-enabled CDS service, otherwise the operation is
 not processed. In addition, the websocket format can be specified on service or operation level via `@websocket.format` or `@ws.format`
 annotation for websocket operations of non-websocket services.
-
-**Hint:**
-
-> Non-websocket service operations are only active when at least one websocket-enabled service is available
-> (i.e., websocket protocol adapter is active).
 
 ### Server Socket
 
