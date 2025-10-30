@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = (srv) => {
-  const { Header } = srv.entities();
+  const { Header } = srv.entities;
 
   srv.on("wsContext", async () => {});
 

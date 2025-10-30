@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = (srv) => {
-  const { Header, HeaderItem } = srv.entities();
+  const { Header, HeaderItem } = srv.entities;
 
   srv.before("CREATE", Header, async (req) => {
     await srv.emit("received", req.data);

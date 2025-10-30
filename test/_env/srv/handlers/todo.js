@@ -7,7 +7,7 @@ module.exports = class TodoService extends cds.ApplicationService {
     super.init();
 
     this.after("*", (data, context) => {
-      const { Todo } = this.entities();
+      const { Todo } = this.entities;
       context.on("succeeded", async () => {
         const ID = context.params?.[0]?.ID;
         if (ID && context.target === Todo && ["CREATE", "UPDATE", "DELETE"].includes(context.event)) {
