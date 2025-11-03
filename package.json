@@ -43,7 +43,7 @@
     "audit": "npm audit --only=prod"
   },
   "dependencies": {
-    "@cap-js-community/common": "^0.2.8",
+    "@cap-js-community/common": "^0.3.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "ws": "^8.18.3"
@@ -51,6 +51,7 @@
   "devDependencies": {
     "@cap-js-community/websocket": "./",
     "@cap-js/cds-test": "^0.4.0",
+    "@cap-js/sqlite": "^2.0.4",
     "@eslint/js": "^9.38.0",
     "@sap/cds": "^9.4.4",
     "@sap/cds-dk": "^9.4.2",
