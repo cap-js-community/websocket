@@ -6,7 +6,8 @@ const { RedisClient } = require("@cap-js-community/common");
 const LOG = cds.log("websocket/redis");
 const IS_ON_CF = process.env.USER === "vcap";
 
-const redisClient = RedisClient.default("websocket");
+const redisClient = RedisClient.create("websocket");
+const redisClientSecondary = RedisClient.create("websocket-secondary", "websocket");
 
 async function connectionCheck(options) {
   const adapterActive = options?.active !== false;
@@ -28,11 +29,11 @@ async function createPrimaryClientAndConnect(options) {
 }
 
 async function createSecondaryClientAndConnect(options) {
-  return await redisClient.createAdditionalClientAndConnect(options?.config);
+  return await redisClientSecondary.createMainClientAndConnect(options?.config);
 }
 
 async function closeClients() {
-  return await redisClient.closeClients();
+  return await RedisClient.closeAllClients();
 }
 
 module.exports = {

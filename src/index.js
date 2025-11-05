@@ -3,10 +3,8 @@
 const cds = require("@sap/cds");
 
 const SocketServer = require("./socket/base");
-const redis = require("./redis");
 
 const LOG = cds.log("websocket");
-const TIMEOUT_SHUTDOWN = 2500;
 
 const WebSocketAction = {
   Connect: "wsConnect",
@@ -26,9 +24,6 @@ const collectServicesAndMountAdapter = (srv, options) => {
     cds.on("served", () => {
       options.services = services;
       serveWebSocketServer(options);
-    });
-    cds.on("shutdown", async () => {
-      await shutdownWebSocketServer();
     });
   }
   services[srv.name] = srv;
@@ -124,26 +119,6 @@ async function initWebSocketServer(server, path) {
   } catch (err) {
     LOG?.error(err);
   }
-}
-
-async function shutdownWebSocketServer() {
-  return await new Promise((resolve, reject) => {
-    const timeoutRef = setTimeout(() => {
-      clearTimeout(timeoutRef);
-      LOG?.info("Shutdown timeout reached!");
-      resolve();
-    }, TIMEOUT_SHUTDOWN);
-    redis
-      .closeClients()
-      .then((result) => {
-        clearTimeout(timeoutRef);
-        resolve(result);
-      })
-      .catch((err) => {
-        clearTimeout(timeoutRef);
-        reject(err);
-      });
-  });
 }
 
 function normalizeServicePath(servicePath, protocolPath) {
