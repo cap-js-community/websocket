@@ -96,6 +96,16 @@ async function bootstrapWebSocketServer(server, options) {
         serveWebSocketService(socketServer, mixinService, options);
       }
     }
+    // Queue / Outbox
+    for (const serviceName in options.services) {
+      ["queued", "outboxed", "outbox"].forEach((aspect) => {
+        if (cds.services[serviceName] && cds.requires[serviceName]?.[aspect]) {
+          cds.services[serviceName].options[aspect] = cds.requires[serviceName][aspect];
+          cds.services[serviceName] = (cds.queued ?? cds.outboxed)(cds.services[serviceName]);
+        }
+      });
+    }
+
     LOG?.info("using websocket", {
       kind: cds.env.websocket.kind,
       adapter: socketServer.adapter ? { impl: socketServer.adapterImpl, active: socketServer.adapterActive } : false,

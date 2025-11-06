@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Queue/outbox websocket services automatically when configured accordingly in `cds.requires`
+- Document how to handle websocket paths in different scenarios
 
 ## Version 1.9.1 - 2025-11-05
 

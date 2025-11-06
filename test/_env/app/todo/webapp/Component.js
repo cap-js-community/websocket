@@ -12,16 +12,17 @@ sap.ui.define(
 
       constructor: function () {
         AppComponent.prototype.constructor.apply(this, arguments);
-        this.initWebSocket("/ws/todo");
+        this.ws("/ws/todo");
       },
 
-      initWebSocket: function (url) {
-        window.websockets ??= {
+      ws: function (sUrl, sName = "main") {
+        window.websockets ??= {};
+        window.websockets[sName] = {
           _ws: undefined,
           _contexts: [],
           _handlers: [],
           _interval: setInterval(() => {
-            window.websockets?.init();
+            window.websockets?.[sName]?.init();
           }, KEEP_ALIVE_INTERVAL),
           reset: function () {
             this._ws?.close();
@@ -33,7 +34,7 @@ sap.ui.define(
             if (this._ws?.getReadyState() === ReadyState.OPEN) {
               return;
             }
-            this._ws = new WebSocket(url);
+            this._ws = new WebSocket(sUrl);
             this._ws.attachClose((oEvent) => {
               if (oEvent.getSource() === this._ws) {
                 this._ws = undefined;
@@ -73,8 +74,8 @@ sap.ui.define(
             });
           },
         };
-        window.websockets.reset();
-        window.websockets.init();
+        window.websockets[sName].reset();
+        window.websockets[sName].init();
       },
     });
   },

@@ -488,6 +488,9 @@ await chatService.tx(req).emit("received", req.data);
 In that case, the websocket event is broadcast to websocket clients exactly once, when the primary transaction succeeds.
 In case of execution errors, the event broadcast is retried automatically, while processing the persistent queue.
 
+Websocket services with `queued` or `outboxed` configuration in respective `cds.requires` section are automatically
+queued/outboxed.
+
 ### Client Determination
 
 The client determination during WebSocket event broadcasting/emitting is based on the following filtering layers of the event:
@@ -1677,6 +1680,43 @@ to [@sap/approuter - websockets property](https://www.npmjs.com/package/@sap/app
 
 For local testing without approuter a mocked basic authorization is hardcoded in `flp.html/index.html`.
 
+#### Paths
+
+UI websocket paths need to be properly routed to the backend service. The following scenarios are relevant:
+
+- **Standalone**:
+  - No Approuter is in place, therefore UI websocket paths must directly match the backend service paths.
+
+- **Approuter**:
+  - The Approuter routes websocket paths to the backend service and the protocol may be rewritten.
+  - Approuter `xs-app.json` may configure routes, so that UI websocket paths are rerouted to the backend service paths.
+  - **Example**: (`xs-app.json`):
+    ```json
+    {
+      "source": "^/ws/(.*)$",
+      "target": "$1",
+      "destination": "backend-url"
+    }
+    ```
+  - To access UI with and without Approuter (local development), the backend service can adjust for the Approuter path prefix in the `upgrade` server request.
+  - **Example:** (Approuter routes `/ws/chat` to backend service path `/chat`)
+    ```js
+    server.on("upgrade", function (req) {
+      if (req.url.startsWith("/ws")) {
+        req.url = req.url.replace("/ws", "");
+      }
+    });
+    ```
+
+- **Workzone**:
+  - The managed Approuter of Workzone routes UI websocket paths to backend services for each HTML5 application.
+  - Websocket paths in the UI must be relative to the loaded app, so that they can be correctly delegated through the app’s `xs-app.json` routing configuration.
+  - The correct relative path can be determined dynamically via the app manifest.
+  - **Example:** (`Component.js`)
+    ```js
+    new WebSocket(this.getManifestObject().resolveUri("ws/chat"));
+    ```
+
 ### Operations
 
 Operations comprise actions and functions in the CDS service that are
@@ -2042,6 +2082,13 @@ For WebSocket standard the following setup in the browser environment is recomme
 const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
 const socket = new WebSocket(protocol + window.location.host + "/ws/chat");
 ```
+
+For UI5, applications class [sap.ui.core.ws.WebSocket](https://sapui5.hana.ondemand.com/sdk/#/api/sap.ui.core.ws.WebSocket)
+can be used, which automatically selects the correct protocol (`ws://` or `wss://`) based on the application protocol.
+
+Example Usage:
+
+- [/app//todo/webapp/Component.js](test/_env/app/todo/webapp/Component.js)
 
 ## Support, Feedback, Contributing
 

@@ -7,8 +7,8 @@ sap.ui.define(
       override: {
         onInit: function () {
           this.base.onInit();
-          window.websockets?.message((message) => {
-            if (message.event === "refresh") {
+          window.websockets?.main?.message((oMessage) => {
+            if (oMessage.event === "refresh") {
               this.base.getExtensionAPI().refresh();
               const router = this.base.getAppComponent().getRouter();
               if (router && !router.getHashChanger().getHash().startsWith("Todo")) {

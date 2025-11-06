@@ -81,6 +81,12 @@
       },
       "socket.io-client": {
         "kind": "websocket-client-socket.io"
+      },
+      "OutboxService": {
+        "outboxed": {}
+      },
+      "QueueService": {
+        "queued": true
       }
     }
   }
