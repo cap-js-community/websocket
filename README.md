@@ -51,6 +51,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
   - [Connect & Disconnect](#connect--disconnect)
   - [Server Client Service](#server-client-service)
   - [Approuter](#approuter)
+    - [Paths](#paths)
   - [Operations](#operations)
     - [Operation Results](#operation-results)
     - [Unbound Operations](#unbound-operations)
@@ -1701,10 +1702,12 @@ UI websocket paths need to be properly routed to the backend service. The follow
   - To access UI with and without Approuter (local development), the backend service can adjust for the Approuter path prefix in the `upgrade` server request.
   - **Example:** (Approuter routes `/ws/chat` to backend service path `/chat`)
     ```js
-    server.on("upgrade", function (req) {
-      if (req.url.startsWith("/ws")) {
-        req.url = req.url.replace("/ws", "");
-      }
+    cds.on("listening", async ({ server, url }) => {
+      server.on("upgrade", function (req) {
+        if (req.url.startsWith("/ws")) {
+          req.url = req.url.replace("/ws", "");
+        }
+      });
     });
     ```
 

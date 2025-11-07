@@ -12,10 +12,10 @@ sap.ui.define(
 
       constructor: function () {
         AppComponent.prototype.constructor.apply(this, arguments);
-        this.ws("/ws/todo");
+        this.websocket("/ws/todo");
       },
 
-      ws: function (sUrl, sName = "main") {
+      websocket: function (sUrl, sName = "main") {
         window.websockets ??= {};
         window.websockets[sName] = {
           _ws: undefined,
