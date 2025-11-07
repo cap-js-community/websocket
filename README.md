@@ -1700,7 +1700,7 @@ UI websocket paths need to be properly routed to the backend service. The follow
     }
     ```
   - To access UI with and without Approuter (local development), the backend service can adjust for the Approuter path prefix in the `upgrade` server request.
-  - **Example:** (Approuter routes `/ws/chat` to backend service path `/chat`)
+  - **Example:** (`server.js`) - Approuter routes `/ws/chat` to backend service path `/chat`
     ```js
     cds.on("listening", async ({ server, url }) => {
       server.on("upgrade", function (req) {
