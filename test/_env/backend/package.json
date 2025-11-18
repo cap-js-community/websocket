@@ -6,10 +6,9 @@
     "start": "cds-serve --production"
   },
   "dependencies": {
-    "@cap-js-community/websocket": "1.5.0",
-    "@cap-js/sqlite": "1.7.8",
-    "@sap/cds": "8.6.0",
-    "@sap/xssec": "4.2.7"
+    "@cap-js-community/websocket": "1.9.1",
+    "@cap-js/sqlite": "2.0.4",
+    "@sap/cds": "9.4.4"
   },
   "engines": {
     "node": ">=20"

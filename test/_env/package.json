@@ -25,9 +25,6 @@
     "@cap-js-community/websocket": "../../"
   },
   "cds": {
-    "features": {
-      "in_memory_db": true
-    },
     "websocket": {
       "kind": "ws",
       "impl": null,
