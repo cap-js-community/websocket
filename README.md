@@ -1208,7 +1208,7 @@ Example:
 @ws.pcp.sideEffect
 @ws.pcp.channel: 'amc\://notification/notify'
 event sideEffect {
-    sideEffectsSource: String;
+    sideEffectSource: String;
 }
 ```
 
@@ -1216,7 +1216,7 @@ Emitting the event `sideEffect` via CDS emit, as follows:
 
 ```js
 await srv.emit("sideEffect", {
-  sideEffectsSource: "/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')",
+  sideEffectSource: "/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')",
 });
 ```
 
@@ -1225,8 +1225,8 @@ It results in the following PCP message sent via websocket protocol:
 ```
 pcp-action:MESSAGE
 pcp-channel:amc:\:notification/notify
-sideEffectsSource:/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')
-sideEffectsEventName:sideEffect
+sideEffectSource:/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')
+sideEffectEventName:sideEffect
 serverAction:RaiseSideEffect
 
 

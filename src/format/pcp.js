@@ -117,8 +117,8 @@ class PCPFormat extends GenericFormat {
     }
     if (pcpSideEffect) {
       pcpFieldsFiltered = {
-        sideEffectsSource: "",
-        sideEffectsEventName: pcpEvent,
+        sideEffectSource: "",
+        sideEffectEventName: pcpEvent,
         serverAction: "RaiseSideEffect",
         ...pcpFieldsFiltered,
       };

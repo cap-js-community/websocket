@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 1.9.2 - 2025-12-xx
+## Version 1.9.2 - 2025-12-01
 
 ### Fixed
 
+- Fix side effect event name and source properties
 - Queue/outbox websocket services automatically when configured accordingly in `cds.requires`
 - Document how to handle websocket paths in different scenarios
 

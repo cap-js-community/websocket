@@ -54,7 +54,7 @@ module.exports = (srv) => {
 
   srv.on("triggerSideEffects", async () => {
     await srv.emit("sideEffect1", {
-      sideEffectsSource: "/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')",
+      sideEffectSource: "/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')",
     });
     return true;
   });

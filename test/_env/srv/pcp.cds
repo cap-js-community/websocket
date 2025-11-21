@@ -53,6 +53,6 @@ service PCPService {
     @ws.pcp.event: 'sideEffect1'
     @ws.pcp.channel: 'amc\://notification/notify'
     event sideEffect1 {
-        sideEffectsSource: String;
+        sideEffectSource: String;
     }
 }
