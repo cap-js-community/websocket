@@ -1200,13 +1200,26 @@ To configure Fiori side effects in PCP format enabled service, the following ann
 
 - **Event level**:
   - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose Fiori side effects in the PCP message
-  - `@websocket.pcp.channel, @ws.pcp.channel: String`: Specify the PCP side effects channel in the PCP message
+  - `@websocket.pcp.channel, @ws.pcp.channel: String`: Specify the PCP side effects channel in the PCP message. In addition, the common annotation `@Common.WebSocketChannel` is respected as well.
 
 Example:
 
 ```cds
 @ws.pcp.sideEffect
 @ws.pcp.channel: 'amc\://notification/notify'
+event sideEffect {
+    sideEffectSource: String;
+}
+```
+
+Side effects often are restricted to user-owned client connections only. Therefore, the annotation can be added to prevent broadcasting to all clients.
+In addition, PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined on the service level.
+
+Example:
+
+```cds
+@ws.user
+@ws.pcp.sideEffect
 event sideEffect {
     sideEffectSource: String;
 }
@@ -1232,6 +1245,19 @@ serverAction:RaiseSideEffect
 
 ```
 
+OData V4 metadata can be extended for side effects to automatically connect the websocket endpoint:
+
+```cds
+@Common : {
+  WebSocketBaseURL : 'ws/odata-api',
+  WebSocketChannel #sideEffects: 'sideeffects'
+}
+service ODataService {
+   ...
+}
+```
+
+Details can be found for UI5 Fiori Elements [Event-Driven Side Effects](https://ui5.sap.com/#/topic/27c9c3bad6eb4d99bc18a661fdb5e246).
 Fiori Elements V4 applications listening on channel will process the side effects, and update the UI accordingly.
 
 ##### Manage Contexts

@@ -84,8 +84,14 @@ class PCPFormat extends GenericFormat {
         : pcpEventAnnotationValue
           ? event
           : undefined;
-    const pcpChannel = eventDefinition?.["@websocket.pcp.channel"] || eventDefinition?.["@ws.pcp.channel"];
     const pcpSideEffect = !!(eventDefinition?.["@websocket.pcp.sideEffect"] || eventDefinition?.["@ws.pcp.sideEffect"]);
+    const pcpChannel =
+      eventDefinition?.["@websocket.pcp.channel"] ||
+      eventDefinition?.["@ws.pcp.channel"] ||
+      (pcpSideEffect && eventDefinition?.["@Common.WebSocketChannel"]) ||
+      (pcpSideEffect &&
+        (this.service.definition?.["@Common.WebSocketChannel#sideEffects"] ||
+          this.service.definition?.["@Common.WebSocketChannel"]));
     return this.serializePcpEvent({
       pcpFields: data,
       pcpMessage,

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fix side effect event name and source properties
 - Queue/outbox websocket services automatically when configured accordingly in `cds.requires`
 - Document how to handle websocket paths in different scenarios
+- Respect annotation `@Common.WebSocketChannel` for channel specification on event and service level
+- Document OData extension for UI5 Fiori Elements event-driven side effects
 
 ## Version 1.9.1 - 2025-11-05
 

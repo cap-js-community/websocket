@@ -1,6 +1,10 @@
 using test from '../db/model';
 
 @path: 'odata'
+@Common : {
+  WebSocketBaseURL : 'ws/pcp',
+  WebSocketChannel #sideEffects: 'sideeffects'
+}
 service ODataService {
 
     entity Header as projection on test.Header;
