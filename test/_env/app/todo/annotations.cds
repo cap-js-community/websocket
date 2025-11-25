@@ -6,16 +6,6 @@ annotate TodoService.Todo with @(
     // Filter Bar
     UI.SelectionFields: [ name, status_code ],
 
-    // Head of List
-    UI.HeaderInfo: {
-        Title: {
-            Label: 'Name',
-            Value: name
-        },
-        TypeName: '{i18n>Todo}',
-        TypeNamePlural: '{i18n>Todos}'
-    },
-
     // List
     UI.LineItem: [
         {$Type: 'UI.DataField', Value: name},

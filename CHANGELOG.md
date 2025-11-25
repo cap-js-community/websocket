@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Respect annotation `@Common.WebSocketChannel` for channel specification on event and service level
 - Document OData extension for UI5 Fiori Elements event-driven side effects
 
+### Added
+
+- Add sample Fiori Elements application leveraging event-driven side effects
+
 ## Version 1.9.1 - 2025-11-05
 
 ### Fixed

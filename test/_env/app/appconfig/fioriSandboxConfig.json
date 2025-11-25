@@ -1,0 +1,88 @@
+{
+  "defaultRenderer": "fiori2",
+  "applications": {},
+  "services": {
+    "LaunchPage": {
+      "adapter": {
+        "config": {
+          "catalogs": [],
+          "groups": [
+            {
+              "id": "Samples",
+              "title": "Samples Apps",
+              "isPreset": true,
+              "isVisible": true,
+              "isGroupLocked": false,
+              "tiles": [
+                {
+                  "id": "TodoManage",
+                  "tileType": "sap.ushell.ui.tile.StaticTile",
+                  "properties": {
+                    "title": "Manage Todos",
+                    "targetURL": "#Todo-manage"
+                  }
+                },
+                {
+                  "id": "BrowseBooks",
+                  "tileType": "sap.ushell.ui.tile.StaticTile",
+                  "properties": {
+                    "title": "Browse Books",
+                    "targetURL": "#Books-display"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "NavTargetResolution": {
+      "config": {
+        "enableClientSideTargetResolution": true
+      }
+    },
+    "ClientSideTargetResolution": {
+      "adapter": {
+        "config": {
+          "inbounds": {
+            "Todo-manage": {
+              "semanticObject": "Todo",
+              "action": "manage",
+              "title": "Manage Todos",
+              "signature": {
+                "parameters": {},
+                "additionalParameters": "ignored"
+              },
+              "resolutionResult": {
+                "applicationType": "SAPUI5",
+                "additionalInformation": "SAPUI5.Component=todo",
+                "url": "todo/webapp"
+              }
+            },
+            "Books-display": {
+              "semanticObject": "Books",
+              "action": "display",
+              "title": "Browse Books",
+              "signature": {
+                "parameters": {
+                  "Books.ID": {
+                    "renameTo": "ID"
+                  },
+                  "Authors.books.ID": {
+                    "renameTo": "ID"
+                  }
+                },
+                "additionalParameters": "ignored"
+              },
+              "resolutionResult": {
+                "applicationType": "SAPUI5",
+                "additionalInformation": "SAPUI5.Component=fiori",
+                "url": "fiori/webapp"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

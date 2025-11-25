@@ -77,14 +77,14 @@ class PCPFormat extends GenericFormat {
       annotationNames: ["@websocket.pcp.action", "@ws.pcp.action"],
       fallback: MESSAGE,
     });
+    const pcpSideEffect = !!(eventDefinition?.["@websocket.pcp.sideEffect"] || eventDefinition?.["@ws.pcp.sideEffect"]);
     const pcpEventAnnotationValue = eventDefinition?.["@websocket.pcp.event"] || eventDefinition?.["@ws.pcp.event"];
     const pcpEvent =
       typeof pcpEventAnnotationValue === "string"
         ? pcpEventAnnotationValue
-        : pcpEventAnnotationValue
+        : pcpSideEffect || pcpEventAnnotationValue
           ? event
           : undefined;
-    const pcpSideEffect = !!(eventDefinition?.["@websocket.pcp.sideEffect"] || eventDefinition?.["@ws.pcp.sideEffect"]);
     const pcpChannel =
       eventDefinition?.["@websocket.pcp.channel"] ||
       eventDefinition?.["@ws.pcp.channel"] ||

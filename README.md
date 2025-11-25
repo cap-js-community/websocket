@@ -45,6 +45,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
     - [Ignore Definitions](#ignore-definitions)
   - [WebSocket Format](#websocket-format)
     - [SAP Push Channel Protocol (PCP)](#sap-push-channel-protocol-pcp)
+      - [Fiori Side Effects](#fiori-side-effects)
     - [Cloud Events](#cloud-events)
     - [Custom Format](#custom-format)
     - [Generic Format](#generic-format)
@@ -59,6 +60,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
     - [Bound Operations](#bound-operations)
     - [CRUD Operations](#crud-operations)
   - [Examples](#examples)
+    - [Fiori (UI5)](#fiori-ui5)
     - [Todo (UI5)](#todo-ui5)
     - [Chat (HTML)](#chat-html)
   - [Unit-Tests](#unit-tests)
@@ -1196,7 +1198,20 @@ To configure the PCP message format, the following annotations are available:
 ##### Fiori Side Effects
 
 PCP format can be used to emit Fiori side effects via WebSocket events.
-To configure Fiori side effects in PCP format enabled service, the following annotations are available:
+
+First OData V4 service metadata is extended for side effects to automatically connect to the corresponding websocket endpoint and channel:
+
+```cds
+@Common : {
+  WebSocketBaseURL : '/ws/fiori',
+  WebSocketChannel #sideEffects: 'sideeffects'
+}
+service FioriService {
+   ...
+}
+```
+
+Fiori side effects are configured in PCP format enabled service via the following annotations:
 
 - **Event level**:
   - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose Fiori side effects in the PCP message
@@ -1206,26 +1221,44 @@ Example:
 
 ```cds
 @ws.pcp.sideEffect
-@ws.pcp.channel: 'amc\://notification/notify'
+@ws.pcp.channel: 'sideeffects'
 event sideEffect {
     sideEffectSource: String;
 }
 ```
 
-Side effects often are restricted to user-owned client connections only. Therefore, the annotation can be added to prevent broadcasting to all clients.
+Side effects are often restricted to user-owned client connections only. Therefore, the annotation `@ws.user` can be added to prevent broadcasting to all clients.
 In addition, PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined on the service level.
 
 Example:
 
 ```cds
-@ws.user
-@ws.pcp.sideEffect
-event sideEffect {
+@Common: {
+    WebSocketBaseURL: '/ws/fiori',
+    WebSocketChannel: 'sideeffects',
+}
+service FioriService {
+  @ws.user
+  @ws.pcp.sideEffect
+  event sideEffect {
     sideEffectSource: String;
+  }
 }
 ```
 
-Emitting the event `sideEffect` via CDS emit, as follows:
+To consume side effects in Fiori Elements, an CDS entity can be annotated with side effects as follows:
+
+Example:
+
+```cds
+@Common.SideEffects #sideEffect: {
+   SourceEvents    : ['sideEffect'],
+   TargetProperties: ['name']
+}
+entity Header { ... }
+```
+
+The event `sideEffect` is emitted on server side via CDS `emit`, as follows:
 
 ```js
 await srv.emit("sideEffect", {
@@ -1233,28 +1266,16 @@ await srv.emit("sideEffect", {
 });
 ```
 
-It results in the following PCP message sent via websocket protocol:
+This results in the following PCP message sent via websocket protocol to Fiori Elements:
 
 ```
 pcp-action:MESSAGE
-pcp-channel:amc:\:notification/notify
+pcp-channel:sideeffects
 sideEffectSource:/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')
 sideEffectEventName:sideEffect
 serverAction:RaiseSideEffect
 
 
-```
-
-OData V4 metadata can be extended for side effects to automatically connect the websocket endpoint:
-
-```cds
-@Common : {
-  WebSocketBaseURL : 'ws/odata-api',
-  WebSocketChannel #sideEffects: 'sideeffects'
-}
-service ODataService {
-   ...
-}
 ```
 
 Details can be found for UI5 Fiori Elements [Event-Driven Side Effects](https://ui5.sap.com/#/topic/27c9c3bad6eb4d99bc18a661fdb5e246).
@@ -1845,9 +1866,23 @@ To also include the triggering socket within the broadcast, this can be controll
 
 ### Examples
 
+#### Fiori (UI5)
+
+The example UI5 `fiori` application using WebSockets can be found at `test/_env/app/fiori`.
+
+Example application can be started by:
+
+- Basic Auth
+  - Starting backend: `npm start`
+  - Open in browser: http://localhost:4004/flp.html#Books-display
+- XSUAA Auth:
+  - Starting approuter: `npm run start:approuter`
+  - Starting backend: `npm run start:uaa`
+  - Open in the browser: http://localhost:5001/flp.html#Books-display
+
 #### Todo (UI5)
 
-The example UI5 `todo` application using Socket.IO can be found at `test/_env/app/todo`.
+The example UI5 `todo` application using WebSockets can be found at `test/_env/app/todo`.
 
 Example application can be started by:
 
@@ -1861,7 +1896,7 @@ Example application can be started by:
 
 #### Chat (HTML)
 
-An example `chat` application using Socket.IO can be found at `test/_env/app/chat`.
+An example `chat` application using WebSockets can be found at `test/_env/app/chat`.
 
 Example application can be started by:
 

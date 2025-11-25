@@ -70,7 +70,7 @@ const pcpTriggerSideEffects = `pcp-action:triggerSideEffects
 `;
 
 const pcpSideEffect1 = `pcp-action:MESSAGE
-pcp-channel:amc\\://notification/notify
+pcp-channel:sideeffects
 sideEffectSource:/Header(ID='e0582b6a-6d93-46d9-bd28-98723a285d40')
 sideEffectEventName:sideEffect1
 serverAction:RaiseSideEffect
