@@ -26,6 +26,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
     - [WebSocket Service](#websocket-service)
     - [WebSocket Mixin](#websocket-mixin)
   - [Server Socket](#server-socket)
+  - [Upgrade Request](#upgrade-request)
   - [Service Facade](#service-facade)
   - [Middlewares](#middlewares)
   - [Tenant Isolation](#tenant-isolation)
