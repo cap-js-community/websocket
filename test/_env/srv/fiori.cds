@@ -2,7 +2,7 @@ using {sap.capire.bookshop as my} from '../db/bookshop';
 
 @Common: {
     WebSocketBaseURL: '/ws/fiori',
-    WebSocketChannel: 'sideeffects',
+    WebSocketChannel #sideEffects: 'sideeffects',
 }
 service FioriService {
     @readonly

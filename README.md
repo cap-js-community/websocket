@@ -45,7 +45,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
     - [Ignore Definitions](#ignore-definitions)
   - [WebSocket Format](#websocket-format)
     - [SAP Push Channel Protocol (PCP)](#sap-push-channel-protocol-pcp)
-      - [Fiori Side Effects](#fiori-side-effects)
+    - [Fiori Side Effects](#fiori-side-effects)
     - [Cloud Events](#cloud-events)
     - [Custom Format](#custom-format)
     - [Generic Format](#generic-format)
@@ -365,6 +365,12 @@ Each CDS handler request context is extended to hold the current server `socket`
 It can be accessed via the service websocket facade via `req.context.ws.service` or `cds.context.ws.service`.
 In addition, the native websocket server socket can be accessed via `req.context.ws.socket` or `cds.context.ws.socket`.
 Events can be directly emitted via the native `socket`, bypassing CDS runtime, if necessary.
+
+### Upgrade Request
+
+The upgrade request is automatically handled by CDS Websocket plugin. The original http(s) socket upgrade request is
+accessible in websocket initiated calls via `req.context.ws.socket.request.queryOptions` in the CDS websocket service handler context.
+Query options therefore also can be accessed via `req.context.ws.socket.request.queryOptions`.
 
 ### Service Facade
 
@@ -1195,9 +1201,33 @@ To configure the PCP message format, the following annotations are available:
   - `@websocket.pcp.action, @ws.pcp.action: Boolean`: Expose the string value of the annotated event element as
     `pcp-action` field in the PCP message. Default `MESSAGE`.
 
-##### Fiori Side Effects
+##### Manage Contexts
 
-PCP format can be used to emit Fiori side effects via WebSocket events.
+To manage contexts in format `pcp`, `wsContext` event can be emitted in the following way:
+
+- Model `wsContext` CDS service operation as follows:
+  ```
+  @ws.pcp.action: 'wsContext'
+  action wsContext(context: String, exit: Boolean, reset: Boolean);
+  ```
+- Call `wsContext` message in `pcp` format like this:
+
+  ```
+  pcp-action:wsContext
+  pcp-body-type:text
+  context:context
+  exit:false
+  reset:true
+
+  wsContext
+  ```
+
+The PCP action needs to match an operation with annotation `@websocket.pcp.action` or `@ws.pcp.action`.
+Modeled action parameters `context`, `exit` and `reset` are mapped from `pcp` message fields.
+
+#### Fiori Side Effects
+
+PCP format can be used to emit Fiori Side Effects via WebSocket events.
 
 First OData V4 service metadata is extended for side effects to automatically connect to the corresponding websocket endpoint and channel:
 
@@ -1211,11 +1241,11 @@ service FioriService {
 }
 ```
 
-Fiori side effects are configured in PCP format enabled service via the following annotations:
+Fiori Side Effects are configured in PCP format enabled service via the following annotations:
 
 - **Event level**:
-  - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose Fiori side effects in the PCP message
-  - `@websocket.pcp.channel, @ws.pcp.channel: String`: Specify the PCP side effects channel in the PCP message. In addition, the common annotation `@Common.WebSocketChannel` is respected as well.
+  - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose event as Fiori Side Effect in the PCP message.
+  - `@websocket.pcp.channel, @ws.pcp.channel: String`: Specify the PCP side effects channel in the PCP message. In addition, the common annotation `@Common.WebSocketChannel` is respected (on event and service level).
 
 Example:
 
@@ -1227,15 +1257,16 @@ event sideEffect {
 }
 ```
 
-Side effects are often restricted to user-owned client connections only. Therefore, the annotation `@ws.user` can be added to prevent broadcasting to all clients.
-In addition, PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined on the service level.
+Side effects are often restricted to user-owned client connections only.
+Therefore, the annotation `@ws.user` can be added to prevent broadcasting to all clients.
+In addition, PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined in the same service on service level.
 
 Example:
 
 ```cds
 @Common: {
     WebSocketBaseURL: '/ws/fiori',
-    WebSocketChannel: 'sideeffects',
+    WebSocketChannel #sideEffects: 'sideeffects',
 }
 service FioriService {
   @ws.user
@@ -1251,7 +1282,7 @@ To consume side effects in Fiori Elements, an CDS entity can be annotated with s
 Example:
 
 ```cds
-@Common.SideEffects #sideEffect: {
+@Common.SideEffects #nameUpdated: {
    SourceEvents    : ['sideEffect'],
    TargetProperties: ['name']
 }
@@ -1280,30 +1311,6 @@ serverAction:RaiseSideEffect
 
 Details can be found for UI5 Fiori Elements [Event-Driven Side Effects](https://ui5.sap.com/#/topic/27c9c3bad6eb4d99bc18a661fdb5e246).
 Fiori Elements V4 applications listening on channel will process the side effects, and update the UI accordingly.
-
-##### Manage Contexts
-
-To manage contexts in format `pcp`, `wsContext` event can be emitted in the following way:
-
-- Model `wsContext` CDS service operation as follows:
-  ```
-  @ws.pcp.action: 'wsContext'
-  action wsContext(context: String, exit: Boolean, reset: Boolean);
-  ```
-- Call `wsContext` message in `pcp` format like this:
-
-  ```
-  pcp-action:wsContext
-  pcp-body-type:text
-  context:context
-  exit:false
-  reset:true
-
-  wsContext
-  ```
-
-The PCP action needs to match an operation with annotation `@websocket.pcp.action` or `@ws.pcp.action`.
-Modeled action parameters `context`, `exit` and `reset` are mapped from `pcp` message fields.
 
 #### Cloud Events
 
