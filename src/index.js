@@ -49,10 +49,7 @@ async function bootstrapWebSocketServer(server, options) {
     // Mixin Services (non-ws service events and operations)
     for (const name in cds.model.definitions) {
       const definition = cds.model.definitions[name];
-      if (
-        ["event", "action", "function"].includes(definition.kind) &&
-        (definition["@websocket"] || definition["@ws"])
-      ) {
+      if (["event", "action", "function"].includes(definition.kind) && websocketEnabled(definition)) {
         const service = cds.services[definition._service?.name];
         if (service && !isServedViaWebsocket(service)) {
           mixinServices[service.name] ??= mixinServices[service.name] || {
@@ -111,6 +108,14 @@ async function bootstrapWebSocketServer(server, options) {
       adapter: socketServer.adapter ? { impl: socketServer.adapterImpl, active: socketServer.adapterActive } : false,
     });
   }
+}
+
+function websocketEnabled(definition) {
+  return (
+    definition["@websocket"] ||
+    definition["@ws"] ||
+    Object.keys(definition).some((p) => p.startsWith("@websocket.") || p.startsWith("@ws."))
+  );
 }
 
 async function initWebSocketServer(server, path) {

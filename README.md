@@ -1258,9 +1258,9 @@ event sideEffect {
 }
 ```
 
-Side effects are often restricted to user-owned client connections only.
-Therefore, the annotation `@ws.user` can be added to prevent broadcasting to all clients.
+Side effects are often restricted to user-owned client connections only. Therefore, the annotation `@ws.currentUser` can be added to prevent broadcasting to all clients.
 In addition, PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined in the same service on service level.
+Further using websocket mixins, a websocket event can be defined in the corresponding OData service as follows:
 
 Example:
 
@@ -1270,8 +1270,7 @@ Example:
     WebSocketChannel #sideEffects: 'sideeffects',
 }
 service FioriService {
-  @ws.user
-  @ws.pcp.sideEffect
+  @ws: { currentUser, format: 'pcp', pcp: { sideEffect } }
   event sideEffect {
     sideEffectSource: String;
   }
