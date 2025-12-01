@@ -85,19 +85,7 @@ describe("Redis", () => {
       "websocket/chat",
       '{"tenant":"t1","event":"received","data":{"text":"test","user":"alice"},"headers":{"header":"value"}}',
     );
-
-    // Duplicated because Redis mock publishes to same client (not done for real Redis)
     expect(messages).toEqual([
-      {
-        data: {
-          text: "test",
-          user: "alice",
-        },
-        event: "received",
-        headers: {
-          header: "value",
-        },
-      },
       {
         data: {
           text: "test",

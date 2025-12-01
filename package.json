@@ -51,9 +51,9 @@
   "devDependencies": {
     "@cap-js-community/websocket": "./",
     "@cap-js/cds-test": "^0.4.1",
-    "@cap-js/sqlite": "^2.0.4",
+    "@cap-js/sqlite": "^2.1.0",
     "@eslint/js": "^9.39.1",
-    "@sap/cds": "^9.4.4",
+    "@sap/cds": "^9.4.5",
     "@sap/cds-dk": "^9.4.3",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-streams-adapter": "^0.2.3",
@@ -64,7 +64,7 @@
     "express": "^4.21.2",
     "globals": "^16.5.0",
     "jest": "^30.2.0",
-    "prettier": "^3.6.2"
+    "prettier": "^3.7.3"
   },
   "license": "Apache-2.0",
   "repository": {

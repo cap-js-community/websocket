@@ -181,7 +181,7 @@ class SocketServer {
    * @param {String} tenant Tenant for isolation
    * @param {String} service Service definition
    * @param {String} [path] Service path, e.g. "/path" (relative to websocket server path), undefined: default service path
-   * @param {String} event Event name or event message JSON content (no additional parameters provided (incl. 'data', except 'local'))
+   * @param {String} event Event name or event message JSON content (no additional parameters below allowed except 'local')
    * @param {Object} [data] Event data, undefined: event contains all info incl. data
    * @param {Object} [headers] Event headers
    * @param {Object} [filter] Filters
