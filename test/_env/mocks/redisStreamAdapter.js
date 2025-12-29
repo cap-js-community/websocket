@@ -1,6 +1,7 @@
 "use strict";
 
 const adapter = {
+  init: jest.fn(),
   addAll: jest.fn(),
   delAll: jest.fn(),
   del: jest.fn(),
