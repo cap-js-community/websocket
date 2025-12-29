@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Adapter test mock 
+- Adapter test mock
 
 ## Version 1.9.2 - 2025-12-01
 
