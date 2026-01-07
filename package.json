@@ -43,10 +43,10 @@
     "audit": "npm audit --only=prod"
   },
   "dependencies": {
-    "@cap-js-community/common": "^0.3.2",
+    "@cap-js-community/common": "^0.3.3",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "ws": "^8.18.3"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@cap-js-community/websocket": "./",
@@ -59,10 +59,10 @@
     "@socket.io/redis-streams-adapter": "^0.2.3",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jest": "^29.11.1",
+    "eslint-plugin-jest": "^29.12.1",
     "eslint-plugin-n": "^17.23.1",
     "express": "^4.22.1",
-    "globals": "^16.5.0",
+    "globals": "^17.0.0",
     "jest": "^30.2.0",
     "prettier": "^3.7.4"
   },
