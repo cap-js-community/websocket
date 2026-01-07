@@ -1207,7 +1207,7 @@ To configure the PCP message format, the following annotations are available:
 To manage contexts in format `pcp`, `wsContext` event can be emitted in the following way:
 
 - Model `wsContext` CDS service operation as follows:
-  ```
+  ```cds
   @ws.pcp.action: 'wsContext'
   action wsContext(context: String, exit: Boolean, reset: Boolean);
   ```
