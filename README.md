@@ -1875,6 +1875,8 @@ To also include the triggering socket within the broadcast, this can be controll
 
 #### Fiori (UI5)
 
+<video src='docs/assets/fiori-sideeffects.mp4' width='720'></video>
+
 The example UI5 `fiori` application using WebSockets can be found at `test/_env/app/fiori`.
 It leverages the Fiori Side Effects to perform UI updates based on WebSocket events.
 
