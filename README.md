@@ -1875,10 +1875,11 @@ To also include the triggering socket within the broadcast, this can be controll
 
 #### Fiori (UI5)
 
-<video src='https://github.com/user-attachments/assets/480c0436-ddac-4135-81bf-ba2592d6e16f'></video>
+The example UI5 `fiori` application using WebSockets can be found at [test/\_env/app/fiori](./test/_env/app/fiori).
+It leverages the [Fiori Side Effects](#event-driven-side-effects) to perform UI updates based on WebSocket events.
 
-The example UI5 `fiori` application using WebSockets can be found at `test/_env/app/fiori`.
-It leverages the Fiori Side Effects to perform UI updates based on WebSocket events.
+<video src="https://github.com/user-attachments/assets/480c0436-ddac-4135-81bf-ba2592d6e16f"></video>
+**Source**: [Fiori Side Effects Enabled CDS Service](test/_env/srv/fiori.cds)
 
 Example application can be started by:
 
@@ -1892,7 +1893,7 @@ Example application can be started by:
 
 #### Todo (UI5)
 
-The example UI5 `todo` application using WebSockets can be found at `test/_env/app/todo`.
+The example UI5 `todo` application using WebSockets can be found at [test/\_env/app/todo](./test/_env/app/todo).
 
 Example application can be started by:
 
@@ -1906,7 +1907,8 @@ Example application can be started by:
 
 #### Chat (HTML)
 
-An example `chat` application using WebSockets can be found at `test/_env/app/chat`.
+An example `chat` application using WebSockets can be found at [test/\_env/app/chat_ws](./test/_env/app/chat_ws) and
+[test/\_env/app/chat_chat_socketio](./test/_env/app/chat_socketio).
 
 Example application can be started by:
 
