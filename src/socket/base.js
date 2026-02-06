@@ -437,11 +437,20 @@ class SocketServer {
    * @param {Function} next Call next
    */
   enforceAuth(socket, next) {
+    const req = socket.request;
     const restrict_all = cds.env.requires?.auth?.restrict_all_services !== false;
-    if (!restrict_all || cds.context?.user?._is_privileged || !cds.context?.user?._is_anonymous) {
+    if (
+      !restrict_all ||
+      cds.context?.user?._is_privileged ||
+      !cds.context?.user?._is_anonymous ||
+      cds.env.requires?.auth.kind === "mocked"
+    ) {
+      const mockedUsers = Object.values(cds.env.requires?.auth?.users || {});
+      if (mockedUsers.length) {
+        req.user ??= new cds.User(mockedUsers[0]);
+      }
       return next();
     }
-    const req = socket.request;
     if (typeof req?.isAuthenticated === "function" && req?.isAuthenticated()) {
       return next();
     }
