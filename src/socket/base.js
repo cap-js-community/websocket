@@ -445,9 +445,11 @@ class SocketServer {
       !cds.context?.user?._is_anonymous ||
       cds.env.requires?.auth.kind === "mocked"
     ) {
-      const mockedUsers = Object.values(cds.env.requires?.auth?.users || {});
-      if (mockedUsers.length) {
-        req.user ??= new cds.User(mockedUsers[0]);
+      if (cds.env.requires?.auth.kind === "mocked") {
+        const mockedUsers = Object.values(cds.env.requires?.auth?.users || {});
+        if (mockedUsers.length) {
+          req.user ??= new cds.User(mockedUsers[0]);
+        }
       }
       return next();
     }

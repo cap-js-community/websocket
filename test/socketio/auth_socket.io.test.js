@@ -8,7 +8,8 @@ const auth = require("../_env/util/auth");
 cds.test(__dirname + "/../_env");
 
 cds.env.websocket.kind = "socket.io";
-cds.env.requires.auth.login_required = false;
+cds.env.requires.auth.kind = "basic";
+cds.env.requires.auth.login_required = true;
 
 describe("Auth", () => {
   afterAll(() => {

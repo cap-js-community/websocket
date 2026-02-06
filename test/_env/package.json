@@ -55,8 +55,7 @@
         "kind": "ws"
       },
       "auth": {
-        "kind": "basic",
-        "login_required": true,
+        "kind": "mocked",
         "[production]": {
           "kind": "xsuaa"
         }

@@ -13,7 +13,6 @@
 </form>
 </body>
 <script>
-  document.cookie = "X-Authorization=Basic YWxpY2U6YWxpY2U; path=/"; // Mock auth (overwritten by approuter)
   const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
   const socket = new WebSocket(protocol + window.location.host + "/ws/chat")
   const form = document.getElementById("form");
