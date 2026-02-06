@@ -7,7 +7,8 @@ const { connect } = require("../_env/util/ws");
 
 cds.test(__dirname + "/../_env");
 
-cds.env.requires.auth.login_required = false;
+cds.env.requires.auth.kind = "basic";
+cds.env.requires.auth.login_required = true;
 
 describe("Auth", () => {
   afterAll(() => {

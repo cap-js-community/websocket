@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Mocked auth skips websocket authorization check in dev setup
+- First mocked user (of `cds.requires.auth.users`) is taken as authenticated user for websocket connection (e.g. `alice`) in dev setup
 
 ## Version 1.9.4 - 2026-02-03
 

@@ -61,7 +61,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jest": "^29.12.2",
     "eslint-plugin-n": "^17.23.2",
-    "express": "^5.2.1",
     "globals": "^17.3.0",
     "jest": "^30.2.0",
     "prettier": "^3.8.1"

@@ -15,7 +15,6 @@
           data-sap-ui-frameOptions='allow'> 	// NON-SECURE setting for testing environment
   </script>
   <script type="text/javascript">
-    document.cookie = "X-Authorization=Basic YWxpY2U6YWxpY2U; path=/"; // Mock auth (overwritten by approuter)
     sap.ui.getCore().attachInit(() => {
       sap.ushell.Container.createRenderer().placeAt("content");
     });

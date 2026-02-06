@@ -1312,6 +1312,11 @@ serverAction:RaiseSideEffect
 Details can be found for Fiori Elements [Event-Driven Side Effects](https://ui5.sap.com/#/topic/27c9c3bad6eb4d99bc18a661fdb5e246).
 Fiori Elements V4 applications listening on service and channel will process the side effects, and update the UI accordingly.
 
+**Hint:**
+
+> When using mixin events for OData services, please note that at least one websocket-enabled service is available
+> (i.e., websocket protocol adapter is active). In addition, a service can also be service via multiple protocols using the `@protocols: ['odata', 'ws']`.
+
 #### Cloud Events
 
 CDS WebSocket module supports the [Cloud Events](https://cloudevents.io) specification out-of-the-box, according to

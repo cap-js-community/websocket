@@ -29,7 +29,7 @@ class SocketWSServer extends SocketServer {
       socket.on("error", onSocketError);
       this.applyMiddlewares(socket, async (err) => {
         if (err) {
-          DEBUG?.(err);
+          DEBUG?.("Middleware error", err);
           socket.write(`HTTP/1.1 ${err.statusCode || err.code} ${err.message}\r\n\r\n`);
           socket.destroy();
           return;
