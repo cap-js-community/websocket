@@ -433,6 +433,11 @@ Example for xsuaa based CDS auth strategy:
 
 Headers of Websocket Upgrade request can be accessed via `req.http.req.headers` in websocket service handlers.
 
+#### Local Development Authorization
+
+For local development, authentication is skipped for authentication kind `mocked`. First mocked user (of `cds.requires.auth.users`)
+is taken as authenticated user for websocket connection (e.g. `alice`) in local development setup.
+
 ### Invocation Context
 
 In the context of a WebSocket enabled CDS service, WebSockets events can be directly emitted to the service in the event
