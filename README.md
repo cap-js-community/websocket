@@ -437,7 +437,7 @@ Headers of Websocket Upgrade request can be accessed via `req.http.req.headers` 
 
 For local development, authentication is skipped for authentication kind `mocked` and `basic`.
 If login is required (`cds.requires.auth.login_required: true`), first mocked user (see `cds.requires.auth.users`)
-is taken as authenticated user for websocket connection (e.g. `alice`), 
+is taken as authenticated user for websocket connection (e.g. `alice`),
 otherwise the websocket connection is established with an anonymous user.
 
 Using authentication kind `basic` or `cds.requires.auth.login_required: true` is not recommended for local development,
