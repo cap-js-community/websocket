@@ -39,6 +39,10 @@ class SocketWSServer extends SocketServer {
         request.queryOptions = urlObj?.query || {};
         request.id ??= request.queryOptions.id;
         request.url = urlObj?.pathname;
+        if (!this.services.get(request.url)) {
+          // Route webapp relative requests (local)
+          request.url = request.url.replace(/\/.*\/webapp(\/.*)/, "$1");
+        }
         if (!(typeof this.services.get(request.url) === "function")) {
           socket.write(`HTTP/1.1 404 Not Found\r\n\r\n`);
           socket.destroy();

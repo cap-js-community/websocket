@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- For local development, authentication is skipped for authentication kind `mocked`
-- First mocked user (of `cds.requires.auth.users`) is taken as authenticated user for websocket connection (e.g. `alice`)
+- Authentication is skipped for kind `mocked` and `basic` for local development
+- Anonymous user or first user of `cds.requires.auth.users` (i.e. `alice`) when not set
+- Supports relative paths for `WebSocketBaseURL` for local development
 
 ## Version 1.9.4 - 2026-02-03
 

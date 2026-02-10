@@ -443,13 +443,14 @@ class SocketServer {
       !restrict_all ||
       cds.context?.user?._is_privileged ||
       !cds.context?.user?._is_anonymous ||
-      cds.env.requires?.auth.kind === "mocked"
+      ["mocked", "basic"].includes(cds.env.requires?.auth.kind)
     ) {
-      if (cds.env.requires?.auth.kind === "mocked") {
-        const mockedUsers = Object.values(cds.env.requires?.auth?.users || {});
-        if (mockedUsers.length) {
-          req.user ??= new cds.User(mockedUsers[0]);
+      if (cds.context && !cds.context.user) {
+        const users = Object.values(cds.env.requires?.auth?.users || {});
+        if (cds.env.requires?.auth?.login_required && users.length) {
+          cds.context.user = new cds.User(users[0]);
         }
+        cds.context.user ??= new cds.User.Anonymous();
       }
       return next();
     }

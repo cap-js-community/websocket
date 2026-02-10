@@ -433,10 +433,20 @@ Example for xsuaa based CDS auth strategy:
 
 Headers of Websocket Upgrade request can be accessed via `req.http.req.headers` in websocket service handlers.
 
-#### Local Development Authorization
+#### Local Development
 
-For local development, authentication is skipped for authentication kind `mocked`. First mocked user (of `cds.requires.auth.users`)
-is taken as authenticated user for websocket connection (e.g. `alice`) in local development setup.
+For local development, authentication is skipped for authentication kind `mocked` and `basic`.
+If login is required (`cds.requires.auth.login_required: true`), first mocked user (see `cds.requires.auth.users`)
+is taken as authenticated user for websocket connection (e.g. `alice`), 
+otherwise the websocket connection is established with an anonymous user.
+
+Using authentication kind `basic` or `cds.requires.auth.login_required: true` is not recommended for local development,
+as the websocket connection is established via WebSocket Upgrade request, which does not support interactive login.
+Nevertheless, it could be simulated by hardcoding an authentication cookie in browser as follows:
+
+```js
+document.cookie = "X-Authorization=Basic YWxpY2U6YWxpY2U; path=/"; // mock auth for alice
+```
 
 ### Invocation Context
 
@@ -1234,18 +1244,22 @@ Modeled action parameters `context`, `exit` and `reset` are mapped from `pcp` me
 #### Event-Driven Side Effects
 
 PCP format can be used to emit Fiori Elements Event-Driven Side Effects via WebSocket events.
+Websocket kind `ws` must be configured (default), as UI5 only supports WebSocket protocol for Fiori Elements side effects.
 
 First OData V4 service metadata is extended for side effects to automatically connect to the corresponding websocket endpoint and channel:
 
 ```cds
 @Common : {
-  WebSocketBaseURL : '/ws/fiori',
+  WebSocketBaseURL : 'ws/fiori',
   WebSocketChannel #sideEffects: 'sideeffects'
 }
 service FioriService {
    ...
 }
 ```
+
+Path of `WebSocketBaseURL` shall be defined relatively (i.e. no leading slash) to the OData service URL,
+to be correctly resolved in Fiori Elements, especially in context of WorkZone.
 
 Event-driven side effects are configured in PCP format enabled service via the following annotations:
 
@@ -1271,7 +1285,7 @@ Example:
 
 ```cds
 @Common: {
-    WebSocketBaseURL: '/ws/fiori',
+    WebSocketBaseURL: 'ws/fiori',
     WebSocketChannel #sideEffects: 'sideeffects',
 }
 service FioriService {
