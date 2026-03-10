@@ -1,6 +1,6 @@
 {
   "name": "@cap-js-community/websocket",
-  "version": "1.9.5",
+  "version": "1.10.0",
   "description": "WebSocket adapter for CDS",
   "homepage": "https://cap.cloud.sap/",
   "engines": {
@@ -43,7 +43,7 @@
     "audit": "npm audit --only=prod"
   },
   "dependencies": {
-    "@cap-js-community/common": "^0.3.5",
+    "@cap-js-community/common": "^0.4.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "ws": "^8.19.0"
@@ -51,18 +51,18 @@
   "devDependencies": {
     "@cap-js-community/websocket": "./",
     "@cap-js/cds-test": "^0.4.1",
-    "@cap-js/sqlite": "^2.1.2",
-    "@eslint/js": "^9.39.2",
-    "@sap/cds": "^9.7.1",
-    "@sap/cds-dk": "^9.7.0",
+    "@cap-js/sqlite": "^2.2.0",
+    "@eslint/js": "^10.0.1",
+    "@sap/cds": "^9.8.1",
+    "@sap/cds-dk": "^9.7.2",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-streams-adapter": "^0.3.0",
-    "eslint": "^10.0.0",
+    "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jest": "^29.13.0",
-    "eslint-plugin-n": "^17.23.2",
-    "globals": "^17.3.0",
-    "jest": "^30.2.0",
+    "eslint-plugin-jest": "^29.15.0",
+    "eslint-plugin-n": "^17.24.0",
+    "globals": "^17.4.0",
+    "jest": "^30.3.0",
     "prettier": "^3.8.1"
   },
   "license": "Apache-2.0",
