@@ -10,21 +10,26 @@ const LOG = cds.log("websocket/redis");
 class RedisAdapter extends BaseAdapter {
   constructor(server, config) {
     super(server, config);
+    this.active = false;
   }
 
   async setup() {
     if (await redis.connectionCheck(this.config)) {
-      this.client = await redis.createPrimaryClientAndConnect(this.config);
+      this.publisherClient = await redis.createPrimaryClientAndConnect(this.config);
+      this.subscriberClient = await redis.createSecondaryClientAndConnect(this.config);
+      if (this.publisherClient && this.subscriberClient) {
+        this.active = true;
+      }
     }
   }
 
   async on(service, path) {
-    if (!this.client) {
+    if (!this.active) {
       return;
     }
     try {
       const channel = this.getChannel(path);
-      await this.client.subscribe(channel, async (message, messageChannel) => {
+      await this.subscriberClient.subscribe(channel, async (message, messageChannel) => {
         try {
           if (messageChannel === channel) {
             await this.server.broadcast({ service, path, event: message, local: true });
@@ -39,12 +44,12 @@ class RedisAdapter extends BaseAdapter {
   }
 
   async emit(service, path, message) {
-    if (!this.client) {
+    if (!this.active) {
       return;
     }
     try {
       const channel = this.getChannel(path);
-      await this.client.publish(channel, message);
+      await this.publisherClient.publish(channel, message);
     } catch (err) {
       LOG?.error(err);
     }

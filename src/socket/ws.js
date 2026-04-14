@@ -344,7 +344,7 @@ class SocketWSServer extends SocketServer {
           this.adapter = new adapterFactory(this, config);
           await this.adapter?.setup?.();
           this.adapterImpl = config.impl;
-          this.adapterActive = !!this.adapter?.client;
+          this.adapterActive = !!this.adapter?.active;
         }
       }
     } catch (err) {
