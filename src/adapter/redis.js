@@ -15,9 +15,9 @@ class RedisAdapter extends BaseAdapter {
 
   async setup() {
     if (await redis.connectionCheck(this.config)) {
-      this.publisherClient = await redis.createPrimaryClientAndConnect(this.config);
-      this.subscriberClient = await redis.createSecondaryClientAndConnect(this.config);
-      if (this.publisherClient && this.subscriberClient) {
+      this.subscriberClient = await redis.createPrimaryClientAndConnect(this.config);
+      this.publisherClient = await redis.createSecondaryClientAndConnect(this.config);
+      if (this.subscriberClient && this.publisherClient) {
         this.active = true;
       }
     }
