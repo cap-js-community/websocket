@@ -24,10 +24,8 @@ service CatalogService {
     excluding {
       createdBy,
       modifiedBy
+    }
+    actions {
+      action submitOrder(quantity : Books:stock @mandatory);
     };
-
-  @requires: 'authenticated-user'
-  action submitOrder(book: Books:ID, quantity: Integer) returns {
-    stock : Integer
-  };
 }

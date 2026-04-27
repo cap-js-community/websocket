@@ -1249,6 +1249,8 @@ Websocket kind `ws` must be configured (default), as UI5 only supports WebSocket
 First OData V4 service metadata is extended for side effects to automatically connect to the corresponding websocket endpoint and channel:
 
 ```cds
+@ws
+@odata
 @Common : {
   WebSocketBaseURL : 'ws/fiori',
   WebSocketChannel #sideEffects: 'sideeffects'

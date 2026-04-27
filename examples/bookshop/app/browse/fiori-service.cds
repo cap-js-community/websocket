@@ -15,6 +15,11 @@ annotate CatalogService.Books with @(UI : {
     Label  : '{i18n>Description}',
     Target : '@UI.FieldGroup#Descr'
   }, ],
+  Identification    : [{
+    $Type  : 'UI.DataFieldForAction',
+    Label  : '{i18n>Order}',
+    Action : 'CatalogService.submitOrder(CatalogService.Books)',
+  }, ],
   Facets            : [{
     $Type  : 'UI.ReferenceFacet',
     Label  : '{i18n>Details}',
@@ -27,6 +32,7 @@ annotate CatalogService.Books with @(UI : {
       Value : currency.symbol,
       Label : '{i18n>Currency}'
     },
+    {Value : stock},
   ]},
 });
 
@@ -53,5 +59,15 @@ annotate CatalogService.Books with @(UI : {
     {Value : genre.name},
     {Value : price},
     {Value : currency.symbol},
+    {
+      Value          : stock,
+      @UI.Importance : #High,
+    },
+    {
+      $Type          : 'UI.DataFieldForAction',
+      Label          : '{i18n>Order}',
+      Action         : 'CatalogService.submitOrder(CatalogService.Books)',
+      @UI.Importance : #High,
+    },
   ]
 });
