@@ -195,7 +195,6 @@ service CatalogService {
 this.after(Books.actions.submitOrder, async (_, req) => {
   const { ID: book } = req.params[0];
   await this.emit("OrderedBook", { book, buyer: req.user.id });
-
   this.emit("stockChanged", {
     sideEffectSource: `/Books(${book})`,
   });

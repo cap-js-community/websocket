@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 1.10.2 - 2026-xx-xx
 
-### Fixed
+### Added
 
-- tbd
+- Added bookshop example including Claude skill
 
 ## Version 1.10.1 - 2026-04-14
 
