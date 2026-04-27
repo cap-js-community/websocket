@@ -1,5 +1,7 @@
 using {sap.capire.bookshop as my} from '../db/bookshop';
 
+@ws
+@odata
 @Common: {
     WebSocketBaseURL: 'ws/fiori',
     WebSocketChannel #sideEffects: 'sideeffects',
