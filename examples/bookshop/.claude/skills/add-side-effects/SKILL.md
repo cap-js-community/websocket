@@ -1,4 +1,5 @@
 ---
+name: add-side-effects
 description: Add Fiori Event-Driven Side Effects via WebSocket to a CAP Node.js OData service
 argument-hint: Service name and entity to add side effects to (e.g. "CatalogService Books stock")
 ---
