@@ -38,6 +38,9 @@ module.exports = class CatalogService extends cds.ApplicationService {
       const { quantity } = req.data;
       const { ID: book } = req.params[0];
       await this.emit("OrderedBook", { book, quantity, buyer: req.user.id });
+      this.emit("stockChanged", {
+        sideEffectSource: `/Books(${book})`,
+      });
     });
 
     return super.init();

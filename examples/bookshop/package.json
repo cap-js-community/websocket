@@ -2,7 +2,8 @@
   "name": "bookshop",
   "version": "1.0.0",
   "dependencies": {
-    "@sap/cds": "^9"
+    "@sap/cds": "^9",
+    "@cap-js-community/websocket": "^1"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2"

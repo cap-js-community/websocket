@@ -1899,6 +1899,20 @@ To also include the triggering socket within the broadcast, this can be controll
 
 ### Examples
 
+#### Bookshop (UI5)
+
+The example UI5 `bookshop` application using WebSockets can be found at [examples/bookshop](./examples/bookshop).
+It leverages the [Fiori Side Effects](#event-driven-side-effects) to perform UI updates based on WebSocket events.
+
+**Source**: [Fiori Side Effects Enabled CDS Service](examples/bookshop/srv/cat-service.cds)
+
+The example bookshop application can be started by:
+
+- Open: `cd examples/bookshop`
+- Install: `npm install`
+- Start: `cds watch`
+- Browser: http://localhost:4004/fiori-apps.html
+
 #### Fiori (UI5)
 
 The example UI5 `fiori` application using WebSockets can be found at [test/\_env/app/fiori](./test/_env/app/fiori).
@@ -1907,7 +1921,7 @@ It leverages the [Fiori Side Effects](#event-driven-side-effects) to perform UI 
 <video src="https://github.com/user-attachments/assets/480c0436-ddac-4135-81bf-ba2592d6e16f"></video>
 **Source**: [Fiori Side Effects Enabled CDS Service](test/_env/srv/fiori.cds)
 
-Example application can be started by:
+The example application can be started by:
 
 - Basic Auth
   - Starting backend: `npm start`
@@ -1921,7 +1935,7 @@ Example application can be started by:
 
 The example UI5 `todo` application using WebSockets can be found at [test/\_env/app/todo](./test/_env/app/todo).
 
-Example application can be started by:
+The example application can be started by:
 
 - Basic Auth
   - Starting backend: `npm start`
@@ -1936,7 +1950,7 @@ Example application can be started by:
 An example `chat` application using WebSockets can be found at [test/\_env/app/chat_ws](./test/_env/app/chat_ws) and
 [test/\_env/app/chat_chat_socketio](./test/_env/app/chat_socketio).
 
-Example application can be started by:
+The example application can be started by:
 
 - Basic Auth:
   - WebSocket Standard: `npm start`

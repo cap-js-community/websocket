@@ -1,5 +1,11 @@
 using {sap.capire.bookshop as my} from '../db/schema';
 
+@ws
+@odata
+@Common: {
+  WebSocketBaseURL: 'ws/catalog',
+  WebSocketChannel #sideEffects: 'sideeffects',
+}
 service CatalogService {
 
   /** For displaying lists of Books */
@@ -16,6 +22,10 @@ service CatalogService {
 
   /** For display in details pages */
   @readonly
+  @Common.SideEffects #stockUpdated: {
+    SourceEvents    : ['stockChanged'],
+    TargetProperties: ['stock']
+  }
   entity Books       as
     projection on my.Books {
       *,
@@ -26,6 +36,12 @@ service CatalogService {
       modifiedBy
     }
     actions {
+      @requires: 'authenticated-user'
       action submitOrder(quantity : Books:stock @mandatory);
     };
+
+  @ws: { $value, format: 'pcp', pcp: { sideEffect } }
+  event stockChanged {
+    sideEffectSource : String;
+  };
 }
