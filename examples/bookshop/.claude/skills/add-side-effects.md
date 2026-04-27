@@ -12,6 +12,7 @@ You are helping a developer add Fiori Event-Driven Side Effects to an existing C
 The user provides: $ARGUMENTS
 
 Parse the arguments to identify:
+
 - **Service name**: The CDS service to enhance (e.g. `CatalogService`)
 - **Entity name**: The entity whose properties should refresh (e.g. `Books`)
 - **Target properties**: Which properties to refresh on the UI (e.g. `stock`)
@@ -23,6 +24,7 @@ If any of these are unclear or missing, ask the user before proceeding.
 ## Phase 1: Discovery — Understand the Existing Service
 
 **Actions**:
+
 1. Find the CDS service definition file (`.cds`) for the named service
 2. Find the corresponding service implementation file (`.js`)
 3. Find the `package.json` to check dependencies
@@ -97,6 +99,7 @@ event <eventName> {
 The `sideEffectSource` element carries the entity path (e.g. `/Books(42)`) so Fiori Elements knows which instance changed.
 
 **Mixin annotation explained**:
+
 - `$value`: Expose the event value
 - `format: 'pcp'`: Use Push Channel Protocol format
 - `pcp: { sideEffect }`: Mark this event as a Fiori side effect in PCP messages
@@ -114,6 +117,7 @@ this.emit("<eventName>", {
 ```
 
 **Key rules**:
+
 - The `sideEffectSource` value must be a valid OData entity path relative to the service, e.g. `/Books(42)` or `/Header(ID='some-guid')`
 - The entity key format must match the OData key format (integer keys without quotes, UUID/string keys with quotes)
 - Place the `emit` in an `after` handler or after the data modification completes, so the UI refreshes with the latest data
@@ -133,6 +137,7 @@ Present the changes made:
 3. **JS service implementation** — Added `emit` call to broadcast the side effect event
 
 Remind the user to:
+
 - Run `npm install` to install the WebSocket dependency
 - The Fiori Elements V4 app will automatically pick up the side effects via the OData V4 metadata annotations
 - The WebSocket connection is established automatically by Fiori Elements when the `@Common.WebSocketBaseURL` annotation is detected
@@ -143,6 +148,7 @@ Remind the user to:
 ## Example: Complete Transformation
 
 **Before** (plain OData service):
+
 ```cds
 service CatalogService {
   entity Books as projection on my.Books { * }
@@ -160,6 +166,7 @@ this.after(Books.actions.submitOrder, async (_, req) => {
 ```
 
 **After** (with WebSocket side effects):
+
 ```cds
 @ws
 @odata
@@ -196,6 +203,7 @@ this.after(Books.actions.submitOrder, async (_, req) => {
 ```
 
 This results in a PCP message sent via WebSocket:
+
 ```
 pcp-action:MESSAGE
 pcp-channel:sideeffects
