@@ -373,7 +373,7 @@ The upgrade request is automatically handled by CDS Websocket plugin. The origin
 accessible in websocket initiated calls via `req.context.ws.socket.request.queryOptions` in the CDS websocket service handler context.
 Query options therefore also can be accessed via `req.context.ws.socket.request.queryOptions`.
 
-Unknown paths that do not match any registered websocket service are rejected. 
+Unknown paths that do not match any registered websocket service are rejected.
 For kind `ws`, custom routes can be registered via `cds.ws.route` to handle upgrade requests for specific paths:
 
 ```js
@@ -386,7 +386,7 @@ cds.ws.route("/custom", (request, socket, head) => {
 });
 ```
 
-For a matching route, the upgrade request is left unhandled, so that other `upgrade` 
+For a matching route, the upgrade request is left unhandled, so that other `upgrade`
 listeners on the same HTTP server can pick up and process the request.
 
 ### Service Facade
