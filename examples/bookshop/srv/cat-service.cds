@@ -2,10 +2,6 @@ using {sap.capire.bookshop as my} from '../db/schema';
 
 @ws
 @odata
-@Common: {
-  WebSocketBaseURL: 'ws/catalog',
-  WebSocketChannel #sideEffects: 'sideeffects',
-}
 service CatalogService {
 
   /** For displaying lists of Books */

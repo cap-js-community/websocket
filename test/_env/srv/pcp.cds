@@ -1,10 +1,6 @@
 @ws
 @ws.format: 'pcp'
 @path: 'pcp'
-@Common : {
-  WebSocketBaseURL : 'ws/pcp',
-  WebSocketChannel #sideEffects: 'sideeffects'
-}
 service PCPService {
 
     @ws.pcp.action: 'MESSAGE'
