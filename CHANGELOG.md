@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added bookshop example including Claude skill
+- Custom route registration for non-service paths in upgrade request
 
 ## Version 1.10.1 - 2026-04-14
 

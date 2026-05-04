@@ -14,6 +14,7 @@ class SocketWSServer extends SocketServer {
     super(server, path, config);
     this.wss = new WebSocket.Server({ ...config?.options, noServer: true });
     this.services = new Map();
+    this.routes = new Map();
     cds.ws = this;
     cds.wss = this.wss;
   }
@@ -43,27 +44,37 @@ class SocketWSServer extends SocketServer {
           // Route webapp relative requests (local)
           request.url = request.url.replace(/\/.*\/webapp(\/.*)/, "$1");
         }
-        if (!(typeof this.services.get(request.url) === "function")) {
-          socket.write(`HTTP/1.1 404 Not Found\r\n\r\n`);
-          socket.destroy();
+        if (typeof this.services.get(request.url) === "function") {
+          socket.removeListener("error", onSocketError);
+          this.wss.handleUpgrade(request, socket, head, (ws) => {
+            DEBUG?.("Upgraded");
+            this.onInit(ws, request);
+            this.wss.emit("connection", ws, request);
+          });
           return;
         }
-        socket.removeListener("error", onSocketError);
-        this.wss.handleUpgrade(request, socket, head, (ws) => {
-          DEBUG?.("Upgraded");
-          this.onInit(ws, request);
-          this.wss.emit("connection", ws, request);
-        });
+        const route = this.routes.get(request.url);
+        if (typeof route === "function") {
+          socket.removeListener("error", onSocketError);
+          await route(request, socket, head);
+          return;
+        }
+        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+        socket.destroy();
       });
     });
 
     this.wss.on("connection", async (ws, request) => {
       if (typeof this.services.get(request.url) === "function") {
         this.services.get(request.url)(ws, request);
-      } else {
+      } else if (!this.routes.get(request.url)) {
         DEBUG?.("No websocket service for url", request.url);
       }
     });
+  }
+
+  route(path, handler) {
+    this.routes.set(path, handler);
   }
 
   service(service, path, connected) {
