@@ -19,8 +19,7 @@ function addWebSocketAnnotations(csn) {
       hasWebSocketDefinitions(name, definitions);
     // CDS default protocol is odata-v4 when no @protocol is specified
     const hasOData =
-      protocols.length === 0 ||
-      protocols.some((protocol) => ["odata", "odata-v4", "odata-v2"].includes(protocol.kind));
+      protocols.length === 0 || protocols.some((protocol) => ["odata", "odata-v4", "odata-v2"].includes(protocol.kind));
     if (!hasWebSocket || !hasOData) {
       continue;
     }
