@@ -1262,11 +1262,20 @@ Modeled action parameters `context`, `exit` and `reset` are mapped from `pcp` me
 PCP format can be used to emit Fiori Elements Event-Driven Side Effects via WebSocket events.
 Websocket kind `ws` must be configured (default), as UI5 only supports WebSocket protocol for Fiori Elements side effects.
 
-First OData V4 service metadata is extended for side effects to automatically connect to the corresponding websocket endpoint and channel:
+The OData service is enabled (in addition) for websockets protocol and therefore enabled for event based side effects
+to automatically connect to the websocket endpoint and channel:
 
 ```cds
 @ws
 @odata
+service FioriService {
+   ...
+}
+```
+
+Under the hood the following annotations are derived (based on the OData service path) and added to the service definition:
+
+```
 @Common : {
   WebSocketBaseURL : 'ws/fiori',
   WebSocketChannel #sideEffects: 'sideeffects'
@@ -1276,10 +1285,11 @@ service FioriService {
 }
 ```
 
+The annotation can still be specified explicitly in case of custom configuration, otherwise defaults apply.
 Path of `WebSocketBaseURL` shall be defined relatively (i.e. no leading slash) to the OData service URL,
 to be correctly resolved in Fiori Elements, especially in context of WorkZone.
 
-Event-driven side effects are configured in PCP format enabled service via the following annotations:
+Event-driven side effects are configured in PCP format via the following event annotations:
 
 - **Event level**:
   - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose event as Fiori Side Effect in the PCP message.
@@ -1288,30 +1298,13 @@ Event-driven side effects are configured in PCP format enabled service via the f
 Example:
 
 ```cds
-@ws.pcp.sideEffect
-@ws.pcp.channel: 'sideeffects'
+@ws: { format: 'pcp', pcp: { sideEffect } }
 event sideEffect {
     sideEffectSource: String;
 }
 ```
 
-PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined in the same service on service level.
-Furthermore, using websocket mixins a websocket event can be defined in the corresponding OData service as follows:
-
-Example:
-
-```cds
-@Common: {
-    WebSocketBaseURL: 'ws/fiori',
-    WebSocketChannel #sideEffects: 'sideeffects',
-}
-service FioriService {
-  @ws: { format: 'pcp', pcp: { sideEffect } }
-  event sideEffect {
-    sideEffectSource: String;
-  }
-}
-```
+PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined on service level.
 
 To consume side effects in Fiori Elements, an CDS entity can be annotated with side effects specifying `SourceEvents` as follows:
 
@@ -1347,11 +1340,6 @@ serverAction:RaiseSideEffect
 
 Details can be found for Fiori Elements [Event-Driven Side Effects](https://ui5.sap.com/#/topic/27c9c3bad6eb4d99bc18a661fdb5e246).
 Fiori Elements V4 applications listening on service and channel will process the side effects, and update the UI accordingly.
-
-**Hint:**
-
-> When using mixin events for OData services, please note that at least one websocket-enabled service is available
-> (i.e., websocket protocol adapter is active). In addition, a service can also be service via multiple protocols using the `@protocols: ['odata', 'ws']`.
 
 #### Cloud Events
 

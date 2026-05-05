@@ -3,6 +3,7 @@
 const cds = require("@sap/cds");
 
 const BaseFormat = require("./base");
+const util = require("../common/util");
 
 /**
  * Generic class for a websocket format
@@ -290,9 +291,7 @@ class GenericFormat extends BaseFormat {
    * @returns {String} Local name of the definition
    */
   localName(definition) {
-    return definition.name.startsWith(`${definition._service.name}.`)
-      ? definition.name.substring(definition._service.name.length + 1)
-      : definition.name;
+    return util.localName(definition);
   }
 
   /**

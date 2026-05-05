@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Side effect `@Common` annotations are derived automatically when service is exposed both as `@odata` and `@ws`
 
 ## Version 1.10.2 - 2026-05-04
 

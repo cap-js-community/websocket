@@ -3,6 +3,7 @@
 const cds = require("@sap/cds");
 
 const SocketServer = require("./socket/base");
+const util = require("./common/util");
 
 const LOG = cds.log("websocket");
 
@@ -42,16 +43,16 @@ async function bootstrapWebSocketServer(server, options) {
     // Websocket services
     for (const serviceName in options.services) {
       const service = options.services[serviceName];
-      if (isServedViaWebsocket(service)) {
+      if (util.servedViaWebsocket(service)) {
         serveWebSocketService(socketServer, service, options);
       }
     }
     // Mixin Services (non-ws service events and operations)
     for (const name in cds.model.definitions) {
       const definition = cds.model.definitions[name];
-      if (["event", "action", "function"].includes(definition.kind) && websocketEnabled(definition)) {
+      if (["event", "action", "function"].includes(definition.kind) && util.websocketEnabled(definition)) {
         const service = cds.services[definition._service?.name];
-        if (service && !isServedViaWebsocket(service)) {
+        if (service && !util.servedViaWebsocket(service)) {
           mixinServices[service.name] ??= mixinServices[service.name] || {
             name: service.name,
             definition: service.definition,
@@ -60,7 +61,7 @@ async function bootstrapWebSocketServer(server, options) {
                 cds.env.protocols[endpoint.kind] || (endpoint.kind === "odata" ? cds.env.protocols["odata-v4"] : null);
               let path = normalizeServicePath(service.path, protocol.path);
               if (!path.startsWith("/")) {
-                path = (cds.env.protocols?.websocket?.path || cds.env.protocols?.ws?.path || "/ws") + "/" + path;
+                path = util.webSocketProtocolPath() + "/" + path;
               }
               return { kind: "websocket", path };
             }),
@@ -80,9 +81,9 @@ async function bootstrapWebSocketServer(server, options) {
             tx: service.tx.bind(service),
           };
           if (["event"].includes(definition.kind)) {
-            mixinServices[service.name]._events[localName(definition)] = definition;
+            mixinServices[service.name]._events[util.localName(definition)] = definition;
           } else if (["action", "function"].includes(definition.kind)) {
-            mixinServices[service.name]._operations[localName(definition)] = definition;
+            mixinServices[service.name]._operations[util.localName(definition)] = definition;
           }
         }
       }
@@ -108,14 +109,6 @@ async function bootstrapWebSocketServer(server, options) {
       adapter: socketServer.adapter ? { impl: socketServer.adapterImpl, active: socketServer.adapterActive } : false,
     });
   }
-}
-
-function websocketEnabled(definition) {
-  return (
-    definition["@websocket"] ||
-    definition["@ws"] ||
-    Object.keys(definition).some((p) => p.startsWith("@websocket.") || p.startsWith("@ws."))
-  );
 }
 
 async function initWebSocketServer(server, path) {
@@ -173,7 +166,7 @@ function bindServiceEvents(socketServer, service, path) {
   for (const event of service.events) {
     service.on(event, async (req) => {
       try {
-        const localEvent = localName(event);
+        const localEvent = util.localName(event);
         const format = deriveFormat(service, event);
         const headers = deriveHeaders(req.headers, format);
         const user = deriveUser(event, req.data, headers, req);
@@ -249,7 +242,7 @@ function bindServiceDefaults(socket, service) {
 
 function bindServiceOperations(socket, service) {
   for (const operation of service.operations) {
-    const event = localName(operation);
+    const event = util.localName(operation);
     if (Object.values(WebSocketAction).includes(event)) {
       continue;
     }
@@ -265,7 +258,7 @@ function bindServiceMixins(socket, service) {
     for (const operation of mixinService.operations) {
       const path = derivePath(mixinService, operation);
       if (path && socket.path === path) {
-        const event = localName(operation);
+        const event = util.localName(operation);
         if (Object.values(WebSocketAction).includes(event)) {
           continue;
         }
@@ -281,7 +274,7 @@ function bindServiceMixins(socket, service) {
 
 function bindServiceEntities(socket, service) {
   for (const entity of service.entities) {
-    const localEntity = localName(entity);
+    const localEntity = util.localName(entity);
     socket.on(`${localEntity}:create`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "create", data, headers, async (response) => {
         callback && (await callback(response));
@@ -844,12 +837,6 @@ function getDeepEntityColumns(entity) {
   return columns;
 }
 
-function localName(definition) {
-  return definition.name.startsWith(`${definition._service.name}.`)
-    ? definition.name.substring(definition._service.name.length + 1)
-    : definition.name;
-}
-
 function toCamelCase(string) {
   return string.replace(/([-_][a-z])/g, (group) => group.toUpperCase().replace("-", "").replace("_", ""));
 }
@@ -863,28 +850,6 @@ function interableObject(object) {
       }
     },
   };
-}
-
-function isServedViaWebsocket(service) {
-  if (!service) {
-    return false;
-  }
-  const serviceDefinition = service.definition;
-  if (!serviceDefinition) {
-    return false;
-  }
-  let protocols = serviceDefinition["@protocol"];
-  if (protocols) {
-    protocols = !Array.isArray(protocols) ? [protocols] : protocols;
-    return protocols.some((protocol) => {
-      return ["websocket", "ws"].includes(typeof protocol === "string" ? protocol : protocol.kind);
-    });
-  }
-  const protocolDirect = Object.keys(cds.env.protocols || {}).find((protocol) => serviceDefinition["@" + protocol]);
-  if (protocolDirect) {
-    return ["websocket", "ws"].includes(protocolDirect);
-  }
-  return false;
 }
 
 module.exports = collectServicesAndMountAdapter;

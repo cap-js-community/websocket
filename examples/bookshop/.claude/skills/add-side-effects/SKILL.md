@@ -56,21 +56,17 @@ Apply the following changes to the CDS service definition file, in this exact or
 
 ### 3a. Add WebSocket and OData protocol annotations to the service
 
-Add `@ws`, `@odata`, and `@Common` annotations before the `service` keyword:
+Add `@ws` and `@odata` annotations before the `service` keyword:
 
 ```cds
 @ws
 @odata
-@Common: {
-  WebSocketBaseURL: 'ws/<service-path>',
-  WebSocketChannel #sideEffects: 'sideeffects',
-}
 service <ServiceName> {
   ...
 }
 ```
 
-Where `<service-path>` is the lowercase service path segment (e.g. `catalog` for `CatalogService`). The `WebSocketBaseURL` path must be relative (no leading slash) so it resolves correctly in Fiori Elements, especially in SAP Build Work Zone context.
+The `@Common.WebSocketBaseURL` and `@Common.WebSocketChannel#sideEffects` annotations are **automatically added** by the `@cap-js-community/websocket` plugin at runtime when a service exposes both OData and WebSocket protocols. You do NOT need to add them manually.
 
 ### 3b. Add `@Common.SideEffects` annotation to the target entity
 
@@ -91,7 +87,7 @@ Choose a meaningful qualifier name (e.g. `#stockUpdated`, `#nameChanged`) and ev
 Add a CDS event definition inside the service, annotated for PCP side effects via the `@ws` mixin shorthand:
 
 ```cds
-@ws: { $value, format: 'pcp', pcp: { sideEffect } }
+@ws: { format: 'pcp', pcp: { sideEffect } }
 event <eventName> {
   sideEffectSource : String;
 };
@@ -101,7 +97,6 @@ The `sideEffectSource` element carries the entity path (e.g. `/Books(42)`) so Fi
 
 **Mixin annotation explained**:
 
-- `$value`: Expose the event value
 - `format: 'pcp'`: Use Push Channel Protocol format
 - `pcp: { sideEffect }`: Mark this event as a Fiori side effect in PCP messages
 
@@ -132,7 +127,7 @@ Present the changes made:
 
 1. **package.json** — Added `@cap-js-community/websocket` dependency (if not already present)
 2. **CDS service definition** — Added:
-   - `@ws`, `@odata`, `@Common` service-level annotations for WebSocket connectivity
+   - `@ws` and `@odata` service-level annotations for WebSocket connectivity (the `@Common.WebSocketBaseURL` and `@Common.WebSocketChannel#sideEffects` annotations are added automatically at runtime)
    - `@Common.SideEffects` annotation on the entity linking the event to target properties
    - WebSocket event definition with PCP side effect format
 3. **JS service implementation** — Added `emit` call to broadcast the side effect event
@@ -141,7 +136,7 @@ Remind the user to:
 
 - Run `npm install` to install the WebSocket dependency
 - The Fiori Elements V4 app will automatically pick up the side effects via the OData V4 metadata annotations
-- The WebSocket connection is established automatically by Fiori Elements when the `@Common.WebSocketBaseURL` annotation is detected
+- The WebSocket connection is established automatically by Fiori Elements when the `@Common.WebSocketBaseURL` annotation is detected (this annotation is auto-generated at runtime by the plugin)
 - Reference: [Fiori Elements Event-Driven Side Effects](https://ui5.sap.com/#/topic/27c9c3bad6eb4d99bc18a661fdb5e246)
 
 ---
@@ -171,10 +166,6 @@ this.after(Books.actions.submitOrder, async (_, req) => {
 ```cds
 @ws
 @odata
-@Common: {
-  WebSocketBaseURL: 'ws/catalog',
-  WebSocketChannel #sideEffects: 'sideeffects',
-}
 service CatalogService {
   @Common.SideEffects #stockUpdated: {
     SourceEvents    : ['stockChanged'],

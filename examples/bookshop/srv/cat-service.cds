@@ -36,7 +36,7 @@ service CatalogService {
       action submitOrder(quantity : Books:stock @mandatory);
     };
 
-  @ws: { $value, format: 'pcp', pcp: { sideEffect } }
+  @ws: { format: 'pcp', pcp: { sideEffect } }
   event stockChanged {
     sideEffectSource : String;
   };
