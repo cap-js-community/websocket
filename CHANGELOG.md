@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Middlewares are not applied to custom routes per default
-- Added options to custom route registration to enable middlewares 
+- Added options to custom route registration to enable middlewares
 - Side effect `@Common` annotations are derived automatically when service is exposed both as `@odata` and `@ws`
 
 ## Version 1.10.2 - 2026-05-04
