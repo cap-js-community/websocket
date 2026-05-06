@@ -28,6 +28,20 @@ class SocketWSServer extends SocketServer {
         LOG?.error(err);
       };
       socket.on("error", onSocketError);
+      const url = request?.url;
+      const urlObj = URL.parse(url, true);
+      request.queryOptions = urlObj?.query || {};
+      request.id ??= request.queryOptions.id;
+      request.url = urlObj?.pathname;
+      request.url = request.url.replace(/\/.*\/webapp(\/.*)/, "$1");
+      if (!this.services.get(request.url)) {
+        const route = this.routes.get(request.url);
+        if (route?.handler && !route?.middlewares) {
+          socket.removeListener("error", onSocketError);
+          route.handler(request, socket, head);
+          return;
+        }
+      }
       this.applyMiddlewares(socket, async (err) => {
         if (err) {
           DEBUG?.("Middleware error", err);
@@ -35,16 +49,7 @@ class SocketWSServer extends SocketServer {
           socket.destroy();
           return;
         }
-        const url = request?.url;
-        const urlObj = URL.parse(url, true);
-        request.queryOptions = urlObj?.query || {};
-        request.id ??= request.queryOptions.id;
-        request.url = urlObj?.pathname;
-        if (!this.services.get(request.url)) {
-          // Route webapp relative requests (local)
-          request.url = request.url.replace(/\/.*\/webapp(\/.*)/, "$1");
-        }
-        if (typeof this.services.get(request.url) === "function") {
+        if (this.services.get(request.url)) {
           socket.removeListener("error", onSocketError);
           this.wss.handleUpgrade(request, socket, head, (ws) => {
             DEBUG?.("Upgraded");
@@ -54,9 +59,9 @@ class SocketWSServer extends SocketServer {
           return;
         }
         const route = this.routes.get(request.url);
-        if (typeof route === "function") {
+        if (route?.handler) {
           socket.removeListener("error", onSocketError);
-          await route(request, socket, head);
+          await route.handler(request, socket, head);
           return;
         }
         socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
@@ -65,16 +70,16 @@ class SocketWSServer extends SocketServer {
     });
 
     this.wss.on("connection", async (ws, request) => {
-      if (typeof this.services.get(request.url) === "function") {
+      if (this.services.get(request.url)) {
         this.services.get(request.url)(ws, request);
-      } else if (!this.routes.get(request.url)) {
+      } else if (!this.routes.get(request.url)?.handler) {
         DEBUG?.("No websocket service for url", request.url);
       }
     });
   }
 
-  route(path, handler) {
-    this.routes.set(path, handler);
+  route(path, handler, { middlewares = false } = {}) {
+    this.routes.set(path, { handler, middlewares });
   }
 
   service(service, path, connected) {

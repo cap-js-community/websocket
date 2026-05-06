@@ -386,8 +386,18 @@ cds.ws.route("/custom", (request, socket, head) => {
 });
 ```
 
-For a matching route, the upgrade request is left unhandled, so that other `upgrade`
-listeners on the same HTTP server can pick up and process the request.
+The route function accepts an optional options object as third parameter:
+
+- `middlewares`: `Boolean` (default: `false`) - If `false`, the route handler is called directly without applying
+  CDS middlewares (authentication, authorization, context setup). If `true`, the full middleware pipeline is applied
+  before the route handler is invoked.
+
+```js
+cds.ws.route("/custom", handler, { middlewares: true });
+```
+
+For a matching route without middlewares, the upgrade request is handled directly and
+the route handler is responsible for any security validation.
 
 ### Service Facade
 
