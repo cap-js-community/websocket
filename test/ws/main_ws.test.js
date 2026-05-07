@@ -9,6 +9,13 @@ const { connect, disconnect, emitEvent, emitMessage, waitForEvent, waitForNoEven
 
 cds.test(__dirname + "/../_env");
 
+let ready = false;
+let readyWs = null;
+cds.on("ws:ready", (ws) => {
+  ready = true;
+  readyWs = ws;
+});
+
 describe("Main", () => {
   let socket;
   let socketOther;
@@ -43,6 +50,13 @@ describe("Main", () => {
 
   test("Server", async () => {
     expect(cds.ws).toBeDefined();
+    expect(cds.wss).toBeDefined();
+  });
+
+  test("WS Server Ready", async () => {
+    expect(ready).toBe(true);
+    expect(readyWs).toBeDefined();
+    expect(readyWs).toBe(cds.ws);
     expect(cds.wss).toBeDefined();
   });
 

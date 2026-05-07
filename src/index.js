@@ -34,6 +34,7 @@ function serveWebSocketServer(options) {
   // Wait for server listening (http server is ready)
   cds.on("listening", async (app) => {
     await bootstrapWebSocketServer(app.server, options);
+    cds.emit("ws:ready", cds.ws);
   });
 }
 

@@ -51,6 +51,7 @@ using [@sap/cds](https://www.npmjs.com/package/@sap/cds) (CDS Node.js).
     - [Custom Format](#custom-format)
     - [Generic Format](#generic-format)
   - [Connect & Disconnect](#connect--disconnect)
+  - [Server Ready](#server-ready)
   - [Server Client Service](#server-client-service)
   - [Approuter](#approuter)
     - [Paths](#paths)
@@ -1658,6 +1659,17 @@ service operation:
 - `Disconnect`: Invoke service operation `wsDisconnect()`, if available
   - `wsDisconnect()`: No parameters are passed
   - `wsDisconnect(reason: String)`: Disconnect reason is passed as parameter
+
+### WS Server Ready
+
+After the websocket server has been initialized and is ready to accept connections, the global `ws:ready` event is emitted.
+The `cds.ws` server instance is passed as parameter:
+
+```js
+cds.on("ws:ready", (ws) => {
+  // ...
+});
+```
 
 ### Server Client Service
 

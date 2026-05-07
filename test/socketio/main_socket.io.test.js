@@ -11,6 +11,13 @@ cds.test(__dirname + "/../_env");
 
 cds.env.websocket.kind = "socket.io";
 
+let ready = false;
+let readyWs = null;
+cds.on("ws:ready", (ws) => {
+  ready = true;
+  readyWs = ws;
+});
+
 describe("Main", () => {
   let socket;
   let socketOther;
@@ -45,6 +52,13 @@ describe("Main", () => {
 
   test("Server", async () => {
     expect(cds.ws).toBeDefined();
+    expect(cds.io).toBeDefined();
+  });
+
+  test("WS Server Ready", async () => {
+    expect(ready).toBe(true);
+    expect(readyWs).toBeDefined();
+    expect(readyWs).toBe(cds.ws);
     expect(cds.io).toBeDefined();
   });
 
