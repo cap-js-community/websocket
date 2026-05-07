@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 1.10.4 - 2026-05-07
 
-### Fixed
+### Added
 
 - Emit `ws:ready` event after CDS `listening` when websockets are ready
 
