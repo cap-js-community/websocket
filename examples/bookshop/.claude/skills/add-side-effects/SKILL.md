@@ -94,7 +94,7 @@ event <eventName> {
 
 The `sideEffectSource` element carries the entity path (e.g. `/Books(42)`) so Fiori Elements knows which instance changed.
 
-The `@ws: { format: 'pcp', pcp: { sideEffect } }` annotation is **automatically added** by the `@cap-js-community/websocket` plugin at runtime when the event is referenced in a `@Common.SideEffects` `SourceEvents` array on an entity in the same service. 
+The `@ws: { format: 'pcp', pcp: { sideEffect } }` annotation is **automatically added** by the `@cap-js-community/websocket` plugin at runtime when the event is referenced in a `@Common.SideEffects` `SourceEvents` array on an entity in the same service.
 You do NOT need to add it manually, but it can still be specified explicitly.
 
 ---
