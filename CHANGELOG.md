@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- tbd
+- Auto-derive `@ws.pcp.sideEffect` annotation on events referenced in `@Common.SideEffects` `SourceEvents`
 
 ## Version 1.10.4 - 2026-05-07
 

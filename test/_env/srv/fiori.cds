@@ -21,7 +21,7 @@ service FioriService {
             action submitOrder(quantity : Books:stock @mandatory );
         };
 
-    @ws: { $value, currentUser, format: 'pcp', pcp: { sideEffect } }
+    @ws: { currentUser, format: 'pcp', pcp: { sideEffect } }
     event stockChanged {
         sideEffectSource : String;
     };

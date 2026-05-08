@@ -1280,11 +1280,16 @@ to automatically connect to the websocket endpoint and channel:
 @ws
 @odata
 service FioriService {
-   ...
+   event sideEffect {
+      sideEffectSource: String;
+   }
 }
 ```
 
-Under the hood the following annotations are derived (based on the OData service path) and added to the service definition:
+A side effect event name can be freely chosen, but it should contain a `sideEffectSource: String`
+event parameter, to specify the side effect source instance while emitting.
+
+Under the hood the following `@Common` annotations are derived (based on the OData service path) and added to the service definition:
 
 ```
 @Common : {
@@ -1296,17 +1301,15 @@ service FioriService {
 }
 ```
 
-The annotation can still be specified explicitly in case of custom configuration, otherwise defaults apply.
+The annotation on service level can still be specified explicitly in case of custom configuration, otherwise defaults apply.
 Path of `WebSocketBaseURL` shall be defined relatively (i.e. no leading slash) to the OData service URL,
 to be correctly resolved in Fiori Elements, especially in context of WorkZone.
 
-Event-driven side effects are configured in PCP format via the following event annotations:
+Service events referenced in `@Common.SideEffects` `SourceEvents` annotations on entities within the same service
+are automatically enabled as side effect events via annotations `@ws.format: 'pcp'` and `@ws.pcp.sideEffect: true`,
+(if not yet present).
 
-- **Event level**:
-  - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose event as Fiori Side Effect in the PCP message.
-  - `@websocket.pcp.channel, @ws.pcp.channel: String`: Specify the PCP side effects channel in the PCP message. In addition, the common annotation `@Common.WebSocketChannel` is respected (on event and service level).
-
-Example:
+Under the hood the following annotations are derived when event is used in side effects:
 
 ```cds
 @ws: { format: 'pcp', pcp: { sideEffect } }
@@ -1314,6 +1317,13 @@ event sideEffect {
     sideEffectSource: String;
 }
 ```
+
+The annotation on event level can still be specified explicitly in case of custom configuration, otherwise defaults apply.
+Event-driven side effects events are configured in PCP format via the following event annotations:
+
+- **Event level**:
+  - `@websocket.pcp.sideEffect, @ws.pcp.sideEffect: Boolean`: Expose event as Fiori Side Effect in the PCP message.
+  - `@websocket.pcp.channel, @ws.pcp.channel: String`: Specify the PCP side effects channel in the PCP message. In addition, the common annotation `@Common.WebSocketChannel` is respected (on event and service level).
 
 PCP Channel can be omitted, if the common annotation `@Common.WebSocketChannel` is defined on service level.
 

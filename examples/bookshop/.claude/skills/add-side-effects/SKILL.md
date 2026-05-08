@@ -84,10 +84,9 @@ Choose a meaningful qualifier name (e.g. `#stockUpdated`, `#nameChanged`) and ev
 
 ### 3c. Define the WebSocket event
 
-Add a CDS event definition inside the service, annotated for PCP side effects via the `@ws` mixin shorthand:
+Add a CDS event definition inside the service with a `sideEffectSource` element:
 
 ```cds
-@ws: { format: 'pcp', pcp: { sideEffect } }
 event <eventName> {
   sideEffectSource : String;
 };
@@ -95,10 +94,8 @@ event <eventName> {
 
 The `sideEffectSource` element carries the entity path (e.g. `/Books(42)`) so Fiori Elements knows which instance changed.
 
-**Mixin annotation explained**:
-
-- `format: 'pcp'`: Use Push Channel Protocol format
-- `pcp: { sideEffect }`: Mark this event as a Fiori side effect in PCP messages
+The `@ws: { format: 'pcp', pcp: { sideEffect } }` annotation is **automatically added** by the `@cap-js-community/websocket` plugin at runtime when the event is referenced in a `@Common.SideEffects` `SourceEvents` array on an entity in the same service. 
+You do NOT need to add it manually, but it can still be specified explicitly.
 
 ---
 
@@ -129,14 +126,14 @@ Present the changes made:
 2. **CDS service definition** — Added:
    - `@ws` and `@odata` service-level annotations for WebSocket connectivity (the `@Common.WebSocketBaseURL` and `@Common.WebSocketChannel#sideEffects` annotations are added automatically at runtime)
    - `@Common.SideEffects` annotation on the entity linking the event to target properties
-   - WebSocket event definition with PCP side effect format
+   - WebSocket event definition with `sideEffectSource` element (the `@ws: { format: 'pcp', pcp: { sideEffect } }` annotation is added automatically at runtime based on the `@Common.SideEffects` reference)
 3. **JS service implementation** — Added `emit` call to broadcast the side effect event
 
 Remind the user to:
 
 - Run `npm install` to install the WebSocket dependency
 - The Fiori Elements V4 app will automatically pick up the side effects via the OData V4 metadata annotations
-- The WebSocket connection is established automatically by Fiori Elements when the `@Common.WebSocketBaseURL` annotation is detected (this annotation is auto-generated at runtime by the plugin)
+- The WebSocket connection is established automatically by Fiori Elements when the `@Common.WebSocketBaseURL` annotation is detected
 - Reference: [Fiori Elements Event-Driven Side Effects](https://ui5.sap.com/#/topic/27c9c3bad6eb4d99bc18a661fdb5e246)
 
 ---
@@ -176,7 +173,6 @@ service CatalogService {
       action submitOrder(quantity : Books:stock);
     };
 
-  @ws: { format: 'pcp', pcp: { sideEffect } }
   event stockChanged {
     sideEffectSource : String;
   };
