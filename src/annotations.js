@@ -23,12 +23,12 @@ function addWebSocketAnnotations(csn) {
     if (!hasWebSocket || !hasOData) {
       continue;
     }
-    addWebsocketCommonAnnotations(name, definition, protocols);
+    addCommonWebsocketAnnotations(name, definition, protocols);
     addSideEffectAnnotations(name, definitions);
   }
 }
 
-function addWebsocketCommonAnnotations(serviceName, definition, protocols) {
+function addCommonWebsocketAnnotations(serviceName, definition, protocols) {
   if (!definition["@Common.WebSocketBaseURL"]) {
     const webSocketBaseURL = deriveWebSocketBaseURL(definition, serviceName, protocols);
     if (webSocketBaseURL) {
@@ -46,10 +46,10 @@ function addSideEffectAnnotations(serviceName, definitions) {
   const prefix = serviceName + ".";
   const sideEffectEventNames = new Set();
   for (const [name, definition] of Object.entries(definitions)) {
-    if (!name.startsWith(prefix)) {
+    if (definition.kind !== "entity") {
       continue;
     }
-    if (definition.kind !== "entity") {
+    if (!name.startsWith(prefix)) {
       continue;
     }
     for (const key of Object.keys(definition)) {
@@ -67,10 +67,10 @@ function addSideEffectAnnotations(serviceName, definitions) {
     return;
   }
   for (const [name, definition] of Object.entries(definitions)) {
-    if (!name.startsWith(prefix)) {
+    if (definition.kind !== "event") {
       continue;
     }
-    if (definition.kind !== "event") {
+    if (!name.startsWith(prefix)) {
       continue;
     }
     const localName = name.substring(prefix.length);
@@ -84,7 +84,7 @@ function addSideEffectAnnotations(serviceName, definitions) {
       definition["@ws.format"] = "pcp";
     }
     definition["@ws.pcp.sideEffect"] = true;
-    LOG?.debug?.("Auto-added @ws.pcp.sideEffect", { service: serviceName, event: localName });
+    LOG?.debug?.("Auto-added @ws.format: 'pcp' and @ws.pcp.sideEffect", { service: serviceName, event: localName });
   }
 }
 

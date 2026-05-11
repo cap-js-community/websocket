@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Version 1.10.5 - 2026-xx-xx
+## Version 1.10.5 - 2026-05-11
 
 ### Added
 
-- Auto-derive `@ws.pcp.sideEffect` annotation on events referenced in `@Common.SideEffects` `SourceEvents`
+- Auto-derive `@ws.format: 'pcp'` and `@ws.pcp.sideEffect` annotation on events referenced in `@Common.SideEffects.SourceEvents`
 
 ## Version 1.10.4 - 2026-05-07
 
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Middlewares are not applied to custom routes per default
 - Added options to custom route registration to enable middlewares
-- Side effect `@Common` annotations are derived automatically when service is exposed both as `@odata` and `@ws`
+- `@Common` webSocket annotations are derived automatically when service is exposed both as `@odata` and `@ws`
 
 ## Version 1.10.2 - 2026-05-04
 
