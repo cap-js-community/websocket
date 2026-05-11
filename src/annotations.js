@@ -23,17 +23,68 @@ function addWebSocketAnnotations(csn) {
     if (!hasWebSocket || !hasOData) {
       continue;
     }
-    if (!definition["@Common.WebSocketBaseURL"]) {
-      const webSocketBaseURL = deriveWebSocketBaseURL(definition, name, protocols);
-      if (webSocketBaseURL) {
-        definition["@Common.WebSocketBaseURL"] = webSocketBaseURL;
-        LOG?.debug?.("Auto-added @Common.WebSocketBaseURL", { service: name, value: webSocketBaseURL });
+    addWebsocketCommonAnnotations(name, definition, protocols);
+    addSideEffectAnnotations(name, definitions);
+  }
+}
+
+function addWebsocketCommonAnnotations(serviceName, definition, protocols) {
+  if (!definition["@Common.WebSocketBaseURL"]) {
+    const webSocketBaseURL = deriveWebSocketBaseURL(definition, serviceName, protocols);
+    if (webSocketBaseURL) {
+      definition["@Common.WebSocketBaseURL"] = webSocketBaseURL;
+      LOG?.debug?.("Auto-added @Common.WebSocketBaseURL", { service: serviceName, value: webSocketBaseURL });
+    }
+  }
+  if (!definition["@Common.WebSocketChannel#sideEffects"]) {
+    definition["@Common.WebSocketChannel#sideEffects"] = "sideeffects";
+    LOG?.debug?.("Auto-added @Common.WebSocketChannel#sideEffects", { service: serviceName });
+  }
+}
+
+function addSideEffectAnnotations(serviceName, definitions) {
+  const prefix = serviceName + ".";
+  const sideEffectEventNames = new Set();
+  for (const [name, definition] of Object.entries(definitions)) {
+    if (!name.startsWith(prefix)) {
+      continue;
+    }
+    if (definition.kind !== "entity") {
+      continue;
+    }
+    for (const key of Object.keys(definition)) {
+      if (key.startsWith("@Common.SideEffects") && key.endsWith(".SourceEvents")) {
+        const sourceEvents = definition[key];
+        if (Array.isArray(sourceEvents)) {
+          for (const eventName of sourceEvents) {
+            sideEffectEventNames.add(eventName);
+          }
+        }
       }
     }
-    if (!definition["@Common.WebSocketChannel#sideEffects"]) {
-      definition["@Common.WebSocketChannel#sideEffects"] = "sideeffects";
-      LOG?.debug?.("Auto-added @Common.WebSocketChannel#sideEffects", { service: name });
+  }
+  if (sideEffectEventNames.size === 0) {
+    return;
+  }
+  for (const [name, definition] of Object.entries(definitions)) {
+    if (!name.startsWith(prefix)) {
+      continue;
     }
+    if (definition.kind !== "event") {
+      continue;
+    }
+    const localName = name.substring(prefix.length);
+    if (!sideEffectEventNames.has(localName)) {
+      continue;
+    }
+    if (definition["@ws.pcp.sideEffect"] || definition["@websocket.pcp.sideEffect"]) {
+      continue;
+    }
+    if (!definition["@ws.format"]) {
+      definition["@ws.format"] = "pcp";
+    }
+    definition["@ws.pcp.sideEffect"] = true;
+    LOG?.debug?.("Auto-added @ws.pcp.sideEffect", { service: serviceName, event: localName });
   }
 }
 

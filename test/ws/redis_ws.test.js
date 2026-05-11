@@ -76,12 +76,13 @@ describe("Redis", () => {
     });
     expect(redis.client.connect).toHaveBeenCalledWith();
     expect(redis.client.on).toHaveBeenNthCalledWith(1, "error", expect.any(Function));
-    expect(redis.client.subscribe).toHaveBeenNthCalledWith(1, "websocket/chat", expect.any(Function));
-    expect(redis.client.subscribe).toHaveBeenNthCalledWith(2, "websocket/cloudevent", expect.any(Function));
-    expect(redis.client.subscribe).toHaveBeenNthCalledWith(3, "websocket/cloudevents", expect.any(Function));
-    expect(redis.client.subscribe).toHaveBeenNthCalledWith(4, "websocket/fiori", expect.any(Function));
-    expect(redis.client.subscribe).toHaveBeenNthCalledWith(5, "websocket/fns-websocket", expect.any(Function));
-    expect(redis.client.subscribe).toHaveBeenNthCalledWith(6, "websocket/main", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(1, "websocket/annotations", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(2, "websocket/chat", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(3, "websocket/cloudevent", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(4, "websocket/cloudevents", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(5, "websocket/fiori", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(6, "websocket/fns-websocket", expect.any(Function));
+    expect(redis.client.subscribe).toHaveBeenNthCalledWith(7, "websocket/main", expect.any(Function));
     expect(redis.client.publish).toHaveBeenCalledWith(
       "websocket/chat",
       '{"tenant":"t1","event":"received","data":{"text":"test","user":"alice"},"headers":{"header":"value"}}',
