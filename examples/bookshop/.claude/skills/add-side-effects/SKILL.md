@@ -101,20 +101,21 @@ You do NOT need to add it manually, but it can still be specified explicitly.
 
 ## Phase 4: Emit the Event in the Service Implementation
 
-In the `.js` service implementation file, find the handler that modifies the target property and add an `emit` call after the modification:
+In the `.js` service implementation file, find the handler that modifies the target property and add a queued `emit` call after the modification:
 
 ```js
-this.emit("<eventName>", {
+await cds.queued(this).emit("<eventName>", {
   sideEffectSource: `/<EntityName>(${keyValue})`,
 });
 ```
 
 **Key rules**:
 
+- Use `cds.queued(this)` to queue the event emission so it is sent transactionally safe — the event is only dispatched after the current transaction commits successfully. This prevents the UI from refreshing with stale data if the transaction rolls back.
 - The `sideEffectSource` value must be a valid OData entity path relative to the service, e.g. `/Books(42)` or `/Header(ID='some-guid')`
 - The entity key format must match the OData key format (integer keys without quotes, UUID/string keys with quotes)
 - Place the `emit` in an `after` handler or after the data modification completes, so the UI refreshes with the latest data
-- The emit can be fire-and-forget (no `await` needed) since it is a notification, not a data operation
+- Use `await` on the queued emit to ensure it is properly registered in the transaction
 
 ---
 
@@ -127,7 +128,7 @@ Present the changes made:
    - `@ws` and `@odata` service-level annotations for WebSocket connectivity (the `@Common.WebSocketBaseURL` and `@Common.WebSocketChannel#sideEffects` annotations are added automatically at runtime)
    - `@Common.SideEffects` annotation on the entity linking the event to target properties
    - WebSocket event definition with `sideEffectSource` element (the `@ws: { format: 'pcp', pcp: { sideEffect } }` annotation is added automatically at runtime based on the `@Common.SideEffects` reference)
-3. **JS service implementation** — Added `emit` call to broadcast the side effect event
+3. **JS service implementation** — Added queued `emit` call via `cds.queued(this)` to broadcast the side effect event transactionally safe
 
 Remind the user to:
 
@@ -183,7 +184,7 @@ service CatalogService {
 this.after(Books.actions.submitOrder, async (_, req) => {
   const { ID: book } = req.params[0];
   await this.emit("OrderedBook", { book, buyer: req.user.id });
-  this.emit("stockChanged", {
+  await cds.queued(this).emit("stockChanged", {
     sideEffectSource: `/Books(${book})`,
   });
 });

@@ -4,8 +4,8 @@ node_modules/
 reports/
 temp/
 gen/
-test/_env/test.sqlite
-test/_env/test.sqlite-journal
+examples/bookshop/db.sqlite**
+test/_env/test.sqlite**
 test/_env/default-env.json
 test/_env/approuter/default-services.json
 test/_env/backend/app

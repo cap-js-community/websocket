@@ -9,11 +9,22 @@
     "@cap-js/sqlite": "^2"
   },
   "scripts": {
-    "start": "cds-serve"
+    "start": "cds-serve",
+    "start:file": "cds-serve --profile file",
+    "deploy": "cds deploy --to sqlite:db.sqlite"
   },
   "private": true,
   "cds": {
     "requires": {
+      "db": {
+        "[file]": {
+          "kind": "sqlite",
+          "impl": "@cap-js/sqlite",
+          "credentials": {
+            "database": "db.sqlite"
+          }
+        }
+      },
       "db-ext": {
         "[development]": {
           "model": "db/sqlite"
