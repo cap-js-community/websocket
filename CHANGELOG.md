@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Fixed websocket path determination for `WebSocketBaseURL` for multiple word services 
+- Fixed websocket path determination for `WebSocketBaseURL` for multiple word services
 
 ## Version 1.10.5 - 2026-05-11
 
