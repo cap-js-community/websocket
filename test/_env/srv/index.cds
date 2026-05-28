@@ -4,6 +4,7 @@ using from './cloudevent';
 using from './cloudevents';
 using from './fiori';
 using from './fns';
+using from './guest-billing';
 using from './main';
 using from './odata';
 using from './outbox';

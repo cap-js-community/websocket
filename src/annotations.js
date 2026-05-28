@@ -116,12 +116,16 @@ function deriveWebSocketBaseURL(definition, serviceName, protocols) {
 }
 
 function deriveServicePath(definition, serviceName) {
-  const path = definition["@path"];
-  if (path) {
-    return util.normalizeBasePath(path);
-  }
-  const localName = serviceName.split(".").pop();
-  return localName.replace(/Service$/i, "").toLowerCase() || localName.toLowerCase();
+  const path = definition["@path"] ?? slugified(serviceName);
+  return util.normalizeBasePath(path);
 }
+
+const slugified = (name) =>
+  /[^.]+$/
+    .exec(name)[0]
+    .replace(/Service$/, "")
+    .replace(/_/g, "-")
+    .replace(/([a-z0-9])([A-Z])/g, (_, c, C) => c + "-" + C)
+    .toLowerCase();
 
 module.exports = addWebSocketAnnotations;

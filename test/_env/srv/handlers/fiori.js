@@ -3,7 +3,7 @@
 const cds = require("@sap/cds");
 const log = cds.log("fiori");
 
-module.exports = class CatalogService extends cds.ApplicationService {
+module.exports = class FioriService extends cds.ApplicationService {
   init() {
     const { Books } = this.entities;
 
