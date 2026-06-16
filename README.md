@@ -1291,7 +1291,7 @@ event parameter, to specify the side effect source instance while emitting.
 
 Under the hood the following `@Common` annotations are derived (based on the OData service path) and added to the service definition:
 
-```
+```cds
 @Common : {
   WebSocketBaseURL : 'ws/fiori',
   WebSocketChannel #sideEffects: 'sideeffects'
@@ -1594,20 +1594,20 @@ via `@ws.ignore`, if not necessary.
 To manage contexts in format `cloudevent`, `wsContext` event can be emitted in the following way:
 
 - Model `wsContext` CDS service operation as follows:
-  ```
+  ```cds
   @ws.cloudevent.name: 'event.ws.context'
   action wsContext(context: String, exit: Boolean, reset: Boolean);
   ```
 - Call `wsContext` message in `cloudevents` format like this:
-  ```
+  ```json
   {
-    specversion: "1.0",
-    type: "event.ws.context",
-    source: "CloudEventService",
-    data: {
-      context: "context",
-      exit: false,
-      reset: true,
+    "specversion": "1.0",
+    "type": "event.ws.context",
+    "source": "CloudEventService",
+    "data": {
+      "context": "context",
+      "exit": false,
+      "reset": true
     }
   }
   ```
