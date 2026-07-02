@@ -30,7 +30,7 @@ const cloudEvent2 = {
 
 const cloudEvent3 = {
   ...cloudEvent,
-  type: "CloudEventsService.send",
+  type: "CloudEventsService.sendCloudEvents",
 };
 
 describe("CloudEvents", () => {
@@ -102,7 +102,7 @@ describe("CloudEvents", () => {
     });
   });
 
-  test("Cloud event operation name 'send'", async () => {
+  test("Cloud event operation name 'sendCloudEvents'", async () => {
     const waitCloudEventPromise = waitForMessage(socket, "cloudEvent", null, true);
     const result = await emitMessage(socket, JSON.stringify(cloudEvent3));
     expect(result).toBeNull();

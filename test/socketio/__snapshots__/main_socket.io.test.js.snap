@@ -33,7 +33,7 @@ exports[`Main CRUD entity 3`] = `
   "description": "Test description- header",
   "modifiedBy": "alice",
   "name": "Test",
-  "price": 44.44,
+  "price": "44.44",
   "stock": 11,
 }
 `;
@@ -54,7 +54,7 @@ exports[`Main CRUD entity 4`] = `
   "description": "Test description- header",
   "modifiedBy": "alice",
   "name": "Test",
-  "price": 44.44,
+  "price": "44.44",
   "stock": 11,
 }
 `;
@@ -70,10 +70,12 @@ exports[`Main CRUD entity 5`] = `
     },
   ],
   "country": "de",
+  "createdBy": "alice",
   "currency": "EUR",
   "description": "Test description- header - updated",
+  "modifiedBy": "alice",
   "name": "Test",
-  "price": 44.44,
+  "price": "44.44",
   "stock": 11,
 }
 `;
@@ -93,7 +95,7 @@ exports[`Main CRUD entity 9`] = `
     "description": "This is a test Header",
     "modifiedBy": "anonymous",
     "name": "Header",
-    "price": 12.34,
+    "price": "12.34",
     "stock": 11,
   },
 ]

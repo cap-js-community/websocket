@@ -4,7 +4,7 @@ module.exports = (srv) => {
   srv.on(["sendCloudEvent"], async (req) => {
     await srv.emit("cloudEvent", req.data.data);
   });
-  srv.on(["send"], async (req) => {
+  srv.on(["sendCloudEvents"], async (req) => {
     await srv.emit("cloudEvent", req.data.data);
   });
 };

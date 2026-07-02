@@ -278,8 +278,9 @@ function bindServiceEntities(socket, service) {
     const localEntity = util.localName(entity);
     socket.on(`${localEntity}:create`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "create", data, headers, async (response) => {
-        callback && (await callback(response));
-        await broadcastEvent(socket, service, `${localEntity}:created`, entity, response);
+        const result = extractResult(response, data);
+        callback && (await callback(result));
+        await broadcastEvent(socket, service, `${localEntity}:created`, entity, result);
       });
     });
     socket.on(`${localEntity}:read`, async (data, headers, callback) => {
@@ -290,14 +291,16 @@ function bindServiceEntities(socket, service) {
     });
     socket.on(`${localEntity}:update`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "update", data, headers, async (response) => {
-        callback && (await callback(response));
-        await broadcastEvent(socket, service, `${localEntity}:updated`, entity, response);
+        const result = extractResult(response, data);
+        callback && (await callback(result));
+        await broadcastEvent(socket, service, `${localEntity}:updated`, entity, result);
       });
     });
     socket.on(`${localEntity}:delete`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "delete", data, headers, async (response) => {
-        callback && (await callback(response));
-        await broadcastEvent(socket, service, `${localEntity}:deleted`, entity, { ...response, ...data });
+        const result = extractResult(response, data);
+        callback && (await callback(result));
+        await broadcastEvent(socket, service, `${localEntity}:deleted`, entity, result);
       });
     });
     socket.on(`${localEntity}:list`, async (data, headers, callback) => {
@@ -399,6 +402,32 @@ async function callCRUD(socket, service, entity, event, data, headers) {
         });
     }
   });
+}
+
+function extractResult(response, data) {
+  if (response?.toJSON) {
+    response.toJSON();
+  }
+  if (typeof response.length === "number") {
+    if (response.length === 0) {
+      return data;
+    } else if (response.length === 1) {
+      return {
+        ...response[0],
+        ...data,
+      };
+    } else {
+      const result = [];
+      for (let i = 0; i < response.length; i++) {
+        result.push({
+          ...response[i],
+          ...data[i],
+        });
+      }
+      return result;
+    }
+  }
+  return response;
 }
 
 async function broadcastEvent(socket, service, event, entity, data, headers) {

@@ -9,7 +9,7 @@ service CloudEventsService {
     @ws.cloudevents.name: 'com.example.someevent'
     action sendCloudEvent(data: CloudEventDataType);
 
-    action send(data: CloudEventDataType);
+    action sendCloudEvents(data: CloudEventDataType);
 
     event cloudEvent {
         appinfoA : String;

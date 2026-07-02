@@ -24,6 +24,9 @@
   "dependencies": {
     "@cap-js-community/websocket": "../../"
   },
+  "devDependencies": {
+    "@cap-js/sqlite": "*"
+  },
   "cds": {
     "websocket": {
       "kind": "ws",
