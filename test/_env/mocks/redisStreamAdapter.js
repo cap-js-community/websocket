@@ -1,16 +1,16 @@
 "use strict";
 
 const adapter = {
-  init: jest.fn(),
-  addAll: jest.fn(),
-  delAll: jest.fn(),
-  del: jest.fn(),
-  broadcast: jest.fn(),
-  persistSession: jest.fn(),
-  socketRooms: jest.fn(() => {
+  init: vi.fn(),
+  addAll: vi.fn(),
+  delAll: vi.fn(),
+  del: vi.fn(),
+  broadcast: vi.fn(),
+  persistSession: vi.fn(),
+  socketRooms: vi.fn(() => {
     return new Set();
   }),
-  close: jest.fn(),
+  close: vi.fn(),
 };
 
 module.exports = {
