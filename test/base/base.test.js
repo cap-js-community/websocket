@@ -71,7 +71,7 @@ describe("Base", () => {
   });
 
   test("Enhance Request - Host", async () => {
-    const next = jest.fn();
+    const next = vi.fn();
     const socketServer = new SocketServer();
     let req = { headers: { host: "localhost:4711" } };
     socketServer.enhanceRequest({ request: req }, next);
@@ -91,7 +91,7 @@ describe("Base", () => {
   test("Enhance Request - Mock Response", async () => {
     const socketServer = new SocketServer();
     const req = {};
-    const next = jest.fn();
+    const next = vi.fn();
     socketServer.enhanceRequest({ request: req }, next);
     expect(req.res).toBeDefined();
     expect(req.res.headers).toEqual({});
@@ -142,7 +142,7 @@ describe("Base", () => {
         cookie: "X-Authorization=Basic YWxpY2U6YWxpY2U",
       },
     };
-    const next = jest.fn();
+    const next = vi.fn();
     const socketServer = new SocketServer();
     socketServer.applyAuthCookie({ request }, next);
     expect(request.headers.authorization).toEqual("Basic YWxpY2U6YWxpY2U");

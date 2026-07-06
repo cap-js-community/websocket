@@ -4,9 +4,6 @@ const cds = require("@sap/cds");
 const redis = require("redis");
 require("@socket.io/redis-streams-adapter");
 
-jest.mock("redis", () => require("../_env/mocks/redis"));
-jest.mock("@socket.io/redis-streams-adapter", () => require("../_env/mocks/redisStreamAdapter"));
-
 const { connect, disconnect, emitEvent } = require("../_env/util/socket.io");
 
 cds.test(__dirname + "/../_env");

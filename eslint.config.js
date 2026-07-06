@@ -4,7 +4,7 @@ const globals = require("globals");
 const js = require("@eslint/js");
 
 const nodePlugin = require("eslint-plugin-n");
-const jestPlugin = require("eslint-plugin-jest");
+const vitestPlugin = require("@vitest/eslint-plugin");
 const configPrettier = require("eslint-config-prettier");
 
 // https://eslint.org/docs/latest/use/configure/configuration-files
@@ -15,7 +15,6 @@ module.exports = [
   },
   js.configs.recommended,
   nodePlugin.configs["flat/recommended-script"],
-  jestPlugin.configs["flat/recommended"],
   configPrettier,
   {
     languageOptions: {
@@ -55,8 +54,20 @@ module.exports = [
       "n/no-unpublished-require": ["off"],
       "n/no-unsupported-features/node-builtins": ["off"],
       "n/no-deprecated-api": ["off"],
-      "jest/no-conditional-expect": ["off"],
-      "jest/no-disabled-tests": ["off"],
+    },
+  },
+  {
+    files: ["test/**/*.js"],
+    ...vitestPlugin.configs.recommended,
+    languageOptions: {
+      globals: {
+        ...vitestPlugin.environments.env.globals,
+      },
+    },
+    rules: {
+      "vitest/no-conditional-expect": ["off"],
+      "vitest/no-disabled-tests": ["off"],
+      "vitest/valid-expect": ["off"],
     },
   },
 ];
