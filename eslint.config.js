@@ -4,6 +4,7 @@ const globals = require("globals");
 const js = require("@eslint/js");
 
 const nodePlugin = require("eslint-plugin-n");
+const vitestPlugin = require("@vitest/eslint-plugin");
 const configPrettier = require("eslint-config-prettier");
 
 // https://eslint.org/docs/latest/use/configure/configuration-files
@@ -56,21 +57,17 @@ module.exports = [
     },
   },
   {
-    // Vitest globals for test files and their helpers
     files: ["test/**/*.js"],
+    ...vitestPlugin.configs.recommended,
     languageOptions: {
       globals: {
-        vi: false,
-        describe: false,
-        it: false,
-        test: false,
-        expect: false,
-        beforeAll: false,
-        afterAll: false,
-        beforeEach: false,
-        afterEach: false,
-        suite: false,
+        ...vitestPlugin.environments.env.globals,
       },
+    },
+    rules: {
+      "vitest/no-conditional-expect": ["off"],
+      "vitest/no-disabled-tests": ["off"],
+      "vitest/valid-expect": ["off"],
     },
   },
 ];
