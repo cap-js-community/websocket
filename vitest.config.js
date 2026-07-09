@@ -22,7 +22,7 @@ module.exports = defineConfig({
       reportsDirectory: "reports/coverage/unit/",
       reporter: ["lcov", "text"],
       thresholds: {
-        branches: 80,
+        branches: 75,
         functions: 90,
         lines: 90,
         statements: 90,

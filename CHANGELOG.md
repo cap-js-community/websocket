@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Migrate jest to vitest
+- Fix `InsertResult` for CURD
 
 ## Version 1.11.0 - 2026-07-03
 

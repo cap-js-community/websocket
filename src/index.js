@@ -405,29 +405,30 @@ async function callCRUD(socket, service, entity, event, data, headers) {
 }
 
 function extractResult(response, data) {
-  if (response?.toJSON) {
-    response.toJSON();
-  }
-  if (typeof response.length === "number") {
-    if (response.length === 0) {
-      return data;
-    } else if (response.length === 1) {
-      return {
-        ...response[0],
-        ...data,
-      };
-    } else {
-      const result = [];
-      for (let i = 0; i < response.length; i++) {
+  if (typeof response[Symbol.iterator] === "function") {
+    const result = [];
+    let i = 0;
+    for (const row of response) {
+      if (response.length === 1) {
+        return {
+          ...data,
+          ...row,
+        };
+      } else {
         result.push({
-          ...response[i],
           ...data[i],
+          ...row,
         });
       }
-      return result;
+      i++;
     }
+    if (response.length === 0) {
+      return data;
+    }
+    return result;
+  } else {
+    return response;
   }
-  return response;
 }
 
 async function broadcastEvent(socket, service, event, entity, data, headers) {
