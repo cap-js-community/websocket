@@ -9,12 +9,7 @@ module.exports = defineConfig({
     include: ["**/test/**/*.test.js"],
     reporters: ["verbose"],
     setupFiles: [path.resolve(__dirname, "test/setup.js")],
-    poolOptions: {
-      threads: {
-        minThreads: 1,
-        maxThreads: 2,
-      },
-    },
+    maxWorkers: 2,
     coverage: {
       enabled: true,
       provider: "v8",

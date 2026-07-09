@@ -9,11 +9,3 @@ exports[`Main > CRUD entity 1`] = `
 exports[`Main > CRUD entity 2`] = `{}`;
 
 exports[`Main > CRUD entity 3`] = `{}`;
-
-exports[`Main > Event 1`] = `
-{
-  "stock": 11,
-}
-`;
-
-exports[`Main > Event Tenant 1`] = `{}`;
