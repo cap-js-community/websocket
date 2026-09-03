@@ -58,13 +58,13 @@
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-streams-adapter": "^0.3.1",
     "@vitest/eslint-plugin": "^1.6.26",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-n": "^18.2.2",
     "globals": "^17.9.0",
     "prettier": "^3.9.6",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   },
   "license": "Apache-2.0",
   "repository": {
