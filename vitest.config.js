@@ -8,6 +8,7 @@ module.exports = defineConfig({
     globals: true,
     include: ["**/test/**/*.test.js"],
     reporters: ["verbose"],
+    clearMocks: false,
     setupFiles: [path.resolve(__dirname, "test/setup.js")],
     maxWorkers: 2,
     coverage: {
