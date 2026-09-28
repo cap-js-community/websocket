@@ -222,6 +222,26 @@ Examples:
 - `@path: 'chat`: Service is exposed at `/ws/chat`
 - `@path: '/chat`: Service is exposed at `/chat`
 
+### Exclude from WebSocket
+
+Individual service definitions (events, operations or entities) can be excluded from websocket serving by
+annotating them with `@ws: false` or `@websocket: false`. Excluded events are not broadcast, and excluded operations
+and entities are not bound as websocket handlers, even if the service itself is exposed via websocket.
+
+```cds
+@protocol: 'websocket'
+service ChatService {
+
+    @ws: false
+    event internalEvent {
+        text: String;
+    }
+
+    @websocket: false
+    action internalAction();
+}
+```
+
 ### WebSocket Server
 
 The CDS websocket server is exposed on `cds` object implementation-independent at `cds.ws` and implementation-specific

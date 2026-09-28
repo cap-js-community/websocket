@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Version 1.11.2 - 2026-xx-xx
 
+### Added
+
+- Exclude events, operations and entities from websockets via `@ws: false` or `@websocket: false`
+
 ### Fixed
 
 - tbd

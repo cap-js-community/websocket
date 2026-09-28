@@ -10,10 +10,15 @@ function localName(definition) {
 
 function websocketEnabled(definition) {
   return (
-    definition["@websocket"] ||
-    definition["@ws"] ||
-    Object.keys(definition).some((p) => p.startsWith("@websocket.") || p.startsWith("@ws."))
+    !websocketDisabled(definition) &&
+    (definition["@websocket"] ||
+      definition["@ws"] ||
+      Object.keys(definition).some((p) => p.startsWith("@websocket.") || p.startsWith("@ws.")))
   );
+}
+
+function websocketDisabled(definition) {
+  return definition["@websocket"] === false || definition["@ws"] === false;
 }
 
 function normalizeBasePath(path) {
@@ -65,6 +70,7 @@ function deriveProtocols(definition) {
 module.exports = {
   localName,
   websocketEnabled,
+  websocketDisabled,
   normalizeBasePath,
   servedViaWebsocket,
   webSocketProtocolPath,

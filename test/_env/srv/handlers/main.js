@@ -31,6 +31,14 @@ module.exports = (srv) => {
     return text;
   });
 
+  srv.on("triggerCustomExcludedEvent", async (req) => {
+    const text = req.data.text + req.data.num;
+    await srv.emit("customExcludedEvent", { text });
+    await srv.emit("customExcludedEvent2", { text });
+    await srv.emit("customEvent", { text });
+    return text;
+  });
+
   srv.on("triggerCustomContextEvent", async (req) => {
     const ID = req.data.ID;
     const text = req.data.text + req.data.num;

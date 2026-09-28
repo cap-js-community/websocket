@@ -160,6 +160,44 @@ describe("Main", () => {
     await eventNoResultPromise;
   });
 
+  test("Excluded event is not broadcast (@ws: false / @websocket: false)", async () => {
+    const eventResultPromise = waitForEvent(socketOther, "customEvent");
+    const excludedNoResultPromise = waitForNoEvent(socketOther, "customExcludedEvent");
+    const excludedNoResultPromise2 = waitForNoEvent(socketOther, "customExcludedEvent2");
+    const result = await emitEvent(socket, "triggerCustomExcludedEvent", { num: 1, text: "test" });
+    expect(result).toBe("test1");
+    const eventResult = await eventResultPromise;
+    expect(eventResult.text).toBe("test1");
+    await excludedNoResultPromise;
+    await excludedNoResultPromise2;
+  });
+
+  test("Excluded operation is not bound (@ws: false / @websocket: false)", async () => {
+    socket.emit("excludedAction", { num: 1, text: "test" });
+    socket.emit("excludedFunction", { num: 1, text: "test" });
+    const controlResult = await emitEvent(socket, "unboundAction", { num: 2, text: "test" });
+    expect(controlResult).toBe("test2");
+  });
+
+  test("Excluded entity is not bound (@ws: false)", async () => {
+    let header = {
+      name: "Excluded",
+      description: "Excluded description",
+      country: "de",
+      currency: "EUR",
+      stock: 1,
+      price: 1.11,
+    };
+    const excludedCreatedNoResultPromise = waitForNoEvent(socketOther, "ExcludedHeader:created");
+    socket.emit("ExcludedHeader:create", header);
+    await excludedCreatedNoResultPromise;
+    const createdResultPromise = waitForEvent(socketOther, "Header:created");
+    const createResult = await emitEvent(socket, "Header:create", header, { test: "header" });
+    expect(createResult).toBeDefined();
+    const createdResult = await createdResultPromise;
+    expect(createdResult.ID).toBeDefined();
+  });
+
   test("Disconnects socket (last test)", async () => {
     await disconnect(socket); // for test coverage
     await wait();

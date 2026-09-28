@@ -165,6 +165,9 @@ function serveWebSocketService(socketServer, service, options) {
 
 function bindServiceEvents(socketServer, service, path) {
   for (const event of service.events) {
+    if (util.websocketDisabled(event)) {
+      continue;
+    }
     service.on(event, async (req) => {
       try {
         const localEvent = util.localName(event);
@@ -247,6 +250,9 @@ function bindServiceOperations(socket, service) {
     if (Object.values(WebSocketAction).includes(event)) {
       continue;
     }
+    if (util.websocketDisabled(operation)) {
+      continue;
+    }
     socket.on(event, async (data, headers, callback) => {
       await processEvent(socket, service, event, data, headers, callback);
     });
@@ -275,6 +281,9 @@ function bindServiceMixins(socket, service) {
 
 function bindServiceEntities(socket, service) {
   for (const entity of service.entities) {
+    if (util.websocketDisabled(entity)) {
+      continue;
+    }
     const localEntity = util.localName(entity);
     socket.on(`${localEntity}:create`, async (data, headers, callback) => {
       await processCRUD(socket, service, entity, "create", data, headers, async (response) => {

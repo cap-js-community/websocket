@@ -155,6 +155,47 @@ describe("Main", () => {
     await eventNoResultPromise;
   });
 
+  test("Excluded event is not broadcast (@ws: false / @websocket: false)", async () => {
+    const eventResultPromise = waitForEvent(socketOther, "customEvent");
+    const excludedNoResultPromise = waitForNoEvent(socketOther, "customExcludedEvent");
+    const excludedNoResultPromise2 = waitForNoEvent(socketOther, "customExcludedEvent2");
+    const result = await emitEvent(socket, "triggerCustomExcludedEvent", { num: 1, text: "test" });
+    expect(result).toBeNull();
+    const eventResult = await eventResultPromise;
+    expect(eventResult.text).toBe("test1");
+    await excludedNoResultPromise;
+    await excludedNoResultPromise2;
+  });
+
+  test("Excluded operation is not bound (@ws: false / @websocket: false)", async () => {
+    const excludedActionResult = await emitEvent(socket, "excludedAction", { num: 1, text: "test" });
+    expect(excludedActionResult).toBeNull();
+    const excludedFunctionResult = await emitEvent(socket, "excludedFunction", { num: 1, text: "test" });
+    expect(excludedFunctionResult).toBeNull();
+    const controlResult = await emitEvent(socket, "unboundAction", { num: 2, text: "test" });
+    expect(controlResult).toBeNull();
+  });
+
+  test("Excluded entity is not bound (@ws: false)", async () => {
+    let header = {
+      name: "Excluded",
+      description: "Excluded description",
+      country: "de",
+      currency: "EUR",
+      stock: 1,
+      price: 1.11,
+    };
+    const excludedCreatedNoResultPromise = waitForNoEvent(socketOther, "ExcludedHeader:created");
+    const excludedCreateResult = await emitEvent(socket, "ExcludedHeader:create", header);
+    expect(excludedCreateResult).toBeNull();
+    await excludedCreatedNoResultPromise;
+    const createdResultPromise = waitForEvent(socketOther, "Header:created");
+    const createResult = await emitEvent(socket, "Header:create", header, { test: "header" });
+    expect(createResult).toBeNull();
+    const createdResult = await createdResultPromise;
+    expect(createdResult.ID).toBeDefined();
+  });
+
   test("JSON format error", async () => {
     const result = await emitMessage(socket, "This is not a JSON!");
     expect(result).toEqual(null);

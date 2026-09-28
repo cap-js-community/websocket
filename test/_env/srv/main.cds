@@ -20,6 +20,30 @@ service MainService {
         text: String;
     }
 
+    function triggerCustomExcludedEvent(num: Integer, text: String) returns String;
+
+    @ws: false
+    event customExcludedEvent {
+        num: Integer;
+        text: String;
+    }
+
+    @websocket: false
+    event customExcludedEvent2 {
+        num: Integer;
+        text: String;
+    }
+
+    @ws: false
+    action excludedAction(num: Integer, text: String) returns String;
+
+    @websocket: false
+    function excludedFunction(num: Integer, text: String) returns String;
+
+    @ws: false
+    @cds.redirection.target: false
+    entity ExcludedHeader as projection on test.Header;
+
     function triggerCustomContextEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextStaticEvent(ID: UUID, num: Integer, text: String) returns String;
     function triggerCustomContextMassEvent(ID1: UUID, ID2: UUID, num: Integer, text: String) returns String;
