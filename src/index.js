@@ -13,6 +13,13 @@ const WebSocketAction = {
   Context: "wsContext",
 };
 
+class WebSocketRequest extends cds.Request {
+  constructor(args) {
+    super(args);
+    Object.defineProperty(this, "protocol", { value: "ws" });
+  }
+}
+
 let socketServer;
 
 let services;
@@ -353,11 +360,13 @@ async function processEvent(socket, service, event, data, headers, callback) {
 async function callEvent(socket, service, event, data, headers) {
   data = data || {};
   return await service.tx(socket.context, async (srv) => {
-    return await srv.send({
-      event,
-      data,
-      headers,
-    });
+    return await srv.send(
+      new WebSocketRequest({
+        event,
+        data,
+        headers,
+      }),
+    );
   });
 }
 
@@ -387,28 +396,32 @@ async function callCRUD(socket, service, entity, event, data, headers) {
     const key = deriveKey(entity, data);
     switch (event) {
       case "create":
-        return await srv.send({ query: srv.create(entity).entries(data), headers });
+        return await srv.send(new WebSocketRequest({ query: srv.create(entity).entries(data), headers }));
       case "read":
-        return await srv.send({ query: SELECT.one.from(entity).where(key), headers });
+        return await srv.send(new WebSocketRequest({ query: SELECT.one.from(entity).where(key), headers }));
       case "readDeep":
-        return await srv.send({
-          query: SELECT.one.from(entity).columns(getDeepEntityColumns(entity)).where(key),
-          headers,
-        });
+        return await srv.send(
+          new WebSocketRequest({
+            query: SELECT.one.from(entity).columns(getDeepEntityColumns(entity)).where(key),
+            headers,
+          }),
+        );
       case "update":
-        return await srv.send({ query: srv.update(entity).set(data).where(key), headers });
+        return await srv.send(new WebSocketRequest({ query: srv.update(entity).set(data).where(key), headers }));
       case "delete":
-        return await srv.send({ query: srv.delete(entity).where(key), headers });
+        return await srv.send(new WebSocketRequest({ query: srv.delete(entity).where(key), headers }));
       case "list":
-        return await srv.send({ query: srv.read(entity).where(data), headers });
+        return await srv.send(new WebSocketRequest({ query: srv.read(entity).where(data), headers }));
       default:
-        return await srv.send({
-          event,
-          entity: entity.name,
-          data,
-          params: [key],
-          headers,
-        });
+        return await srv.send(
+          new WebSocketRequest({
+            event,
+            entity: entity.name,
+            data,
+            params: [key],
+            headers,
+          }),
+        );
     }
   });
 }

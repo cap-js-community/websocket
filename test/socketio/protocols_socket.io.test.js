@@ -30,7 +30,7 @@ describe("Protocols", () => {
     const waitProtocol = waitForEvent(socket, "test");
     await emitEvent(socket, "trigger", { text: protocol });
     const waitResult = await waitProtocol;
-    expect(waitResult).toMatchObject({ text: protocol });
+    expect(waitResult).toMatchObject({ text: protocol, protocol: "ws" });
     socket.close();
   });
 });

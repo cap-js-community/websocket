@@ -5,6 +5,7 @@ service ProtocolServiceWebsocket {
 
     event test {
         text : String;
+        protocol : String;
     }
 }
 
@@ -15,6 +16,7 @@ service ProtocolServiceWS {
 
     event test {
         text : String;
+        protocol : String;
     }
 }
 
@@ -25,6 +27,7 @@ service ProtocolServiceAnnotationWebsocket {
 
     event test {
         text : String;
+        protocol : String;
     }
 }
 
@@ -35,6 +38,7 @@ service ProtocolServiceAnnotationWS {
 
     event test {
         text : String;
+        protocol : String;
     }
 }
 
@@ -48,6 +52,7 @@ service ProtocolServiceWebsocketPath {
 
     event test {
         text : String;
+        protocol : String;
     }
 }
 
@@ -60,6 +65,7 @@ service ProtocolServiceWebsocketAbsolutePath {
 
     event test {
         text : String;
+        protocol : String;
     }
 }
 
@@ -78,5 +84,6 @@ service ProtocolServiceWebsocketMultiple {
 
     event test {
         text : String;
+        protocol : String;
     }
 }
