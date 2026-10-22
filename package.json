@@ -43,7 +43,7 @@
     "audit": "npm audit --only=prod"
   },
   "dependencies": {
-    "@cap-js-community/common": "^0.5.4",
+    "@cap-js-community/common": "^0.5.5",
     "socket.io": "^4.8.4",
     "socket.io-client": "^4.8.4",
     "ws": "^8.22.0"
@@ -51,20 +51,20 @@
   "devDependencies": {
     "@cap-js-community/websocket": "./",
     "@cap-js/cds-test": "^1.0.2",
-    "@cap-js/sqlite": "^3.1.1",
+    "@cap-js/sqlite": "^3.1.2",
     "@eslint/js": "^10.0.1",
-    "@sap/cds": "^10.1.1",
-    "@sap/cds-dk": "^10.1.2",
+    "@sap/cds": "^10.2.1",
+    "@sap/cds-dk": "^10.2.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-streams-adapter": "^0.3.1",
     "@vitest/eslint-plugin": "^1.6.27",
-    "@vitest/coverage-v8": "^5.0.3",
-    "eslint": "^10.12.0",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-n": "^18.4.1",
+    "eslint-plugin-n": "^18.5.0",
     "globals": "^17.13.0",
-    "prettier": "^3.9.9",
-    "vitest": "^5.0.3"
+    "prettier": "^3.9.10",
+    "vitest": "^5.0.5"
   },
   "license": "Apache-2.0",
   "repository": {
