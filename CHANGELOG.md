@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- tbd
+- Remove automatic queuing/outboxing for WS services
 
 ## Version 1.11.3 - 2026-10-22
 
